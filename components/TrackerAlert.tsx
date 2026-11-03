@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
+import { TRACKER_UPDATE_INTERVAL_MS } from "@/lib/nhc/types";
 
 /** Derive Saffir-Simpson category from wind speed (knots) */
 function deriveCategory(storm: Storm): string | null {
@@ -46,7 +47,7 @@ function categoryColor(cat: string) {
 }
 
 const DISMISS_KEY = "tracker-alert-dismissed-ids";
-const POLL_INTERVAL_MS = 60_000;
+const POLL_INTERVAL_MS = TRACKER_UPDATE_INTERVAL_MS; // Real-time auto-update every 60 seconds (60,000 ms)
 
 function getDismissed(): Set<string> {
   if (typeof window === "undefined") return new Set();

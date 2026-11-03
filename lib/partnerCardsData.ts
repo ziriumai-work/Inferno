@@ -1,23 +1,29 @@
+export interface PartnerCard {
+  badge: string;
+  title: string;
+  desc: string;
+}
+
 export const partnerCardsData: PartnerCard[] = [
   {
     badge: "Prime Teaming",
     title: "Lead & Win Together",
-    desc: "Collaborate with The Inferno Group as your prime or mentor-protégé partner. We assemble compliant solutions, joint ventures, and provide HUBZone & VOSB socioeconomic teaming value on federal solicitations.",
+    desc: "Team with TIG as a prime or joint-venture partner, leveraging our HUBZone and VOSB socioeconomic credentials on federal bids.",
   },
   {
     badge: "Specialty Subcontracting",
     title: "Deliver Targeted Capabilities",
-    desc: "We actively engage qualified specialty contractors, consultants, and trade partners across emergency management, disaster debris monitoring, facilities support, and contact center operations.",
+    desc: "We engage qualified specialty contractors and consultants across disaster recovery, debris monitoring, facilities support, and contact centers.",
   },
   {
     badge: "Emergency Vendor Networks",
     title: "Rapid Disaster Response",
-    desc: "Join our deployable supplier and response network. We mobilize distributors, logistics carriers, equipment providers, and staffing cadres for rapid emergency activations nationwide.",
+    desc: "Join our deployable supplier network mobilizing logistics carriers, equipment providers, and staffing cadres for nationwide activations.",
   },
   {
     badge: "Emerging & Small Business",
     title: "Build & Scale Without Barriers",
-    desc: "We welcome capable emerging businesses. We do not create unnecessary barriers to partnership—connecting on capability, reliability, competitive pricing, and performance first.",
+    desc: "We welcome capable emerging businesses—partnering on capability, reliability, competitive pricing, and performance without unnecessary barriers.",
   },
 ];
 

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { syncExternalCalendarBusyBlocks } from "@/lib/calendarSync";
 
-// Standard daily business hours in EST (09:00 AM to 04:30 PM)
+// Standard daily business hours in Eastern Time (09:00 AM to 04:30 PM EST/EDT)
 const DAILY_SLOT_TIMES = [
   { startHour: 9, startMin: 0, durationMin: 30 },
   { startHour: 9, startMin: 30, durationMin: 30 },
@@ -16,6 +16,33 @@ const DAILY_SLOT_TIMES = [
   { startHour: 15, startMin: 30, durationMin: 30 },
   { startHour: 16, startMin: 0, durationMin: 30 },
 ];
+
+function getEasternDateString(date: Date): string {
+  const formatter = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/New_York",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+  return formatter.format(date);
+}
+
+function getEasternOffsetString(date: Date): string {
+  const formatter = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/New_York",
+    timeZoneName: "shortOffset",
+  });
+  const parts = formatter.formatToParts(date);
+  const tzPart = parts.find((p) => p.type === "timeZoneName")?.value || "GMT-4";
+  const match = tzPart.match(/GMT([+-]\d+)/);
+  if (match) {
+    const hours = parseInt(match[1], 10);
+    const sign = hours >= 0 ? "+" : "-";
+    const absHours = Math.abs(hours);
+    return `${sign}${String(absHours).padStart(2, "0")}:00`;
+  }
+  return "-04:00";
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -59,16 +86,26 @@ export async function GET(request: NextRequest) {
     const newSlotsToInsert: Array<{ start_time: string; end_time: string; timezone: string; is_available: boolean }> = [];
 
     for (const bDay of businessDays) {
+      const dateStr = getEasternDateString(bDay);
+      const offsetStr = getEasternOffsetString(bDay);
+
       for (const slotDef of DAILY_SLOT_TIMES) {
-        const slotStart = new Date(bDay);
-        slotStart.setHours(slotDef.startHour, slotDef.startMin, 0, 0);
-        
-        const slotEnd = new Date(slotStart);
-        slotEnd.setMinutes(slotEnd.getMinutes() + slotDef.durationMin);
+        const startHourStr = String(slotDef.startHour).padStart(2, "0");
+        const startMinStr = String(slotDef.startMin).padStart(2, "0");
+        const slotStart = new Date(`${dateStr}T${startHourStr}:${startMinStr}:00${offsetStr}`);
+
+        const endMinTotal = slotDef.startMin + slotDef.durationMin;
+        const endHour = slotDef.startHour + Math.floor(endMinTotal / 60);
+        const endMin = endMinTotal % 60;
+        const endHourStr = String(endHour).padStart(2, "0");
+        const endMinStr = String(endMin).padStart(2, "0");
+        const slotEnd = new Date(`${dateStr}T${endHourStr}:${endMinStr}:00${offsetStr}`);
+
+        const slotStartTime = slotStart.getTime();
 
         // Check if a slot at this start_time already exists in existingSlots
         const slotExists = existingSlots?.some(
-          (s) => new Date(s.start_time).getTime() === slotStart.getTime()
+          (s) => new Date(s.start_time).getTime() === slotStartTime
         );
 
         if (!slotExists) {
@@ -76,7 +113,7 @@ export async function GET(request: NextRequest) {
             start_time: slotStart.toISOString(),
             end_time: slotEnd.toISOString(),
             timezone: "EST",
-            is_available: true
+            is_available: true,
           });
         }
       }

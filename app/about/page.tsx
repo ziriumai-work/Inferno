@@ -48,7 +48,7 @@ export default function AboutPage() {
       "@type": "GovernmentOrganization",
       "name": "The Inferno Group LLC",
       "url": "https://infernogroup.com",
-      "logo": "https://infernogroup.com/logo.jpeg",
+      "logo": "https://infernogroup.com/logo.png",
       "taxID": "22VP2",
       "foundingLocation": "Orlando, Florida, USA",
       "knowsAbout": [

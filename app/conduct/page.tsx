@@ -9,8 +9,17 @@ export default function ConductPage() {
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
-    setConduct(dataStore.getLegalConduct());
+    const refreshConduct = () => setConduct(dataStore.getLegalConduct());
+    refreshConduct();
     setIsMounted(true);
+
+    window.addEventListener("storage", refreshConduct);
+    window.addEventListener("cms-update", refreshConduct);
+
+    return () => {
+      window.removeEventListener("storage", refreshConduct);
+      window.removeEventListener("cms-update", refreshConduct);
+    };
   }, []);
 
   if (!isMounted || !conduct) {
@@ -47,7 +56,7 @@ export default function ConductPage() {
       <section id="standards-of-conduct" className="max-w-[800px] mx-auto py-16 px-8">
         <RevealOnMount>
           <div className="section-eyebrow">Ethical Guidelines</div>
-          <h2 className="section-title">{conduct.title}</h2>
+          <h1 className="section-title">{conduct.title}</h1>
           <p className="section-desc mb-12">
             The Inferno Group LLC guidelines regarding anti-kickback provisions, conflicts of interest, and procurement integrity.
           </p>

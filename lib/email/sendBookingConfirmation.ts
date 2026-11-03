@@ -1,4 +1,8 @@
-import { generateICSContent, createGoogleCalendarUrl, createOutlookCalendarUrl } from "@/lib/calendarUtils";
+import {
+  generateICSContent,
+  createGoogleCalendarUrl,
+  createOutlookCalendarUrl,
+} from "@/lib/calendarUtils";
 import { SupabaseClient } from "@supabase/supabase-js";
 
 export interface BookingConfirmationParams {
@@ -24,7 +28,7 @@ export interface EmailDispatchResult {
 const CONSULT_TYPE_NAMES: Record<string, string> = {
   sba: "SBA Socioeconomic Certifications Consultation (30m)",
   emergency: "FEMA Disaster Recovery Programmatic Audit Compliance (45m)",
-  teaming: "Prime/Subcontractor Joint-Venture Teaming Review (30m)"
+  teaming: "Prime/Subcontractor Joint-Venture Teaming Review (30m)",
 };
 
 /**
@@ -33,18 +37,22 @@ const CONSULT_TYPE_NAMES: Record<string, string> = {
  */
 export async function sendBookingConfirmation(
   params: BookingConfirmationParams,
-  supabase?: SupabaseClient
+  supabase?: SupabaseClient,
 ): Promise<EmailDispatchResult> {
   const resendApiKey = process.env.RESEND_API_KEY;
-  const fromEmail = process.env.RESEND_FROM_EMAIL || "The Inferno Group <onboarding@resend.dev>";
-  const adminNotificationEmail = process.env.ADMIN_NOTIFICATION_EMAIL || "operations@infernogroup.com";
+  const fromEmail =
+    process.env.RESEND_FROM_EMAIL ||
+    "The Inferno Group <onboarding@resend.dev>";
+  const adminNotificationEmail =
+    process.env.ADMIN_NOTIFICATION_EMAIL || "operations@infernogroup.com";
 
-  const meetingTitle = CONSULT_TYPE_NAMES[params.meetingType] || "Operations Review Consultation";
+  const meetingTitle =
+    CONSULT_TYPE_NAMES[params.meetingType] || "Operations Review Consultation";
   const formattedDate = params.startTime.toLocaleDateString("en-US", {
     weekday: "long",
     year: "numeric",
     month: "long",
-    day: "numeric"
+    day: "numeric",
   });
   const formattedTime = `${params.startTime.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })} (${params.timezone})`;
 
@@ -52,14 +60,14 @@ export async function sendBookingConfirmation(
     title: meetingTitle,
     description: `Booked by: ${params.fullName} (${params.company || "N/A"})\nEmail: ${params.email}\nScope: ${params.notes || "None"}`,
     startTime: params.startTime,
-    endTime: params.endTime
+    endTime: params.endTime,
   });
 
   const outlookUrl = createOutlookCalendarUrl({
     title: meetingTitle,
     description: `Booked by: ${params.fullName} (${params.company || "N/A"})\nEmail: ${params.email}\nScope: ${params.notes || "None"}`,
     startTime: params.startTime,
-    endTime: params.endTime
+    endTime: params.endTime,
   });
 
   const htmlBody = `
@@ -68,18 +76,18 @@ export async function sendBookingConfirmation(
       <head>
         <meta charset="utf-8">
         <style>
-          body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #f8fafc; color: #0f172a; margin: 0; padding: 20px; }
+          body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #f8fafc; color: #0d1b3d; margin: 0; padding: 20px; }
           .container { max-width: 600px; margin: 0 auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 32px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); }
-          .logo { font-size: 20px; font-weight: bold; color: #ea580c; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 24px; }
-          h1 { font-size: 22px; color: #0f172a; margin-top: 0; margin-bottom: 16px; font-weight: 700; }
+          .logo { font-size: 20px; font-weight: bold; color: #e14d18; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 24px; }
+          h1 { font-size: 22px; color: #0d1b3d; margin-top: 0; margin-bottom: 16px; font-weight: 700; }
           p { font-size: 15px; line-height: 1.6; color: #334155; }
           .details-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; margin: 24px 0; }
           .detail-row { margin-bottom: 10px; font-size: 14px; color: #1e293b; }
-          .detail-label { color: #ea580c; font-weight: bold; }
+          .detail-label { color: #e14d18; font-weight: bold; }
           .btn-group { display: flex; gap: 12px; margin-top: 24px; flex-wrap: wrap; }
           .btn { display: inline-block; padding: 12px 20px; border-radius: 6px; font-weight: 600; text-decoration: none; font-size: 14px; text-align: center; }
-          .btn-google { background-color: #2563eb; color: #ffffff; }
-          .btn-outlook { background-color: #0284c7; color: #ffffff; }
+          .btn-google { background-color: #1a56c4; color: #ffffff; }
+          .btn-outlook { background-color: #0d1b3d; color: #ffffff; }
           .footer { font-size: 12px; color: #64748b; margin-top: 32px; border-top: 1px solid #e2e8f0; padding-top: 16px; text-align: center; }
         </style>
       </head>
@@ -118,7 +126,7 @@ export async function sendBookingConfirmation(
     title: meetingTitle,
     description: `Booked by ${params.fullName} (${params.company || "N/A"})\nEmail: ${params.email}\nScope: ${params.notes || "None"}`,
     startTime: params.startTime,
-    endTime: params.endTime
+    endTime: params.endTime,
   });
 
   let result: EmailDispatchResult;
@@ -133,9 +141,9 @@ export async function sendBookingConfirmation(
         attachments: [
           {
             filename: `inferno-consultation-${params.bookingId}.ics`,
-            content: Buffer.from(icsData).toString("base64")
-          }
-        ]
+            content: Buffer.from(icsData).toString("base64"),
+          },
+        ],
       };
 
       // Include bcc if adminNotificationEmail is provided and distinct
@@ -146,17 +154,23 @@ export async function sendBookingConfirmation(
       let resendRes = await fetch("https://api.resend.com/emails", {
         method: "POST",
         headers: {
-          "Authorization": `Bearer ${resendApiKey}`,
-          "Content-Type": "application/json"
+          Authorization: `Bearer ${resendApiKey}`,
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
       });
 
       let resData = await resendRes.json();
 
       // Sandbox safety fallback: If Resend blocks sending to unverified recipient domain in testing mode, redirect to account owner email (rafkhan9323@gmail.com)
-      if (!resendRes.ok && (resendRes.status === 403 || resendRes.status === 422) && adminNotificationEmail) {
-        console.warn(`Resend sandbox mode active for ${params.email}: ${resData.message}. Rerouting sandbox test copy to owner inbox (${adminNotificationEmail}).`);
+      if (
+        !resendRes.ok &&
+        (resendRes.status === 403 || resendRes.status === 422) &&
+        adminNotificationEmail
+      ) {
+        console.warn(
+          `Resend sandbox mode active for ${params.email}: ${resData.message}. Rerouting sandbox test copy to owner inbox (${adminNotificationEmail}).`,
+        );
         delete payload.bcc;
         payload.to = [adminNotificationEmail];
         payload.subject = `[Sandbox Test Delivery] Booking Confirmed: ${meetingTitle} (Client: ${params.fullName} <${params.email}>)`;
@@ -164,10 +178,10 @@ export async function sendBookingConfirmation(
         resendRes = await fetch("https://api.resend.com/emails", {
           method: "POST",
           headers: {
-            "Authorization": `Bearer ${resendApiKey}`,
-            "Content-Type": "application/json"
+            Authorization: `Bearer ${resendApiKey}`,
+            "Content-Type": "application/json",
           },
-          body: JSON.stringify(payload)
+          body: JSON.stringify(payload),
         });
         resData = await resendRes.json();
       }
@@ -177,16 +191,19 @@ export async function sendBookingConfirmation(
           emailSent: true,
           provider: "resend",
           status: "sent",
-          messageId: resData.id
+          messageId: resData.id,
         };
       } else {
-        const errorMsg = resData.message || resData.error || "Resend API returned non-OK response.";
+        const errorMsg =
+          resData.message ||
+          resData.error ||
+          "Resend API returned non-OK response.";
         console.error("Resend API dispatch error:", errorMsg);
         result = {
           emailSent: false,
           provider: "resend",
           status: "failed",
-          error: errorMsg
+          error: errorMsg,
         };
       }
     } catch (err: unknown) {
@@ -196,7 +213,7 @@ export async function sendBookingConfirmation(
         emailSent: false,
         provider: "resend",
         status: "failed",
-        error: errorMessage || "Failed to reach Resend API endpoint."
+        error: errorMessage || "Failed to reach Resend API endpoint.",
       };
     }
   } else {
@@ -205,7 +222,7 @@ export async function sendBookingConfirmation(
       emailSent: false,
       provider: "fallback_logger",
       status: "logged_offline",
-      error: "RESEND_API_KEY is not configured in environment variables."
+      error: "RESEND_API_KEY is not configured in environment variables.",
     };
   }
 
@@ -220,10 +237,13 @@ export async function sendBookingConfirmation(
         provider: result.provider,
         message_id: result.messageId || null,
         error_message: result.error || null,
-        sent_at: new Date().toISOString()
+        sent_at: new Date().toISOString(),
       });
     } catch (dbErr) {
-      console.error("Error writing safety-net record to booking_emails:", dbErr);
+      console.error(
+        "Error writing safety-net record to booking_emails:",
+        dbErr,
+      );
     }
   }
 

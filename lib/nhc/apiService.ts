@@ -1,5 +1,16 @@
 import AdmZip from "adm-zip";
-import { DetailedStorm, StormCategoryType, BasinType, ForecastPoint, HistoricalTrackPoint, WatchWarningArea, StormImpacts, DisturbanceArea } from "./types";
+import {
+  DetailedStorm,
+  StormCategoryType,
+  BasinType,
+  ForecastPoint,
+  HistoricalTrackPoint,
+  WatchWarningArea,
+  StormImpacts,
+  DisturbanceArea,
+  RealtimeNWSAlert,
+  TRACKER_UPDATE_INTERVAL_SECONDS,
+} from "./types";
 
 
 const CURRENT_STORMS_URL = "https://www.nhc.noaa.gov/CurrentStorms.json";
@@ -44,7 +55,7 @@ async function fetchTextUrl(url?: string): Promise<string | null> {
       headers: {
         "User-Agent": "InfernoGroup-HurricaneDashboard/2.0",
       },
-      next: { revalidate: 300 },
+      next: { revalidate: TRACKER_UPDATE_INTERVAL_SECONDS },
     });
     clearTimeout(timeoutId);
     if (!res.ok) return null;
@@ -65,7 +76,7 @@ async function fetchKmzKmlText(url?: string): Promise<string | null> {
       headers: {
         "User-Agent": "InfernoGroup-HurricaneDashboard/2.0",
       },
-      next: { revalidate: 300 },
+      next: { revalidate: TRACKER_UPDATE_INTERVAL_SECONDS },
     });
     clearTimeout(timeoutId);
     if (!res.ok) return null;
@@ -102,7 +113,7 @@ async function fetchMapServerWatchesWarnings(binNumber?: string): Promise<WatchW
     const res = await fetch(url, {
       signal: controller.signal,
       headers: { "User-Agent": "InfernoGroup-HurricaneDashboard/2.0" },
-      next: { revalidate: 300 },
+      next: { revalidate: TRACKER_UPDATE_INTERVAL_SECONDS },
     });
     clearTimeout(timeoutId);
     if (!res.ok) return [];
@@ -140,7 +151,7 @@ async function fetchMapServerWatchesWarnings(binNumber?: string): Promise<WatchW
   }
 }
 
-export async function fetchRawStorms() {
+export async function fetchRawStorms(forceRefresh = false) {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 8000);
   try {
@@ -149,7 +160,9 @@ export async function fetchRawStorms() {
       headers: {
         "User-Agent": "InfernoGroup-HurricaneDashboard/2.0 (contact: ops@infernogroup.com)",
       },
-      next: { revalidate: 0 },
+      ...(forceRefresh
+        ? { cache: "no-store" as const }
+        : { next: { revalidate: TRACKER_UPDATE_INTERVAL_SECONDS } }),
     });
     clearTimeout(timeoutId);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -520,7 +533,7 @@ export async function fetchTropicalDisturbances(basin = "atlc", days = "7"): Pro
     const res = await fetch(url, {
       signal: controller.signal,
       headers: { "User-Agent": "InfernoGroup-HurricaneDashboard/2.0" },
-      next: { revalidate: 300 },
+      next: { revalidate: TRACKER_UPDATE_INTERVAL_SECONDS },
     });
     clearTimeout(timeoutId);
 
@@ -648,4 +661,38 @@ function getFallbackDisturbances(basin: string, days: string): DisturbanceArea[]
     },
   ];
 }
+
+export async function fetchActiveNWSAlerts(): Promise<RealtimeNWSAlert[]> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 6000);
+  try {
+    const url = "https://api.weather.gov/alerts/active?event=Hurricane%20Warning,Hurricane%20Watch,Tropical%20Storm%20Warning,Tropical%20Storm%20Watch,Storm%20Surge%20Warning,Storm%20Surge%20Watch";
+    const res = await fetch(url, {
+      signal: controller.signal,
+      headers: {
+        "User-Agent": "InfernoGroup-HurricaneDashboard/2.0 (contact: ops@infernogroup.com)",
+        "Accept": "application/geo+json",
+      },
+      next: { revalidate: TRACKER_UPDATE_INTERVAL_SECONDS },
+    });
+    clearTimeout(timeoutId);
+    if (!res.ok) return [];
+    const data = await res.json();
+    const features = Array.isArray(data?.features) ? data.features : [];
+    return features.map((f: any) => ({
+      id: f.id || f.properties?.id || "",
+      event: f.properties?.event || "Tropical Alert",
+      headline: f.properties?.headline || f.properties?.event || "",
+      severity: f.properties?.severity || "Unknown",
+      urgency: f.properties?.urgency || "Unknown",
+      areaDesc: f.properties?.areaDesc || "",
+      effective: f.properties?.effective || "",
+      expires: f.properties?.expires || "",
+    }));
+  } catch {
+    clearTimeout(timeoutId);
+    return [];
+  }
+}
+
 

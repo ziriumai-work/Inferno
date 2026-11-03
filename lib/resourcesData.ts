@@ -4,8 +4,8 @@ export const resourcesData: Resource[] = [
     title: "Corporate Capability Statement (TIG-CS-2026)",
     description: "Official capability brief featuring Unique Entity ID (UEI: QW6RHJACHA56), CAGE Code (22VP2), SBA HUBZone Certified & VOSB designations, registered NAICS classifications, and bonding capacity.",
     category: "Capability Statements",
-    fileType: "Corporate Brief",
-    fileSize: "Direct Export",
+    fileType: "PDF Document (1-Page Brief)",
+    fileSize: "500 KB",
     downloads: 890,
   },
   {

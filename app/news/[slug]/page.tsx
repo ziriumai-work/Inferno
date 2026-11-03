@@ -13,15 +13,26 @@ export default function ArticleDetailPage() {
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
-    const list = dataStore.getArticles();
-    const found = list.find((a) => a.slug === slug);
-    if (found) {
-      setArticle(found);
-    }
-    // Get other articles for sidebar
-    const others = list.filter((art) => art.slug !== slug && art.status === "published");
-    setOtherArticles(others);
+    const refreshArticle = () => {
+      const list = dataStore.getArticles();
+      const found = list.find((a) => a.slug === slug);
+      if (found) {
+        setArticle(found);
+      }
+      const others = list.filter((art) => art.slug !== slug && art.status === "published");
+      setOtherArticles(others);
+    };
+
+    refreshArticle();
     setIsMounted(true);
+
+    window.addEventListener("storage", refreshArticle);
+    window.addEventListener("cms-update", refreshArticle);
+
+    return () => {
+      window.removeEventListener("storage", refreshArticle);
+      window.removeEventListener("cms-update", refreshArticle);
+    };
   }, [slug]);
 
   if (!isMounted) {

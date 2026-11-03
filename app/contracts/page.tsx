@@ -4,9 +4,11 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import RevealOnMount from "@/components/RevealOnMount";
 import { contractsData } from "@/lib/contractsData";
+import { dataStore } from "@/utils/dataStore";
 
 export default function ContractsPage() {
   const [isMounted, setIsMounted] = useState(false);
+  const [contracts, setContracts] = useState<Contract[]>(contractsData);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedNaics, setSelectedNaics] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
@@ -14,7 +16,9 @@ export default function ContractsPage() {
   const [lastRefreshed, setLastRefreshed] = useState<string>("");
 
   // Teaming / Review Modal State
-  const [selectedContract, setSelectedContract] = useState<Contract | null>(null);
+  const [selectedContract, setSelectedContract] = useState<Contract | null>(
+    null,
+  );
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [partnerCompany, setPartnerCompany] = useState("");
   const [contactName, setContactName] = useState("");
@@ -27,11 +31,24 @@ export default function ContractsPage() {
   const itemsPerPage = 4;
 
   useEffect(() => {
+    const refreshContracts = () => {
+      setContracts(dataStore.getContracts());
+      setLastRefreshed(new Date().toLocaleTimeString());
+    };
+
+    refreshContracts();
     const timer = setTimeout(() => {
       setIsMounted(true);
-      setLastRefreshed(new Date().toLocaleTimeString());
     }, 50);
-    return () => clearTimeout(timer);
+
+    window.addEventListener("storage", refreshContracts);
+    window.addEventListener("cms-update", refreshContracts);
+
+    return () => {
+      window.removeEventListener("storage", refreshContracts);
+      window.removeEventListener("cms-update", refreshContracts);
+      clearTimeout(timer);
+    };
   }, []);
 
   const handleRefresh = () => {
@@ -55,23 +72,22 @@ export default function ContractsPage() {
       setIsSubmitting(false);
       setIsSuccess(true);
 
-      const lead = {
-        id: Date.now().toString(),
+      // Save teaming lead and sync to Supabase database
+      void dataStore.submitLead({
         type: "CONTRACT_REVIEW",
         solicitation: selectedContract?.solicitation,
         contractTitle: selectedContract?.title,
         agency: selectedContract?.agency,
         partnerCompany,
+        company: partnerCompany,
         contactName,
+        name: contactName,
         contactEmail,
+        email: contactEmail,
         teamingRole,
+        notes: reviewNotes,
         reviewNotes,
-        createdAt: new Date().toISOString(),
-      };
-
-      const currentLeads = JSON.parse(localStorage.getItem("inferno_leads") || "[]");
-      currentLeads.push(lead);
-      localStorage.setItem("inferno_leads", JSON.stringify(currentLeads));
+      });
 
       setTimeout(() => {
         setIsModalOpen(false);
@@ -85,8 +101,9 @@ export default function ContractsPage() {
     }, 1200);
   };
 
-  const filteredContracts = contractsData.filter((contract) => {
-    const matchesNaics = selectedNaics === "all" || contract.naics === selectedNaics;
+  const filteredContracts = contracts.filter((contract) => {
+    const matchesNaics =
+      selectedNaics === "all" || contract.naics === selectedNaics;
     const matchesSearch =
       contract.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       contract.solicitation.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -99,7 +116,10 @@ export default function ContractsPage() {
   // Pagination calculations
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentItems = filteredContracts.slice(indexOfFirstItem, indexOfLastItem);
+  const currentItems = filteredContracts.slice(
+    indexOfFirstItem,
+    indexOfLastItem,
+  );
   const totalPages = Math.ceil(filteredContracts.length / itemsPerPage);
 
   const naicsList = [
@@ -117,30 +137,38 @@ export default function ContractsPage() {
     <div className="page-view block">
       <section id="contracts">
         {/* Header */}
-        <RevealOnMount className={`reveal flex flex-wrap justify-between items-end gap-6 ${isMounted ? "active" : ""}`}>
+        <RevealOnMount
+          className={`reveal flex flex-wrap justify-between items-end gap-6 ${isMounted ? "active" : ""}`}
+        >
           <div>
-            <div className="section-eyebrow">B2G &amp; Public Sector Opportunities</div>
-            <h2 className="section-title">Active Government Contracts &amp; Pursuits</h2>
+            <div className="section-eyebrow">
+              B2G &amp; Public Sector Opportunities
+            </div>
+            <h1 className="section-title">
+              Active Government Contracts &amp; Pursuits
+            </h1>
             <p className="section-desc max-w-[820px]">
-              Federal, state, and regional emergency management and consulting solicitations matching The Inferno Group LLC&apos;s registered NAICS codes, HUBZone, and VOSB socioeconomic parameters.
+              Federal, state, and regional emergency management and consulting
+              solicitations matching The Inferno Group LLC&apos;s registered
+              NAICS codes, HUBZone, and VOSB socioeconomic parameters.
             </p>
           </div>
           <div className="flex items-center gap-4">
             <span className="text-xs text-[var(--text-muted)] font-[family-name:var(--font-jetbrains-mono)]">
               Feed Synced: {lastRefreshed}
             </span>
-            <button 
-              onClick={handleRefresh} 
+            <button
+              onClick={handleRefresh}
               className="btn btn-secondary py-2 px-4 text-xs flex items-center gap-2"
               disabled={isRefreshing}
             >
-              <svg 
+              <svg
                 className={isRefreshing ? "animate-spin" : ""}
-                viewBox="0 0 24 24" 
-                width="14" 
-                height="14" 
-                fill="none" 
-                stroke="currentColor" 
+                viewBox="0 0 24 24"
+                width="14"
+                height="14"
+                fill="none"
+                stroke="currentColor"
                 strokeWidth="2.5"
               >
                 <path d="M23 4v6h-6"></path>
@@ -153,7 +181,9 @@ export default function ContractsPage() {
         </RevealOnMount>
 
         {/* Federal Identifiers Badge Card */}
-        <RevealOnMount className={`mt-8 mb-10 reveal ${isMounted ? "active" : ""}`}>
+        <RevealOnMount
+          className={`mt-8 mb-10 reveal ${isMounted ? "active" : ""}`}
+        >
           <div className="glow-card bg-[var(--panel-dark)] border border-[var(--border)] rounded-[20px] p-5 sm:p-6">
             <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-4 gap-4 text-center sm:text-left">
               <div>
@@ -193,7 +223,9 @@ export default function ContractsPage() {
         </RevealOnMount>
 
         {/* Filters & Search */}
-        <RevealOnMount className={`faq-controls reveal flex flex-col gap-6 mb-10 max-w-[840px] mx-auto ${isMounted ? "active" : ""}`}>
+        <RevealOnMount
+          className={`faq-controls reveal flex flex-col gap-6 mb-10 max-w-[840px] mx-auto ${isMounted ? "active" : ""}`}
+        >
           <div className="form-group m-0">
             <input
               type="text"
@@ -207,7 +239,8 @@ export default function ContractsPage() {
               }}
             />
             <label htmlFor="contract-search" className="form-label">
-              Search by Solicitation ID, Title, Agency, Set-Aside, or Location...
+              Search by Solicitation ID, Title, Agency, Set-Aside, or
+              Location...
             </label>
           </div>
           <div className="faq-tabs flex flex-wrap gap-2 justify-center">
@@ -229,7 +262,9 @@ export default function ContractsPage() {
         </RevealOnMount>
 
         {/* Opportunities Feed */}
-        <div className={`faq-container reveal flex flex-col gap-6 max-w-[900px] mx-auto ${isMounted ? "active" : ""}`}>
+        <div
+          className={`faq-container reveal flex flex-col gap-6 max-w-[900px] mx-auto ${isMounted ? "active" : ""}`}
+        >
           {currentItems.length > 0 ? (
             currentItems.map((contract) => (
               <div
@@ -242,7 +277,7 @@ export default function ContractsPage() {
                       <span className="service-badge py-1 px-2.5 text-[0.68rem] bg-[rgba(225,77,24,0.08)] border border-[rgba(225,77,24,0.2)] rounded-md text-[var(--primary)] font-mono font-bold">
                         NAICS {contract.naics}
                       </span>
-                      <span className="service-badge py-1 px-2.5 text-[0.68rem] bg-[#0f172a]/10 border border-[#0f172a]/20 rounded-md text-[var(--text-bright)] font-semibold">
+                      <span className="service-badge py-1 px-2.5 text-[0.68rem] bg-[var(--navy)]/10 border border-[var(--navy)]/20 rounded-md text-[var(--navy)] font-semibold">
                         {contract.setAside}
                       </span>
                     </div>
@@ -250,9 +285,16 @@ export default function ContractsPage() {
                       {contract.title}
                     </h3>
                     <p className="text-xs text-[var(--text-muted)] mt-1.5 flex flex-wrap gap-x-3 gap-y-1">
-                      <span><strong>Solicitation:</strong> <code className="text-[var(--text-bright)] font-mono">{contract.solicitation}</code></span>
+                      <span>
+                        <strong>Solicitation:</strong>{" "}
+                        <code className="text-[var(--text-bright)] font-mono">
+                          {contract.solicitation}
+                        </code>
+                      </span>
                       <span>&bull;</span>
-                      <span><strong>Agency:</strong> {contract.agency}</span>
+                      <span>
+                        <strong>Agency:</strong> {contract.agency}
+                      </span>
                     </p>
                   </div>
                   <span className="text-xs py-1 px-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 rounded-full font-semibold shrink-0">
@@ -261,9 +303,24 @@ export default function ContractsPage() {
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs text-[var(--text-muted)] bg-[var(--panel-dark)] py-3 px-5 rounded-xl border border-[var(--border)]">
-                  <div>Posted: <strong className="text-[var(--text-bright)]">{contract.postedDate}</strong></div>
-                  <div>Deadline: <strong className="text-[var(--primary)] font-semibold">{contract.deadline}</strong></div>
-                  <div>Location: <strong className="text-[var(--text-bright)]">{contract.location}</strong></div>
+                  <div>
+                    Posted:{" "}
+                    <strong className="text-[var(--text-bright)]">
+                      {contract.postedDate}
+                    </strong>
+                  </div>
+                  <div>
+                    Deadline:{" "}
+                    <strong className="text-[var(--primary)] font-semibold">
+                      {contract.deadline}
+                    </strong>
+                  </div>
+                  <div>
+                    Location:{" "}
+                    <strong className="text-[var(--text-bright)]">
+                      {contract.location}
+                    </strong>
+                  </div>
                 </div>
 
                 <div className="flex flex-wrap justify-between items-center gap-4 pt-2 border-t border-dashed border-[var(--border)]">
@@ -271,8 +328,8 @@ export default function ContractsPage() {
                     Bonding: Up to 100% Performance &amp; Payment available
                   </span>
                   <div className="flex gap-3">
-                    <button 
-                      className="btn btn-primary py-2 px-5 text-xs" 
+                    <button
+                      className="btn btn-primary py-2 px-5 text-xs"
                       onClick={() => openReviewModal(contract)}
                     >
                       Request Teaming / Review
@@ -312,19 +369,29 @@ export default function ContractsPage() {
         )}
 
         {/* Bottom Teaming Callout */}
-        <RevealOnMount className={`mt-16 text-center reveal ${isMounted ? "active" : ""}`}>
+        <RevealOnMount
+          className={`mt-16 text-center reveal ${isMounted ? "active" : ""}`}
+        >
           <div className="bg-[var(--glass)] border border-[var(--border)] rounded-[24px] p-8 max-w-[760px] mx-auto">
             <h3 className="font-[family-name:var(--font-space-grotesk)] text-[1.3rem] font-bold text-[var(--text-bright)] mb-2">
               Pursuing a Government Contract or Need Teaming Capacity?
             </h3>
             <p className="text-xs text-[var(--text-muted)] max-w-[550px] mx-auto mb-6 leading-[1.7]">
-              The Inferno Group LLC structures compliant prime-sub teaming agreements, joint pursuits, and subcontracting arrangements across federal civilian, defense, and emergency agencies.
+              The Inferno Group LLC structures compliant prime-sub teaming
+              agreements, joint pursuits, and subcontracting arrangements across
+              federal civilian, defense, and emergency agencies.
             </p>
             <div className="flex flex-wrap gap-4 justify-center">
-              <Link href="/partnerships" className="btn btn-primary py-2.5 px-6 text-xs no-underline">
+              <Link
+                href="/partnerships"
+                className="btn btn-primary py-2.5 px-6 text-xs no-underline"
+              >
                 Register as Teaming Partner
               </Link>
-              <Link href="/capabilities" className="btn btn-secondary py-2.5 px-6 text-xs no-underline">
+              <Link
+                href="/capabilities?download=true"
+                className="btn btn-secondary py-2.5 px-6 text-xs no-underline"
+              >
                 Download Capability Statement
               </Link>
             </div>
@@ -335,8 +402,21 @@ export default function ContractsPage() {
       {/* Teaming / Compliance Review Modal */}
       <div className={`modal-overlay ${isModalOpen ? "show" : ""}`}>
         <div className="modal-content contact-form-container p-8 md:p-10 max-w-[580px]">
-          <button className="modal-close" onClick={() => setIsModalOpen(false)} aria-label="Close modal">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <button
+            className="modal-close"
+            onClick={() => setIsModalOpen(false)}
+            aria-label="Close modal"
+          >
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
               <line x1="18" y1="6" x2="6" y2="18"></line>
               <line x1="6" y1="6" x2="18" y2="18"></line>
             </svg>
@@ -351,7 +431,9 @@ export default function ContractsPage() {
               </div>
               <h3>Teaming Request Logged</h3>
               <p className="text-center text-[var(--text-muted)] text-[0.92rem] mt-2">
-                Your review request for <strong>{selectedContract?.solicitation}</strong> has been transmitted to our GovCon alliances desk.
+                Your review request for{" "}
+                <strong>{selectedContract?.solicitation}</strong> has been
+                transmitted to our GovCon alliances desk.
               </p>
             </div>
           ) : (
@@ -360,10 +442,17 @@ export default function ContractsPage() {
                 Teaming &amp; Compliance Inquiry
               </h3>
               <p className="text-[var(--text-muted)] text-[0.82rem] mb-6">
-                Solicitation: <strong className="text-[var(--text-bright)]">{selectedContract?.solicitation}</strong> &bull; {selectedContract?.title}
+                Solicitation:{" "}
+                <strong className="text-[var(--text-bright)]">
+                  {selectedContract?.solicitation}
+                </strong>{" "}
+                &bull; {selectedContract?.title}
               </p>
 
-              <form onSubmit={handleReviewSubmit} className="flex flex-col gap-4">
+              <form
+                onSubmit={handleReviewSubmit}
+                className="flex flex-col gap-4"
+              >
                 <div className="form-group m-0">
                   <input
                     type="text"
@@ -374,7 +463,9 @@ export default function ContractsPage() {
                     onChange={(e) => setPartnerCompany(e.target.value)}
                     required
                   />
-                  <label htmlFor="review-company" className="form-label">Company Legal Name</label>
+                  <label htmlFor="review-company" className="form-label">
+                    Company Legal Name
+                  </label>
                 </div>
 
                 <div className="form-grid-2">
@@ -388,7 +479,9 @@ export default function ContractsPage() {
                       onChange={(e) => setContactName(e.target.value)}
                       required
                     />
-                    <label htmlFor="review-contact" className="form-label">Contact Name</label>
+                    <label htmlFor="review-contact" className="form-label">
+                      Contact Name
+                    </label>
                   </div>
                   <div className="form-group m-0">
                     <input
@@ -400,7 +493,9 @@ export default function ContractsPage() {
                       onChange={(e) => setContactEmail(e.target.value)}
                       required
                     />
-                    <label htmlFor="review-email" className="form-label">Work Email</label>
+                    <label htmlFor="review-email" className="form-label">
+                      Work Email
+                    </label>
                   </div>
                 </div>
 
@@ -412,11 +507,19 @@ export default function ContractsPage() {
                     onChange={(e) => setTeamingRole(e.target.value)}
                     required
                   >
-                    <option value="prime">Prime Contractor Seeking TIG (HUBZone / VOSB) Teaming</option>
-                    <option value="subcontractor">Subcontractor / Supplier Seeking to Join TIG Bid</option>
-                    <option value="joint-venture">Joint Venture / Mentor-Protégé Opportunity</option>
+                    <option value="prime">
+                      Prime Contractor Seeking TIG (HUBZone / VOSB) Teaming
+                    </option>
+                    <option value="subcontractor">
+                      Subcontractor / Supplier Seeking to Join TIG Bid
+                    </option>
+                    <option value="joint-venture">
+                      Joint Venture / Mentor-Protégé Opportunity
+                    </option>
                   </select>
-                  <label htmlFor="review-role" className="form-label">Proposed Teaming Role</label>
+                  <label htmlFor="review-role" className="form-label">
+                    Proposed Teaming Role
+                  </label>
                 </div>
 
                 <div className="form-group m-0">
@@ -429,10 +532,16 @@ export default function ContractsPage() {
                     onChange={(e) => setReviewNotes(e.target.value)}
                     required
                   ></textarea>
-                  <label htmlFor="review-notes" className="form-label">Brief Scope Alignment / Specific Questions</label>
+                  <label htmlFor="review-notes" className="form-label">
+                    Brief Scope Alignment / Specific Questions
+                  </label>
                 </div>
 
-                <button type="submit" className="btn-submit mt-2" disabled={isSubmitting}>
+                <button
+                  type="submit"
+                  className="btn-submit mt-2"
+                  disabled={isSubmitting}
+                >
                   {isSubmitting ? (
                     <>
                       Processing Request...
@@ -448,7 +557,12 @@ export default function ContractsPage() {
                         <line x1="12" y1="2" x2="12" y2="6"></line>
                         <line x1="12" y1="18" x2="12" y2="22"></line>
                         <line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line>
-                        <line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line>
+                        <line
+                          x1="16.24"
+                          y1="16.24"
+                          x2="19.07"
+                          y2="19.07"
+                        ></line>
                         <line x1="2" y1="12" x2="6" y2="12"></line>
                         <line x1="18" y1="12" x2="22" y2="12"></line>
                         <line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line>
@@ -458,7 +572,14 @@ export default function ContractsPage() {
                   ) : (
                     <>
                       Submit Teaming Inquiry
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <svg
+                        width="18"
+                        height="18"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.5"
+                      >
                         <line x1="22" y1="2" x2="11" y2="13"></line>
                         <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
                       </svg>
@@ -481,4 +602,3 @@ export default function ContractsPage() {
     </div>
   );
 }
-

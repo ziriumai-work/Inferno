@@ -24,19 +24,28 @@ export default function RevealOnMount({
     const el = ref.current;
     if (!el) return;
 
+    let timeoutId: NodeJS.Timeout | null = null;
+
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
-          setTimeout(() => setIsActive(true), delay);
+          if (delay > 0) {
+            timeoutId = setTimeout(() => setIsActive(true), delay);
+          } else {
+            setIsActive(true);
+          }
           observer.unobserve(el);
         }
       },
-      { threshold: 0.1, rootMargin: "0px 0px -50px 0px" }
+      { threshold: 0.1, rootMargin: "0px 0px -50px 0px" },
     );
 
     observer.observe(el);
 
-    return () => observer.disconnect();
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+      observer.disconnect();
+    };
   }, [delay]);
 
   const dirClass =

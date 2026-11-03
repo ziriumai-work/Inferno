@@ -9,7 +9,7 @@ export async function GET(request: Request) {
   const rawNext = searchParams.get("next");
   
   // Sanitize next parameter to prevent Open Redirect vulnerability
-  const safeNext = validateRedirectUrl(rawNext, "/admin?mode=reset");
+  const safeNext = validateRedirectUrl(rawNext, "/infernollc/admin?mode=reset");
 
   if (code) {
     const supabase = await createClient();
@@ -44,5 +44,5 @@ export async function GET(request: Request) {
   }
 
   // Return the user to admin page if something went wrong
-  return NextResponse.redirect(`${origin}/admin?error=auth_callback_failed`);
+  return NextResponse.redirect(`${origin}/infernollc/admin?error=auth_callback_failed`);
 }

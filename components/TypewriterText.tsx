@@ -46,22 +46,25 @@ export default function TypewriterText({
     if (!isStarted) return;
 
     let currentIndex = 0;
+    let intervalId: ReturnType<typeof setInterval> | null = null;
+
     const startDelay = setTimeout(() => {
       setIsTyping(true);
-      const intervalId = setInterval(() => {
+      intervalId = setInterval(() => {
         if (currentIndex < text.length) {
           setDisplayedText(text.substring(0, currentIndex + 1));
           currentIndex++;
         } else {
-          clearInterval(intervalId);
+          if (intervalId) clearInterval(intervalId);
           setIsTyping(false);
         }
       }, speed);
-
-      return () => clearInterval(intervalId);
     }, delay);
 
-    return () => clearTimeout(startDelay);
+    return () => {
+      clearTimeout(startDelay);
+      if (intervalId) clearInterval(intervalId);
+    };
   }, [isStarted, text, speed, delay]);
 
   return (

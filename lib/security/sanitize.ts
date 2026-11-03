@@ -34,7 +34,7 @@ export function sanitizeText(input: string): string {
  * Ensures the destination URL is a relative path starting with a single '/'
  * and does not start with '//' or contain protocol schemes (e.g., http:, https:, javascript:).
  */
-export function validateRedirectUrl(url: string | null | undefined, fallback: string = "/admin"): string {
+export function validateRedirectUrl(url: string | null | undefined, fallback: string = "/infernollc/admin"): string {
   if (!url || typeof url !== "string") {
     return fallback;
   }

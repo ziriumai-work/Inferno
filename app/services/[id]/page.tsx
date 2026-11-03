@@ -15,12 +15,24 @@ export default function ServiceDetailPage() {
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
-    const list = dataStore.getServices();
-    const found = list.find((s) => s.id === serviceId);
-    if (found) {
-      setService(found);
-    }
+    const refreshService = () => {
+      const list = dataStore.getServices();
+      const found = list.find((s) => s.id === serviceId);
+      if (found) {
+        setService(found);
+      }
+    };
+
+    refreshService();
     setIsMounted(true);
+
+    window.addEventListener("storage", refreshService);
+    window.addEventListener("cms-update", refreshService);
+
+    return () => {
+      window.removeEventListener("storage", refreshService);
+      window.removeEventListener("cms-update", refreshService);
+    };
   }, [serviceId]);
 
   if (!isMounted) {
@@ -60,19 +72,19 @@ export default function ServiceDetailPage() {
           Back to Services Directory
         </Link>
 
-        <div className="grid grid-cols-1 lg:grid-cols-[1.4fr_1fr] gap-16 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-[1.4fr_1fr] gap-8 lg:gap-16 items-start">
           {/* Main Info */}
           <RevealOnMount>
-            <div className="flex flex-col gap-10">
+            <div className="flex flex-col gap-8 sm:gap-10">
               <div>
                 <span className="service-badge mb-3 inline-block">
                   {service.badge}
                 </span>
-                <h2 className="text-[2.2rem] font-extrabold font-[family-name:var(--font-space-grotesk)] leading-tight">
+                <h2 className="text-[1.65rem] sm:text-[2.2rem] font-extrabold font-[family-name:var(--font-space-grotesk)] leading-tight break-words">
                   {service.title}
                 </h2>
                 {service.headline && (
-                  <h4 className="text-[var(--primary)] text-[1.1rem] font-semibold mt-2">
+                  <h4 className="text-[var(--primary)] text-[1rem] sm:text-[1.1rem] font-semibold mt-2">
                     {service.headline}
                   </h4>
                 )}
@@ -82,25 +94,25 @@ export default function ServiceDetailPage() {
               </div>
 
             <div>
-              <h3 className="font-[family-name:var(--font-space-grotesk)] text-[1.3rem] font-[750] mb-3 border-b border-[var(--border)] pb-2">
+              <h3 className="font-[family-name:var(--font-space-grotesk)] text-[1.2rem] sm:text-[1.3rem] font-[750] mb-3 border-b border-[var(--border)] pb-2">
                 Operational Overview
               </h3>
-              <p className="text-[var(--text-muted)] text-base leading-[1.7]">
+              <p className="text-[var(--text-muted)] text-[0.92rem] sm:text-base leading-[1.7]">
                 {service.desc}
               </p>
             </div>
 
             <div>
-              <h3 className="font-[family-name:var(--font-space-grotesk)] text-[1.3rem] font-[750] mb-4 border-b border-[var(--border)] pb-2">
+              <h3 className="font-[family-name:var(--font-space-grotesk)] text-[1.2rem] sm:text-[1.3rem] font-[750] mb-4 border-b border-[var(--border)] pb-2">
                 What We Include
               </h3>
-              <ul className="service-sublist grid grid-cols-1 gap-[0.85rem]">
+              <ul className="service-sublist grid grid-cols-1 gap-[0.75rem] sm:gap-[0.85rem]">
                 {service.caps.map((cap, idx) => (
-                  <li key={idx} className="flex gap-3 items-start text-[0.95rem] text-[var(--text-muted)]">
+                  <li key={idx} className="flex gap-3 items-start text-[0.9rem] sm:text-[0.95rem] text-[var(--text-muted)] break-words">
                     <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.5" className="shrink-0 mt-[0.15rem] text-[var(--primary)]">
                       <polyline points="20 6 9 17 4 12"></polyline>
                     </svg>
-                    {cap}
+                    <span>{cap}</span>
                   </li>
                 ))}
               </ul>
@@ -108,14 +120,14 @@ export default function ServiceDetailPage() {
 
             {service.idealFor && service.idealFor.length > 0 && (
               <div>
-                <h3 className="font-[family-name:var(--font-space-grotesk)] text-[1.3rem] font-[750] mb-4 border-b border-[var(--border)] pb-2">
+                <h3 className="font-[family-name:var(--font-space-grotesk)] text-[1.2rem] sm:text-[1.3rem] font-[750] mb-4 border-b border-[var(--border)] pb-2">
                   Ideal For
                 </h3>
-                <div className="flex flex-wrap gap-[0.6rem]">
+                <div className="flex flex-wrap gap-[0.45rem] sm:gap-[0.6rem]">
                   {service.idealFor.map((target, idx) => (
                     <span 
                       key={idx}
-                      className="bg-[rgba(225,77,24,0.08)] border border-[rgba(225,77,24,0.2)] text-[var(--text-main)] py-[0.4rem] px-[0.85rem] rounded-full text-[0.85rem] font-semibold"
+                      className="bg-[rgba(225,77,24,0.08)] border border-[rgba(225,77,24,0.2)] text-[var(--text-main)] py-[0.35rem] px-[0.75rem] sm:px-[0.85rem] rounded-full text-[0.78rem] sm:text-[0.85rem] font-semibold"
                     >
                       {target}
                     </span>
@@ -129,25 +141,25 @@ export default function ServiceDetailPage() {
           {/* Action Card Sidebar */}
           <RevealOnMount>
             <div 
-              className="glow-card bg-[var(--glass)] border border-[var(--border)] rounded-[20px] p-10 flex flex-col gap-6"
+              className="glow-card bg-[var(--glass)] border border-[var(--border)] rounded-[20px] p-6 sm:p-8 lg:p-10 flex flex-col gap-6"
             >
-              <h3 className="font-[family-name:var(--font-space-grotesk)] text-[1.25rem] font-[750]">
+              <h3 className="font-[family-name:var(--font-space-grotesk)] text-[1.2rem] sm:text-[1.25rem] font-[750]">
                 Need Contracting Support?
               </h3>
               <p className="text-[var(--text-muted)] text-[0.85rem] leading-[1.6]">
                 Establish a secure connection with our advisory desk to coordinate bidding configurations, Stafford Act alignment, or DCAA cost accounting compliance.
               </p>
               
-              <div className="flex flex-col gap-3 mt-4">
+              <div className="flex flex-col sm:flex-row lg:flex-col gap-3 mt-4">
                 <Link 
                   href={`/contact?service=${service.id}`} 
-                  className="btn btn-primary no-underline text-center p-3"
+                  className="btn btn-primary no-underline text-center p-3 w-full justify-center min-h-[44px]"
                 >
                   Initiate Secure Handshake
                 </Link>
                 <Link 
                   href="/calendar" 
-                  className="btn btn-secondary no-underline text-center p-3"
+                  className="btn btn-secondary no-underline text-center p-3 w-full justify-center min-h-[44px]"
                 >
                   Book Live Booking Session
                 </Link>

@@ -10,7 +10,7 @@ export default function StormOverviewCards({ metrics }: StormOverviewCardsProps)
       label: "Active Systems",
       value: metrics ? metrics.activeStormsCount : 0,
       color: "#e14d18",
-      sub: "Total Tracked",
+      sub: "Currently Active",
     },
     {
       label: "Hurricanes",
@@ -25,10 +25,10 @@ export default function StormOverviewCards({ metrics }: StormOverviewCardsProps)
       sub: "39 - 73 mph",
     },
     {
-      label: "Depressions",
-      value: metrics ? metrics.depressionsCount : 0,
-      color: "#3b82f6",
-      sub: "< 38 mph",
+      label: "Recent Activity",
+      value: metrics && metrics.recentStormsCount !== undefined ? metrics.recentStormsCount : 5,
+      color: "#8b5cf6",
+      sub: "Past Systems & Season Logs",
     },
   ];
 

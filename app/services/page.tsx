@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 import RevealOnMount from "@/components/RevealOnMount";
 import { dataStore, ServiceItem } from "@/utils/dataStore";
@@ -8,29 +8,58 @@ import { dataStore, ServiceItem } from "@/utils/dataStore";
 export default function ServicesPage() {
   const [servicesData, setServicesData] = useState<ServiceItem[]>([]);
   const [activeServiceId, setActiveServiceId] = useState("");
+  const [filterCategory, setFilterCategory] = useState<"all" | "emergency" | "small-business">("all");
   const [isMounted, setIsMounted] = useState(false);
 
+  const displayedServices = useMemo(() => {
+    return servicesData.filter((service) => {
+      if (filterCategory === "small-business") {
+        return (
+          service.id === "strategic-consulting-and-operational-excellence" ||
+          service.id === "program-and-project-management" ||
+          service.id === "contact-center-operations"
+        );
+      }
+      if (filterCategory === "emergency") {
+        return (
+          service.id === "emergency-management-and-disaster-recovery" ||
+          service.id === "planning-and-preparedness" ||
+          service.id === "training-exercises-and-workforce-development" ||
+          service.id === "facilities-logistics-and-specialty-services"
+        );
+      }
+      return true;
+    });
+  }, [servicesData, filterCategory]);
+
   useEffect(() => {
-    const list = dataStore.getServices().filter((s) => s.status === "published");
-    setServicesData(list);
-    if (list.length > 0) {
-      setActiveServiceId(list[0].id);
-    }
+    const refreshServices = () => {
+      const list = dataStore.getServices().filter((s) => s.status === "published");
+      setServicesData(list);
+      if (list.length > 0) {
+        setActiveServiceId((prev) => prev || list[0].id);
+      }
+    };
+
+    refreshServices();
     
     const timer = setTimeout(() => {
       setIsMounted(true);
     }, 50);
 
     const handleScroll = () => {
+      const list = dataStore.getServices().filter((s) => s.status === "published");
       if (list.length === 0) return;
       let currentId = list[0].id;
       let minDistance = Infinity;
+      const isMobile = typeof window !== "undefined" && window.innerWidth <= 1024;
+      const targetOffset = isMobile ? 160 : 200;
 
       list.forEach((service) => {
         const el = document.getElementById(service.id);
         if (el) {
           const rect = el.getBoundingClientRect();
-          const distance = Math.abs(rect.top - 200);
+          const distance = Math.abs(rect.top - targetOffset);
           if (distance < minDistance) {
             minDistance = distance;
             currentId = service.id;
@@ -41,21 +70,71 @@ export default function ServicesPage() {
       setActiveServiceId(currentId);
     };
 
-    window.addEventListener("scroll", handleScroll);
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    window.addEventListener("storage", refreshServices);
+    window.addEventListener("cms-update", refreshServices);
     // Initial check
     handleScroll();
 
     return () => {
       window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("storage", refreshServices);
+      window.removeEventListener("cms-update", refreshServices);
       clearTimeout(timer);
     };
   }, []);
+
+  // Auto-scroll horizontal pill navigation on mobile to keep active tab centered
+  useEffect(() => {
+    if (!activeServiceId || typeof window === "undefined") return;
+    if (window.innerWidth <= 1024) {
+      const activeBtn = document.querySelector(
+        `.services-menu-item[data-id="${activeServiceId}"]`
+      ) as HTMLElement;
+      const menuContainer = document.querySelector(".services-menu") as HTMLElement;
+      if (activeBtn && menuContainer) {
+        const btnLeft = activeBtn.offsetLeft;
+        const btnWidth = activeBtn.offsetWidth;
+        const containerWidth = menuContainer.offsetWidth;
+        menuContainer.scrollTo({
+          left: btnLeft - containerWidth / 2 + btnWidth / 2,
+          behavior: "smooth",
+        });
+      }
+    }
+  }, [activeServiceId]);
+
+  const handleFilterChange = (category: "all" | "emergency" | "small-business") => {
+    setFilterCategory(category);
+    const filtered = servicesData.filter((service) => {
+      if (category === "small-business") {
+        return (
+          service.id === "strategic-consulting-and-operational-excellence" ||
+          service.id === "program-and-project-management" ||
+          service.id === "contact-center-operations"
+        );
+      }
+      if (category === "emergency") {
+        return (
+          service.id === "emergency-management-and-disaster-recovery" ||
+          service.id === "planning-and-preparedness" ||
+          service.id === "training-exercises-and-workforce-development" ||
+          service.id === "facilities-logistics-and-specialty-services"
+        );
+      }
+      return true;
+    });
+    if (filtered.length > 0) {
+      setActiveServiceId(filtered[0].id);
+    }
+  };
 
   const handleMenuClick = (e: React.MouseEvent, id: string) => {
     e.preventDefault();
     const el = document.getElementById(id);
     if (el) {
-      const offset = 120; // Accounts for navbar height
+      const isMobile = typeof window !== "undefined" && window.innerWidth <= 1024;
+      const offset = isMobile ? 135 : 110;
       const bodyRect = document.body.getBoundingClientRect().top;
       const elementRect = el.getBoundingClientRect().top;
       const elementPosition = elementRect - bodyRect;
@@ -65,6 +144,7 @@ export default function ServicesPage() {
         top: offsetPosition,
         behavior: "smooth",
       });
+      setActiveServiceId(id);
     }
   };
 
@@ -82,21 +162,59 @@ export default function ServicesPage() {
       <section id="services">
         <RevealOnMount className={`reveal ${isMounted ? "active" : ""}`}>
           <div className="section-eyebrow">Services Directory</div>
-          <h2 className="section-title">Government &amp; Strategic Solutions</h2>
+          <h1 className="section-title">Government &amp; Commercial Solutions</h1>
           <p className="section-desc">
-            We handle public policy execution, strict procurement parameters, and large-scale emergency program compliance so you can focus on core mission delivery.
+            Full-lifecycle emergency management and federal grant compliance, paired with strategic growth and revenue advisory for independent and small businesses.
           </p>
+
+          {/* Solutions Category Filter Bar */}
+          <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 mt-6 sm:mt-8 mb-4">
+            <button
+              type="button"
+              onClick={() => handleFilterChange("all")}
+              className={`px-3.5 sm:px-4 py-2 rounded-full text-[0.72rem] sm:text-xs font-bold transition-all min-h-[38px] ${
+                filterCategory === "all"
+                  ? "bg-[var(--primary)] text-white shadow-sm"
+                  : "bg-[var(--glass)] border border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text-bright)]"
+              }`}
+            >
+              All Capabilities ({servicesData.length})
+            </button>
+            <button
+              type="button"
+              onClick={() => handleFilterChange("small-business")}
+              className={`px-3.5 sm:px-4 py-2 rounded-full text-[0.72rem] sm:text-xs font-bold transition-all min-h-[38px] ${
+                filterCategory === "small-business"
+                  ? "bg-[var(--secondary)] text-white shadow-sm"
+                  : "bg-[var(--glass)] border border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text-bright)]"
+              }`}
+            >
+              Small Business &amp; Commercial Advisory
+            </button>
+            <button
+              type="button"
+              onClick={() => handleFilterChange("emergency")}
+              className={`px-3.5 sm:px-4 py-2 rounded-full text-[0.72rem] sm:text-xs font-bold transition-all min-h-[38px] ${
+                filterCategory === "emergency"
+                  ? "bg-[var(--primary)] text-white shadow-sm"
+                  : "bg-[var(--glass)] border border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text-bright)]"
+              }`}
+            >
+              Emergency Management &amp; Recovery
+            </button>
+          </div>
         </RevealOnMount>
 
-        {servicesData.length > 0 ? (
+        {displayedServices.length > 0 ? (
           <div className="services-container">
-            {/* Sticky Sidebar Index */}
+            {/* Sticky Sidebar / Mobile Horizontal Pill Bar */}
             <div className="services-sidebar">
               <ul className="services-menu">
-                {servicesData.map((service) => (
-                  <li key={service.id}>
+                {displayedServices.map((service) => (
+                  <li key={service.id} className="shrink-0">
                     <a
                       href={`#${service.id}`}
+                      data-id={service.id}
                       onClick={(e) => handleMenuClick(e, service.id)}
                       className={`services-menu-item ${activeServiceId === service.id ? "active" : ""}`}
                     >
@@ -109,7 +227,7 @@ export default function ServicesPage() {
 
             {/* Service Details Cards */}
             <div className="services-content-list">
-              {servicesData.map((service) => (
+              {displayedServices.map((service) => (
                 <div
                   key={service.id}
                   className={`service-detail-section glow-card reveal ${isMounted ? "active" : ""}`}
@@ -117,10 +235,17 @@ export default function ServicesPage() {
                   onMouseMove={handleCardMouseMove}
                 >
                   <div className="card-content">
-                    <span className="service-badge">{service.badge}</span>
-                    <h3 className="service-card-title">{service.title}</h3>
+                    <div className="flex flex-wrap items-center gap-2 mb-3">
+                      <span className="service-badge">{service.badge}</span>
+                      {service.id === "strategic-consulting-and-operational-excellence" && (
+                        <span className="text-[0.68rem] font-bold uppercase tracking-wider px-3 py-1 rounded-full bg-[rgba(26,86,196,0.1)] text-[var(--secondary)] border border-[rgba(26,86,196,0.25)]">
+                          High Demand &middot; Small Business Advisory
+                        </span>
+                      )}
+                    </div>
+                    <h3 className="service-card-title break-words">{service.title}</h3>
                     {service.headline && (
-                      <p className="text-[var(--primary)] text-[0.95rem] font-semibold mb-3">
+                      <p className="text-[var(--primary)] text-[0.92rem] sm:text-[0.95rem] font-semibold mb-3 leading-snug">
                         {service.headline}
                       </p>
                     )}
@@ -129,11 +254,11 @@ export default function ServicesPage() {
                     <div className="service-sublist-title mt-6">What We Include</div>
                     <ul className="service-sublist mb-6">
                       {service.caps.map((cap, index) => (
-                        <li key={index}>
-                          <svg viewBox="0 0 24 24">
+                        <li key={index} className="break-words">
+                          <svg viewBox="0 0 24 24" className="shrink-0">
                             <polyline points="20 6 9 17 4 12"></polyline>
                           </svg>
-                          {cap}
+                          <span>{cap}</span>
                         </li>
                       ))}
                     </ul>
@@ -145,7 +270,7 @@ export default function ServicesPage() {
                           {service.idealFor.map((item, idx) => (
                             <span 
                               key={idx} 
-                              className="bg-[rgba(225,77,24,0.06)] border border-[rgba(225,77,24,0.15)] text-[var(--text-main)] px-3 py-[0.3rem] rounded-full text-[0.78rem] font-semibold"
+                              className="bg-[rgba(225,77,24,0.06)] border border-[rgba(225,77,24,0.15)] text-[var(--text-main)] px-2.5 sm:px-3 py-[0.3rem] rounded-full text-[0.72rem] sm:text-[0.78rem] font-semibold"
                             >
                               {item}
                             </span>
@@ -154,11 +279,11 @@ export default function ServicesPage() {
                       </div>
                     )}
 
-                    {/* View Profile Page Link */}
-                    <div className="mt-8 border-t border-[var(--border)] pt-6 flex flex-col sm:flex-row gap-3 sm:gap-4 items-stretch sm:items-center">
+                    {/* Action Links */}
+                    <div className="mt-8 border-t border-[var(--border)] pt-5 sm:pt-6 flex flex-col sm:flex-row gap-3 sm:gap-4 items-stretch sm:items-center">
                       <Link 
                         href={`/services/${service.id}`} 
-                        className="btn btn-secondary py-2 px-5 text-[0.85rem] no-underline inline-flex items-center justify-center gap-2"
+                        className="btn btn-secondary py-2.5 px-5 text-xs sm:text-[0.85rem] no-underline inline-flex items-center justify-center gap-2 min-h-[44px]"
                       >
                         View Full Profile
                         <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -168,7 +293,7 @@ export default function ServicesPage() {
                       </Link>
                       <Link 
                         href={`/contact?service=${service.id}`} 
-                        className="btn btn-primary py-2 px-5 text-[0.85rem] no-underline text-center justify-center"
+                        className="btn btn-primary py-2.5 px-5 text-xs sm:text-[0.85rem] no-underline text-center justify-center min-h-[44px]"
                       >
                         Initiate Handshake
                       </Link>
@@ -179,8 +304,8 @@ export default function ServicesPage() {
             </div>
           </div>
         ) : (
-          <div className="text-center p-16 text-[var(--text-muted)] bg-[var(--panel-dark)] border border-[var(--border)] rounded-2xl mt-8">
-            No services currently published in directory.
+          <div className="text-center p-12 sm:p-16 text-[var(--text-muted)] bg-[var(--panel-dark)] border border-[var(--border)] rounded-2xl mt-8">
+            No services currently match the selected classification.
           </div>
         )}
       </section>

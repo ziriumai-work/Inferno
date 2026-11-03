@@ -12,8 +12,20 @@ export default function NewsPage() {
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
-    setArticles(dataStore.getArticles().filter((a) => a.status === "published"));
+    const refreshArticles = () => {
+      setArticles(dataStore.getArticles().filter((a) => a.status === "published"));
+    };
+
+    refreshArticles();
     setIsMounted(true);
+
+    window.addEventListener("storage", refreshArticles);
+    window.addEventListener("cms-update", refreshArticles);
+
+    return () => {
+      window.removeEventListener("storage", refreshArticles);
+      window.removeEventListener("cms-update", refreshArticles);
+    };
   }, []);
 
   const filteredArticles = articles.filter((art) => {
@@ -39,9 +51,9 @@ export default function NewsPage() {
       <section id="news">
         <RevealOnMount className={`reveal ${isMounted ? "active" : ""}`}>
           <div className="section-eyebrow">Firm Intel &amp; Bulletins</div>
-          <h2 className="section-title">News, Insights &amp; Operational Bulletins</h2>
+          <h1 className="section-title">News, Insights &amp; Operational Bulletins</h1>
           <p className="section-desc max-w-[850px] mx-auto">
-            Stay informed with official briefings on FEMA Public Assistance documentation, SBA HUBZone / VOSB procurement advantages, DCAA cost accounting compliance, and Inferno Cares community impact initiatives.
+            Briefings on FEMA Public Assistance, SBA HUBZone &amp; VOSB contracting, DCAA compliance, and Inferno Cares community initiatives.
           </p>
         </RevealOnMount>
 
@@ -167,7 +179,7 @@ export default function NewsPage() {
                   <div className="flex gap-2.5 items-center mb-2.5">
                     <div className="w-7 h-7 rounded-full bg-[var(--primary)]/10 flex items-center justify-center p-0.5 shrink-0">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src="/logo.jpeg" alt="Inferno Logo" className="w-full rounded-full" />
+                      <img src="/logo.png" alt="Inferno Logo" className="w-full h-full object-contain" />
                     </div>
                     <div>
                       <h4 className="font-bold text-[var(--text-bright)] text-xs">The Inferno Group LLC</h4>
@@ -186,7 +198,7 @@ export default function NewsPage() {
                   <div className="flex gap-2.5 items-center mb-2.5">
                     <div className="w-7 h-7 rounded-full bg-[var(--primary)]/10 flex items-center justify-center p-0.5 shrink-0">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src="/logo.jpeg" alt="Inferno Logo" className="w-full rounded-full" />
+                      <img src="/logo.png" alt="Inferno Logo" className="w-full h-full object-contain" />
                     </div>
                     <div>
                       <h4 className="font-bold text-[var(--text-bright)] text-xs">Inferno Cares</h4>
@@ -194,7 +206,7 @@ export default function NewsPage() {
                     </div>
                   </div>
                   <p className="text-[var(--text-muted)] leading-[1.5] mb-2">
-                    Proud to sponsor the &lsquo;Kicking for Relief&rsquo; charity kickball tournament supporting disaster-affected families and launching our 2026 Inferno Flame Academic Scholarships!
+                    Proud to sponsor the &lsquo;Kicking for Relief&rsquo; charity kickball tournament supporting disaster-affected families and launching our 2026 Inferno Ignite Academic Scholarships!
                   </p>
                   <div className="text-[var(--primary)] font-semibold text-[0.7rem]">
                     #InfernoCares #CommunityImpact #Orlando #YouthRelief

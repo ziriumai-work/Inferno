@@ -2,11 +2,13 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { quizQuestions } from "@/lib/quizQuestions";
+import { dataStore, QuizQuestionItem } from "@/utils/dataStore";
+import { quizQuestions as defaultQuizQuestions } from "@/lib/quizQuestions";
 
 export default function QuizPage() {
   const [isMounted, setIsMounted] = useState(false);
-  const [currentStep, setCurrentStep] = useState(0); // 0 to 7 questions, 8 for lead form, 9 for results
+  const [questions, setQuestions] = useState<QuizQuestionItem[]>([]);
+  const [currentStep, setCurrentStep] = useState(0); // 0 to questions.length - 1, questions.length for lead form, questions.length + 1 for results
   const [answers, setAnswers] = useState<Record<string, string>>({});
   
   // Lead info
@@ -19,14 +21,42 @@ export default function QuizPage() {
   const [eligiblePrograms, setEligiblePrograms] = useState<string[]>([]);
 
   useEffect(() => {
+    const refreshQuestions = () => {
+      const list = dataStore.getQuizQuestions().filter((q) => q.status === "published");
+      setQuestions(list.length > 0 ? list : (defaultQuizQuestions.map(q => ({ ...q, status: "published" as const }))));
+    };
+
+    refreshQuestions();
     const timer = setTimeout(() => {
       setIsMounted(true);
     }, 50);
-    return () => clearTimeout(timer);
+
+    const handleStorage = (e: StorageEvent) => {
+      if (!e.key || e.key === "inferno_quiz_questions_v1") {
+        refreshQuestions();
+      }
+    };
+    const handleCMS = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (!detail || detail.all || detail.key === "inferno_quiz_questions_v1") {
+        refreshQuestions();
+      }
+    };
+
+    window.addEventListener("storage", handleStorage);
+    window.addEventListener("cms-update", handleCMS);
+
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener("storage", handleStorage);
+      window.removeEventListener("cms-update", handleCMS);
+    };
   }, []);
 
+  const currentQuestion = questions[currentStep];
+
   const handleOptionSelect = (val: string) => {
-    const currentQuestion = quizQuestions[currentStep];
+    if (!currentQuestion) return;
     setAnswers((prev) => ({ ...prev, [currentQuestion.id]: val }));
     
     // Auto-advance
@@ -75,21 +105,16 @@ export default function QuizPage() {
 
       setEligiblePrograms(programs);
       
-      // Save lead
-      const newLead = {
-        id: Date.now().toString(),
+      // Save lead and sync to Supabase database
+      void dataStore.submitLead({
         type: "QUIZ",
         name,
         email,
         company,
+        org: company,
         answers,
         recommendations: programs,
-        createdAt: new Date().toISOString()
-      };
-      
-      const currentLeads = JSON.parse(localStorage.getItem("inferno_leads") || "[]");
-      currentLeads.push(newLead);
-      localStorage.setItem("inferno_leads", JSON.stringify(currentLeads));
+      });
       
       setCurrentStep(9); // Show results
     }, 1200);
@@ -104,14 +129,14 @@ export default function QuizPage() {
     setCurrentStep(0);
   };
 
-  const progressPct = (currentStep / quizQuestions.length) * 100;
+  const progressPct = questions.length > 0 ? (currentStep / questions.length) * 100 : 0;
 
   return (
     <div className="page-view block">
       <section id="quiz">
         <div className={`reveal ${isMounted ? "active" : ""}`}>
           <div className="section-eyebrow">Interactive Assessment</div>
-          <h2 className="section-title">Certification Eligibility Quiz</h2>
+          <h1 className="section-title">Certification Eligibility Quiz</h1>
           <p className="section-desc">
             Analyze your business parameters against local, state, and federal socioeconomic set-aside frameworks.
           </p>
@@ -121,11 +146,11 @@ export default function QuizPage() {
           className={`contact-form-container reveal max-w-[680px] mx-auto mt-12 mb-0 min-h-[360px] flex flex-col justify-between ${isMounted ? "active" : ""}`}
         >
           {/* STEP 1-8: QUESTIONS */}
-          {currentStep < quizQuestions.length && (
+          {currentStep < questions.length && questions[currentStep] && (
             <div className="flex flex-col flex-1">
               {/* Progress bar */}
               <div className="flex justify-between text-xs text-[var(--text-muted)] mb-2">
-                <span>Question {currentStep + 1} of {quizQuestions.length}</span>
+                <span>Question {currentStep + 1} of {questions.length}</span>
                 <span>{Math.round(progressPct)}% Complete</span>
               </div>
               <div className="h-1 w-full bg-[var(--panel-dark)] rounded-sm overflow-hidden mb-10">
@@ -138,19 +163,19 @@ export default function QuizPage() {
               {/* Question text */}
               <div className="flex-1">
                 <span className="service-badge py-1 px-2 text-[0.65rem] bg-[rgba(225,77,24,0.08)] border border-[var(--border)] rounded text-[var(--primary)]">
-                  {quizQuestions[currentStep].id.toUpperCase()} PARAMETER
+                  {questions[currentStep].id.toUpperCase()} PARAMETER
                 </span>
                 <h3 className="font-[family-name:var(--font-space-grotesk)] text-[1.45rem] font-bold mt-3 mb-2 leading-snug">
-                  {quizQuestions[currentStep].text}
+                  {questions[currentStep].text}
                 </h3>
                 <p className="text-[var(--text-muted)] text-[0.9rem] mb-10">
-                  {quizQuestions[currentStep].description}
+                  {questions[currentStep].description}
                 </p>
 
                 {/* Options */}
                 <div className="flex flex-col gap-4">
-                  {quizQuestions[currentStep].options.map((opt) => {
-                    const isSelected = answers[quizQuestions[currentStep].id] === opt.value;
+                  {questions[currentStep].options.map((opt) => {
+                    const isSelected = answers[questions[currentStep].id] === opt.value;
                     return (
                       <button
                         key={opt.value}
@@ -183,7 +208,7 @@ export default function QuizPage() {
           )}
 
           {/* STEP 9: LEAD CAPTURE GATE */}
-          {currentStep === quizQuestions.length && (
+          {currentStep === questions.length && (
             <div className="flex-1 flex flex-col">
               <h3 className="font-[family-name:var(--font-space-grotesk)] text-[1.45rem] font-bold mb-2">
                 Analysis Ready
@@ -225,6 +250,8 @@ export default function QuizPage() {
                     placeholder=" "
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
+                    pattern="[^@\s]+@[^@\s]+\.[^@\s]{2,}"
+                    title="Please enter a valid work email address"
                     required
                   />
                   <label htmlFor="quiz-email" className="form-label">Work Email</label>

@@ -18,19 +18,20 @@ const SingleStat: React.FC<SingleStatProps> = ({ stat }) => {
       return;
     }
 
+    let rafId: number | null = null;
+
     const observer = new IntersectionObserver(
       (entries) => {
         const [entry] = entries;
         if (entry.isIntersecting && !hasAnimated) {
           setHasAnimated(true);
-          let start = 0;
           const duration = 1500; // ms
           const startTime = performance.now();
 
           const animate = (now: number) => {
             const elapsed = now - startTime;
             const progress = Math.min(elapsed / duration, 1);
-            
+
             // Easing function (easeOutQuad)
             const easeProgress = progress * (2 - progress);
             const current = Math.floor(easeProgress * numericTarget);
@@ -38,16 +39,16 @@ const SingleStat: React.FC<SingleStatProps> = ({ stat }) => {
             setCount(current);
 
             if (progress < 1) {
-              requestAnimationFrame(animate);
+              rafId = requestAnimationFrame(animate);
             } else {
               setCount(target); // Ensure it lands exactly on the target string/value
             }
           };
 
-          requestAnimationFrame(animate);
+          rafId = requestAnimationFrame(animate);
         }
       },
-      { threshold: 0.1 }
+      { threshold: 0.1 },
     );
 
     if (elementRef.current) {
@@ -56,6 +57,7 @@ const SingleStat: React.FC<SingleStatProps> = ({ stat }) => {
 
     return () => {
       observer.disconnect();
+      if (rafId) cancelAnimationFrame(rafId);
     };
   }, [stat.value, hasAnimated]);
 
@@ -76,8 +78,17 @@ export default function AnimatedStats() {
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
-    setStats(dataStore.getStats());
+    const refreshStats = () => setStats(dataStore.getStats());
+    refreshStats();
     setIsMounted(true);
+
+    window.addEventListener("storage", refreshStats);
+    window.addEventListener("cms-update", refreshStats);
+
+    return () => {
+      window.removeEventListener("storage", refreshStats);
+      window.removeEventListener("cms-update", refreshStats);
+    };
   }, []);
 
   if (!isMounted || stats.length === 0) {

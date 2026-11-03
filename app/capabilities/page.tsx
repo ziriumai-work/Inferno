@@ -1,13 +1,18 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
+import Image from "next/image";
+import { useSearchParams } from "next/navigation";
 import RevealOnMount from "@/components/RevealOnMount";
 import { capabilitiesData } from "@/lib/capabilitiesData";
+import { dataStore } from "@/utils/dataStore";
 
-export default function CapabilitiesPage() {
+function CapabilitiesContent() {
+  const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState("hubzone");
   const [isMounted, setIsMounted] = useState(false);
+  const [caps, setCaps] = useState<Capability[]>(capabilitiesData);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
 
   // Email Gate Modal States
@@ -19,10 +24,31 @@ export default function CapabilitiesPage() {
   const [isSuccess, setIsSuccess] = useState(false);
 
   useEffect(() => {
+    if (searchParams?.get("download") === "true") {
+      setIsDownloadOpen(true);
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
+    const refreshCaps = () => {
+      const stored = dataStore.getCapabilities();
+      if (stored.length > 0) {
+        setCaps(stored);
+      }
+    };
+    refreshCaps();
     const timer = setTimeout(() => {
       setIsMounted(true);
     }, 50);
-    return () => clearTimeout(timer);
+
+    window.addEventListener("storage", refreshCaps);
+    window.addEventListener("cms-update", refreshCaps);
+
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener("storage", refreshCaps);
+      window.removeEventListener("cms-update", refreshCaps);
+    };
   }, []);
 
   const handleCopy = (text: string, label: string) => {
@@ -31,7 +57,7 @@ export default function CapabilitiesPage() {
     setTimeout(() => setCopiedCode(null), 2500);
   };
 
-  const activeCap = capabilitiesData.find((cap) => cap.id === activeTab) || capabilitiesData[0];
+  const activeCap = caps.find((cap) => cap.id === activeTab) || caps[0] || capabilitiesData[0];
 
   const naicsList = [
     { code: "541611", title: "Admin & General Management Consulting (Primary)" },
@@ -49,6 +75,15 @@ export default function CapabilitiesPage() {
     { code: "561422", title: "Telemarketing & Other Contact Centers" },
   ];
 
+  const triggerPDFDownload = () => {
+    const element = document.createElement("a");
+    element.href = "/documents/The_Inferno_Group_LLC_Capability_Statement.pdf";
+    element.download = "The_Inferno_Group_LLC_Capability_Statement.pdf";
+    document.body.appendChild(element);
+    element.click();
+    document.body.removeChild(element);
+  };
+
   const handleDownloadSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -57,84 +92,26 @@ export default function CapabilitiesPage() {
       setIsSubmitting(false);
       setIsSuccess(true);
       
-      // Save lead to localStorage
-      const newLead = {
-        id: Date.now().toString(),
-        type: "DOWNLOAD",
+      // Save lead securely and sync to Supabase (Zero LocalStorage policy strictly preserved)
+      void dataStore.submitLead({
+        type: "CAPABILITY_DOWNLOAD",
         name,
         email,
         org,
-        createdAt: new Date().toISOString()
-      };
-      const currentLeads = JSON.parse(localStorage.getItem("inferno_leads") || "[]");
-      currentLeads.push(newLead);
-      localStorage.setItem("inferno_leads", JSON.stringify(currentLeads));
+        company: org,
+      });
       
-      // Trigger client-side download representing Capability Statement
-      const element = document.createElement("a");
-      const fileText = `=================================================================\n` +
-                       `THE INFERNO GROUP LLC (TIG) - CORPORATE CAPABILITY STATEMENT\n` +
-                       `=================================================================\n\n` +
-                       `COMPANY OVERVIEW:\n` +
-                       `The Inferno Group LLC is a mission-focused government consulting and\n` +
-                       `emergency management firm supporting public-sector and commercial clients\n` +
-                       `through preparedness, incident response, disaster recovery, operational\n` +
-                       `support, and scalable workforce solutions.\n\n` +
-                       `FEDERAL CREDENTIALS & IDENTIFIERS:\n` +
-                       `• Unique Entity ID (UEI): QW6RHJACHA56\n` +
-                       `• CAGE Code: 22VP2\n` +
-                       `• SAM.gov Registration: Active & Verified\n` +
-                       `• Headquarters: Orlando, Florida (Nationwide Field Deployments)\n\n` +
-                       `SOCIOECONOMIC CERTIFICATIONS HELD:\n` +
-                       `• SBA HUBZone Certified (U.S. Small Business Administration)\n` +
-                       `• Veteran-Owned Small Business (VOSB)\n\n` +
-                       `BONDING CAPACITY:\n` +
-                       `• Bid Bonds: Up to required solicitation percentage\n` +
-                       `• Performance Bonds: Up to 100% of subcontract/contract value\n` +
-                       `• Payment Bonds: Up to 100% of subcontract/contract value\n` +
-                       `• Single-Project & Aggregate Capacity available upon request\n\n` +
-                       `REGISTERED NAICS CODES:\n` +
-                       `• 541611 - Administrative and General Management Consulting Services (Primary)\n` +
-                       `• 541618 - Other Management Consulting Services\n` +
-                       `• 541690 - Other Scientific and Technical Consulting Services\n` +
-                       `• 624230 - Emergency and Other Relief Services\n` +
-                       `• 561210 - Facilities Support Services\n` +
-                       `• 562910 - Remediation Services\n` +
-                       `• 238320 - Painting and Wall Covering Contractors\n` +
-                       `• 561720 - Janitorial Services\n` +
-                       `• 561790 - Other Services to Buildings and Dwellings\n` +
-                       `• 238990 - All Other Specialty Trade Contractors\n` +
-                       `• 423990 - Other Miscellaneous Durable Goods Merchant Wholesalers\n` +
-                       `• 488510 - Freight Transportation Arrangement\n` +
-                       `• 561422 - Telemarketing Bureaus and Other Contact Centers\n\n` +
-                       `CORE SERVICE CAPABILITIES:\n` +
-                       `1. Emergency Management & Disaster Recovery (FEMA PA / IA, Debris Monitoring, ICS/NIMS)\n` +
-                       `2. Planning, Preparedness & EOC Incident Leadership\n` +
-                       `3. Mission-Focused Contact Center Operations & Disaster Survivor Support\n` +
-                       `4. Program, Project & Financial Management (DCAA Accounting Controls)\n` +
-                       `5. Strategic Consulting, Capture Strategy & Legal Compliance\n` +
-                       `6. Training, Workforce Development & Rapid Cadre Mobilization\n` +
-                       `7. Facilities Support, Logistics & Specialty Trade Services\n\n` +
-                       `POINT OF CONTACT:\n` +
-                       `The Inferno Group LLC\n` +
-                       `Email: Contact@theinfernogroup.com / InfernoCares@theinfernogroup.com\n` +
-                       `Website: https://theinfernogroup.com\n` +
-                       `Generated: ${new Date().toLocaleDateString()}\n`;
-      const file = new Blob([fileText], { type: "text/plain" });
-      element.href = URL.createObjectURL(file);
-      element.download = "The_Inferno_Group_LLC_Capability_Statement.txt";
-      document.body.appendChild(element);
-      element.click();
-      document.body.removeChild(element);
-      
-      setTimeout(() => {
-        setIsDownloadOpen(false);
-        setIsSuccess(false);
-        setName("");
-        setEmail("");
-        setOrg("");
-      }, 1500);
-    }, 1500);
+      // Trigger official Corporate Capability Statement PDF download
+      triggerPDFDownload();
+    }, 1200);
+  };
+
+  const handleResetModal = () => {
+    setIsDownloadOpen(false);
+    setIsSuccess(false);
+    setName("");
+    setEmail("");
+    setOrg("");
   };
 
   return (
@@ -142,7 +119,7 @@ export default function CapabilitiesPage() {
       <section id="capabilities">
         <RevealOnMount className={`reveal ${isMounted ? "active" : ""}`}>
           <div className="section-eyebrow">Federal Credentials &amp; Teaming</div>
-          <h2 className="section-title">Corporate Capabilities &amp; Contracting Readiness</h2>
+          <h1 className="section-title">Corporate Capabilities &amp; Contracting Readiness</h1>
           <p className="section-desc max-w-[850px] mx-auto">
             The Inferno Group LLC (TIG) is a HUBZone Certified and Veteran-Owned Small Business (VOSB). We support federal, state, and local agencies while partnering with prime contractors across high-consequence procurements.
           </p>
@@ -217,7 +194,7 @@ export default function CapabilitiesPage() {
         <div className={`caps-layout reveal ${isMounted ? "active" : ""}`}>
           {/* Left side: Badge Selector Grid */}
           <div className="badge-grid" id="cert-badge-grid">
-            {capabilitiesData.map((cap) => (
+            {caps.map((cap) => (
               <button
                 key={cap.id}
                 className={`badge-button ${activeTab === cap.id ? "active" : ""}`}
@@ -288,6 +265,14 @@ export default function CapabilitiesPage() {
               <line x1="12" y1="15" x2="12" y2="3"></line>
             </svg>
           </button>
+          <Link href="/capabilities/statement" target="_blank" className="btn btn-secondary no-underline justify-center text-center">
+            View Online Statement
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="ml-2">
+              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+              <polyline points="15 3 21 3 21 9"></polyline>
+              <line x1="10" y1="14" x2="21" y2="3"></line>
+            </svg>
+          </Link>
           <Link href="/partnerships" className="btn btn-secondary no-underline justify-center text-center">
             Partner / Teaming Application
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="ml-2">
@@ -305,10 +290,10 @@ export default function CapabilitiesPage() {
         </div>
       </section>
 
-      {/* Email Gate Modal */}
+      {/* Official Capability Statement Email Gate Modal */}
       <div className={`modal-overlay ${isDownloadOpen ? "show" : ""}`}>
-        <div className="modal-content contact-form-container p-6 sm:p-10">
-          <button className="modal-close" onClick={() => setIsDownloadOpen(false)} aria-label="Close modal">
+        <div className="modal-content contact-form-container p-6 sm:p-8 max-w-[650px] w-full">
+          <button className="modal-close" onClick={handleResetModal} aria-label="Close modal">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <line x1="18" y1="6" x2="6" y2="18"></line>
               <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -316,72 +301,176 @@ export default function CapabilitiesPage() {
           </button>
 
           {isSuccess ? (
-            <div className="flex flex-col items-center justify-center h-full py-4">
-              <div className="success-icon-wrapper">
-                <svg viewBox="0 0 24 24">
+            <div className="flex flex-col items-center justify-center py-2 text-center animate-fade-in">
+              <div className="w-14 h-14 rounded-full bg-emerald-500/10 border-2 border-emerald-500 text-emerald-600 flex items-center justify-center mb-3">
+                <svg className="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <polyline points="20 6 9 17 4 12"></polyline>
                 </svg>
               </div>
-              <h3>Download Initiated</h3>
-              <p className="text-center text-[var(--text-muted)] text-[0.95rem]">
-                Verification confirmed. The official Corporate Capability Statement for The Inferno Group LLC has been generated and download has begun.
+              <h3 className="font-[family-name:var(--font-space-grotesk)] text-lg sm:text-xl font-bold text-[var(--text-bright)] mb-1">
+                Capability Statement Dispatched
+              </h3>
+              <p className="text-[var(--text-muted)] text-xs max-w-md mx-auto mb-5 leading-relaxed">
+                Verification confirmed. The official Corporate Capability Statement for The Inferno Group LLC (PDF) has been generated and initiated for download.
               </p>
+
+              {/* Document Confirmation Card */}
+              <div className="w-full p-4 bg-[var(--glass)] border border-[var(--border)] rounded-2xl flex flex-col sm:flex-row items-center gap-4 mb-6 text-left">
+                <div className="relative w-20 h-28 rounded-lg overflow-hidden border border-slate-300 shadow-sm shrink-0 bg-white">
+                  <Image
+                    src="/documents/The_Inferno_Group_LLC_Capability_Statement_Preview.png"
+                    alt="Capability Statement Preview"
+                    fill
+                    className="object-cover object-top"
+                    sizes="80px"
+                  />
+                </div>
+                <div className="flex-1">
+                  <div className="text-xs font-bold text-[var(--text-bright)] font-[family-name:var(--font-space-grotesk)]">
+                    The_Inferno_Group_LLC_Capability_Statement.pdf
+                  </div>
+                  <div className="text-[11px] text-[var(--text-muted)] mt-0.5">
+                    1-Page Executive PDF &bull; 500 KB &bull; Emergency Management &amp; Disaster Recovery
+                  </div>
+                  <div className="text-[10px] text-[var(--primary)] font-mono mt-1.5 font-bold">
+                    UEI: QW6RHJACHA56 &bull; CAGE: 22VP2 &bull; HUBZone &bull; VOSB
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex flex-wrap items-center justify-center gap-2.5 w-full">
+                <button
+                  type="button"
+                  onClick={triggerPDFDownload}
+                  className="btn btn-primary text-xs py-2 px-4 inline-flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-95"
+                >
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                  </svg>
+                  <span>Download PDF Again</span>
+                </button>
+                <a
+                  href="/documents/The_Inferno_Group_LLC_Capability_Statement.pdf"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn btn-secondary text-xs py-2 px-4 no-underline inline-flex items-center gap-1.5 active:scale-95"
+                >
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                    <polyline points="15 3 21 3 21 9"></polyline>
+                    <line x1="10" y1="14" x2="21" y2="3"></line>
+                  </svg>
+                  <span>Open in New Tab</span>
+                </a>
+                <Link
+                  href="/capabilities/statement"
+                  target="_blank"
+                  className="btn btn-secondary text-xs py-2 px-4 no-underline inline-flex items-center gap-1 active:scale-95"
+                >
+                  <span>Printable Web View</span>
+                  <span>&rarr;</span>
+                </Link>
+              </div>
             </div>
           ) : (
             <>
-              <h3 className="font-[family-name:var(--font-space-grotesk)] text-[1.4rem] font-bold mb-2">Corporate Capability Statement</h3>
-              <p className="text-[var(--text-muted)] text-[0.85rem] mb-8">
-                Please supply your contact details to download the official Corporate Capability Statement including UEI, CAGE, bonding capacity, NAICS codes, and past performance profile.
+              {/* Document Summary Card */}
+              <div className="mb-5 p-4 bg-[var(--glass)] border border-[var(--border)] rounded-2xl flex flex-col sm:flex-row items-center gap-4">
+                <div className="relative w-24 h-32 sm:w-24 sm:h-32 rounded-lg overflow-hidden border border-slate-300 shadow-md shrink-0 bg-white group">
+                  <Image
+                    src="/documents/The_Inferno_Group_LLC_Capability_Statement_Preview.png"
+                    alt="The Inferno Group Corporate Capability Statement"
+                    fill
+                    className="object-cover object-top group-hover:scale-105 transition-transform duration-300"
+                    sizes="96px"
+                  />
+                  <div className="absolute inset-0 bg-black/25 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <span className="text-[9px] font-bold text-white bg-black/70 px-2 py-0.5 rounded">PDF</span>
+                  </div>
+                </div>
+                <div className="flex-1 text-left">
+                  <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-[rgba(225,77,24,0.08)] text-[var(--primary)] border border-[rgba(225,77,24,0.2)] mb-1">
+                    Official Executive Brief (PDF)
+                  </div>
+                  <h4 className="font-[family-name:var(--font-space-grotesk)] text-sm font-bold text-[var(--text-bright)]">
+                    Corporate Capability Statement
+                  </h4>
+                  <div className="text-xs text-[var(--text-muted)] mt-1 space-y-0.5">
+                    <div><strong>Discipline:</strong> Emergency Management &amp; Disaster Recovery</div>
+                    <div><strong>Credentials:</strong> HUBZone Certified &bull; VOSB &bull; E-Verify</div>
+                    <div className="font-mono text-[11px]"><strong>UEI:</strong> QW6RHJACHA56 &bull; <strong>CAGE:</strong> 22VP2</div>
+                  </div>
+                  <div className="mt-2 flex items-center gap-2">
+                    <span className="text-[11px] text-[var(--primary)] font-semibold flex items-center gap-1">
+                      <span>✓</span> 1-Page Vector PDF (500 KB)
+                    </span>
+                    <span className="text-slate-300">&bull;</span>
+                    <Link
+                      href="/capabilities/statement"
+                      target="_blank"
+                      className="text-[11px] text-[var(--secondary)] hover:text-[var(--primary)] font-semibold underline underline-offset-2"
+                    >
+                      Preview Online Statement &rarr;
+                    </Link>
+                  </div>
+                </div>
+              </div>
+
+              <p className="text-[var(--text-muted)] text-xs mb-5">
+                Supply your contact details to download the official Corporate Capability Statement including verified credentials, past performance differentiators, and contracting readiness.
               </p>
 
-              <form onSubmit={handleDownloadSubmit} className="flex flex-col gap-6">
+              <form onSubmit={handleDownloadSubmit} className="flex flex-col gap-4">
                 <div className="form-group m-0">
                   <input
                     type="text"
                     id="download-name"
-                    className="form-input"
+                    className="form-input text-xs"
                     placeholder=" "
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     required
                   />
-                  <label htmlFor="download-name" className="form-label">Full Name</label>
+                  <label htmlFor="download-name" className="form-label text-xs">Full Name</label>
                 </div>
 
                 <div className="form-group m-0">
                   <input
                     type="text"
                     id="download-org"
-                    className="form-input"
+                    className="form-input text-xs"
                     placeholder=" "
                     value={org}
                     onChange={(e) => setOrg(e.target.value)}
                     required
                   />
-                  <label htmlFor="download-org" className="form-label">Organization / Prime Contractor / Agency</label>
+                  <label htmlFor="download-org" className="form-label text-xs">Organization / Prime Contractor / Agency</label>
                 </div>
 
                 <div className="form-group m-0">
                   <input
                     type="email"
                     id="download-email"
-                    className="form-input"
+                    className="form-input text-xs"
                     placeholder=" "
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
                   />
-                  <label htmlFor="download-email" className="form-label">Work Email</label>
+                  <label htmlFor="download-email" className="form-label text-xs">Work Email</label>
                 </div>
 
-                <button type="submit" className="btn-submit mt-4" disabled={isSubmitting}>
+                <button type="submit" className="btn-submit mt-2 text-xs py-3" disabled={isSubmitting}>
                   {isSubmitting ? (
                     <>
-                      Verifying &amp; Generating...
+                      <span>Verifying &amp; Generating PDF...</span>
                       <svg
                         className="animate-spin"
-                        width="18"
-                        height="18"
+                        width="16"
+                        height="16"
                         viewBox="0 0 24 24"
                         fill="none"
                         stroke="currentColor"
@@ -399,8 +488,8 @@ export default function CapabilitiesPage() {
                     </>
                   ) : (
                     <>
-                      Download Capability Statement
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <span>Download Capability Statement (PDF)</span>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                         <line x1="22" y1="2" x2="11" y2="13"></line>
                         <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
                       </svg>
@@ -423,3 +512,10 @@ export default function CapabilitiesPage() {
   );
 }
 
+export default function CapabilitiesPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen" />}>
+      <CapabilitiesContent />
+    </Suspense>
+  );
+}

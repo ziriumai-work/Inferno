@@ -4,9 +4,11 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import RevealOnMount from "@/components/RevealOnMount";
 import { resourcesData } from "@/lib/resourcesData";
+import { dataStore } from "@/utils/dataStore";
 
 export default function ResourcesPage() {
   const [isMounted, setIsMounted] = useState(false);
+  const [resources, setResources] = useState<Resource[]>(resourcesData);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCat, setSelectedCat] = useState("all");
   
@@ -20,10 +22,21 @@ export default function ResourcesPage() {
   const [isSuccess, setIsSuccess] = useState(false);
 
   useEffect(() => {
+    const refreshResources = () => setResources(dataStore.getResources());
+    refreshResources();
+
     const timer = setTimeout(() => {
       setIsMounted(true);
     }, 50);
-    return () => clearTimeout(timer);
+
+    window.addEventListener("storage", refreshResources);
+    window.addEventListener("cms-update", refreshResources);
+
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener("storage", refreshResources);
+      window.removeEventListener("cms-update", refreshResources);
+    };
   }, []);
 
   const handleDownloadClick = (res: Resource) => {
@@ -41,49 +54,50 @@ export default function ResourcesPage() {
       setIsSubmitting(false);
       setIsSuccess(true);
 
-      // Save lead to localStorage
-      const newLead = {
-        id: Date.now().toString(),
+      // Save lead and sync to Supabase database
+      void dataStore.submitLead({
         type: "RESOURCE_DOWNLOAD",
         resourceId: selectedResource.id,
         resourceTitle: selectedResource.title,
         name,
         email,
         org,
-        createdAt: new Date().toISOString()
-      };
-      const currentLeads = JSON.parse(localStorage.getItem("inferno_leads") || "[]");
-      currentLeads.push(newLead);
-      localStorage.setItem("inferno_leads", JSON.stringify(currentLeads));
+        company: org,
+      });
 
       // Trigger document export
       const element = document.createElement("a");
-      const fileText = `=================================================================\n` +
-                       `THE INFERNO GROUP LLC - INTEL & COMPLIANCE RESOURCE TRANSMISSION\n` +
-                       `=================================================================\n\n` +
-                       `DOCUMENT: ${selectedResource.title}\n` +
-                       `CATEGORY: ${selectedResource.category}\n` +
-                       `FORMAT: ${selectedResource.fileType}\n` +
-                       `AUTHORIZED TO: ${name} (${org})\n` +
-                       `WORK EMAIL: ${email}\n` +
-                       `ISSUED ON: ${new Date().toLocaleDateString()}\n\n` +
-                       `CORPORATE OVERVIEW & CREDENTIALS:\n` +
-                       `• Entity: The Inferno Group LLC\n` +
-                       `• Unique Entity ID (UEI): QW6RHJACHA56\n` +
-                       `• CAGE Code: 22VP2\n` +
-                       `• Status: SBA HUBZone Certified & Veteran-Owned Small Business (VOSB)\n` +
-                       `• Primary NAICS: 541611 (Admin & General Management Consulting)\n` +
-                       `• Secondary NAICS: 624230, 561210, 562910, 238320, 561720, 561790, 238990, 423990, 488510, 561422\n` +
-                       `• Bonding Capacity: Bid, Performance (up to 100%), and Payment (up to 100%)\n\n` +
-                       `DOCUMENT SUMMARY:\n` +
-                       `${selectedResource.description}\n\n` +
-                       `COMPLIANCE & CONTACT:\n` +
-                       `The Inferno Group LLC | Contracts & Alliances\n` +
-                       `Email: Contact@theinfernogroup.com\n` +
-                       `Portal: https://theinfernogroup.com\n`;
-      const file = new Blob([fileText], { type: "text/plain" });
-      element.href = URL.createObjectURL(file);
-      element.download = `${selectedResource.id}_TIG_Compliance_Package.txt`;
+      if (selectedResource.id === "capability-statement") {
+        element.href = "/documents/The_Inferno_Group_LLC_Capability_Statement.pdf";
+        element.download = "The_Inferno_Group_LLC_Capability_Statement.pdf";
+      } else {
+        const fileText = `=================================================================\n` +
+                         `THE INFERNO GROUP LLC - INTEL & COMPLIANCE RESOURCE TRANSMISSION\n` +
+                         `=================================================================\n\n` +
+                         `DOCUMENT: ${selectedResource.title}\n` +
+                         `CATEGORY: ${selectedResource.category}\n` +
+                         `FORMAT: ${selectedResource.fileType}\n` +
+                         `AUTHORIZED TO: ${name} (${org})\n` +
+                         `WORK EMAIL: ${email}\n` +
+                         `ISSUED ON: ${new Date().toLocaleDateString()}\n\n` +
+                         `CORPORATE OVERVIEW & CREDENTIALS:\n` +
+                         `• Entity: The Inferno Group LLC\n` +
+                         `• Unique Entity ID (UEI): QW6RHJACHA56\n` +
+                         `• CAGE Code: 22VP2\n` +
+                         `• Status: SBA HUBZone Certified & Veteran-Owned Small Business (VOSB)\n` +
+                         `• Primary NAICS: 541611 (Admin & General Management Consulting)\n` +
+                         `• Secondary NAICS: 624230, 561210, 562910, 238320, 561720, 561790, 238990, 423990, 488510, 561422\n` +
+                         `• Bonding Capacity: Bid, Performance (up to 100%), and Payment (up to 100%)\n\n` +
+                         `DOCUMENT SUMMARY:\n` +
+                         `${selectedResource.description}\n\n` +
+                         `COMPLIANCE & CONTACT:\n` +
+                         `The Inferno Group LLC | Contracts & Alliances\n` +
+                         `Email: Contact@theinfernogroup.com\n` +
+                         `Portal: https://theinfernogroup.com\n`;
+        const file = new Blob([fileText], { type: "text/plain" });
+        element.href = URL.createObjectURL(file);
+        element.download = `${selectedResource.id}_TIG_Compliance_Package.txt`;
+      }
       document.body.appendChild(element);
       element.click();
       document.body.removeChild(element);
@@ -101,7 +115,7 @@ export default function ResourcesPage() {
     }, 1200);
   };
 
-  const filteredResources = resourcesData.filter((res) => {
+  const filteredResources = resources.filter((res) => {
     const matchesCat = selectedCat === "all" || res.category === selectedCat;
     const matchesSearch =
       res.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -124,7 +138,7 @@ export default function ResourcesPage() {
       <section id="resources">
         <RevealOnMount className={`reveal ${isMounted ? "active" : ""}`}>
           <div className="section-eyebrow">Intel &amp; Compliance Library</div>
-          <h2 className="section-title">Resources, Playbooks &amp; Guidelines</h2>
+          <h1 className="section-title">Resources, Playbooks &amp; Guidelines</h1>
           <p className="section-desc max-w-[850px] mx-auto">
             Access downloadable compliance playbooks, FEMA Public Assistance checklists, DCAA indirect cost rate templates, and official corporate capability statements.
           </p>
