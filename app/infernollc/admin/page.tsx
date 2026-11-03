@@ -1769,11 +1769,11 @@ export default function AdminPage() {
       <div
         id="admin-panel"
         data-theme={theme}
-        className="min-h-screen bg-[var(--navy)] flex items-center justify-center text-white font-[family-name:var(--font-outfit)]"
+        className="min-h-screen bg-[var(--adm-bg)] flex items-center justify-center text-[var(--adm-text-primary)] font-[family-name:var(--font-outfit)]"
       >
         <div className="flex flex-col items-center gap-3">
           <div className="w-9 h-9 border-3 border-[var(--primary)] border-t-transparent rounded-full animate-spin"></div>
-          <span className="text-sm font-mono text-white/90 font-medium tracking-wider">
+          <span className="text-sm font-mono text-[var(--adm-text-muted)] font-medium tracking-wider">
             Verifying Admin Security Clearance...
           </span>
         </div>
@@ -1786,17 +1786,21 @@ export default function AdminPage() {
       <div
         id="admin-panel"
         data-theme={theme}
-        className="min-h-screen bg-[var(--navy)] flex flex-col justify-center items-center px-4 py-12 relative overflow-hidden font-[family-name:var(--font-outfit)]"
+        className="min-h-screen bg-[var(--adm-bg)] flex flex-col justify-center items-center px-4 py-12 relative overflow-hidden font-[family-name:var(--font-outfit)]"
       >
         {/* Floating Theme Toggle on Auth Screen */}
         <div className="absolute top-6 right-6 z-20">
           <button
             type="button"
             onClick={toggleTheme}
-            className="flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-white/20 bg-white/10 hover:bg-white/20 text-white text-xs font-semibold backdrop-blur-md transition-all cursor-pointer shadow-md"
-            title={`Switch to ${theme === "dark" ? "Light" : "Dark"} mode`}
+            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-full border text-xs font-semibold backdrop-blur-md transition-all cursor-pointer shadow-md ${
+              isDark
+                ? "border-white/20 bg-white/10 hover:bg-white/20 text-white"
+                : "border-slate-300 bg-white/95 hover:bg-white text-slate-900 shadow-sm"
+            }`}
+            title={`Switch to ${isDark ? "Light" : "Dark"} mode`}
           >
-            <span>{theme === "dark" ? "☀️ Light Mode" : "🌙 Dark Mode"}</span>
+            <span>{isDark ? "☀️ Light Mode" : "🌙 Dark Mode"}</span>
           </button>
         </div>
 

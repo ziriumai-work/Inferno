@@ -667,7 +667,7 @@ const defaultCommunityStories: CommunityStory[] = [
     content:
       "TIG hosts the 'Kicking for Relief' Kickball Tournament to unite corporate partners, volunteers, and emergency professionals. 100% of proceeds go directly toward immediate relief for storm-displaced households.",
     image: "/kickball_tournament.png",
-    gallery: ["/kickball_tournament.png", "/impact_texas.png"],
+    gallery: ["/kickball_tournament.png"],
     featured: true,
     status: "published",
   },

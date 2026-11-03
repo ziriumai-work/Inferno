@@ -717,7 +717,7 @@ export default function AboutClient() {
               >
                 <div className="glow-card grid grid-cols-1 lg:grid-cols-[1fr_1.2fr] bg-[var(--glass)] border border-[var(--border)] rounded-[24px] p-8 md:p-10 gap-10 md:gap-12 items-center">
                   <div className={`flex flex-col gap-3 ${isEven ? "order-0" : "order-1"}`}>
-                    <div className="relative w-full aspect-video rounded-2xl overflow-hidden bg-black border border-[var(--border)] shadow-md group">
+                    <div className={`relative w-full ${story.id === "kicking-for-relief" ? "aspect-[4/3] sm:aspect-[16/11]" : "aspect-video"} rounded-2xl overflow-hidden bg-black border border-[var(--border)] shadow-md group`}>
                       {isVideoActive && story.videoUrl ? (
                         <video
                           src={story.videoUrl}
@@ -746,7 +746,11 @@ export default function AboutClient() {
                                   ? "/impact_debris.png"
                                   : "/impact_texas.png";
                             }}
-                            className="w-full h-full object-cover transition-transform duration-700 hover:scale-105"
+                            className={`w-full h-full object-cover transition-transform duration-700 hover:scale-105 ${
+                              story.id === "kicking-for-relief"
+                                ? "object-[center_28%]"
+                                : "object-center"
+                            }`}
                           />
                           {story.videoUrl && (
                             <div className="absolute inset-0 bg-black/40 flex items-center justify-center pointer-events-none group-hover:bg-black/50 transition-colors">

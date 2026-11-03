@@ -92,12 +92,23 @@ function HeroInteractiveBackground({
 }
 
 export default function HomeClient() {
-  const [articles, setArticles] = useState<Article[]>([]);
-  const [aiFeatures, setAiFeatures] = useState<FeatureCard[]>([]);
-  const [about, setAbout] = useState<AboutData | null>(null);
-  const [hero, setHero] = useState<HeroData | null>(null);
-  const [communityStories, setCommunityStories] = useState<CommunityStory[]>(
-    [],
+  const [articles, setArticles] = useState<Article[]>(() =>
+    dataStore
+      .getArticles()
+      .filter((a) => a.status === "published")
+      .slice(0, 3)
+  );
+  const [aiFeatures, setAiFeatures] = useState<FeatureCard[]>(() =>
+    dataStore.getAIInnovation()
+  );
+  const [about, setAbout] = useState<AboutData | null>(() =>
+    dataStore.getAbout()
+  );
+  const [hero, setHero] = useState<HeroData | null>(() =>
+    dataStore.getHero()
+  );
+  const [communityStories, setCommunityStories] = useState<CommunityStory[]>(() =>
+    dataStore.getCommunityStories().filter((s) => s.status === "published")
   );
   const [activeStoryMedia, setActiveStoryMedia] = useState<
     "scholarship" | "kickball"
@@ -328,14 +339,6 @@ export default function HomeClient() {
         );
     }
   };
-
-  if (!isMounted) {
-    return (
-      <div className="page-view block text-center py-24 px-8">
-        <h2>Loading Intelligence...</h2>
-      </div>
-    );
-  }
 
   return (
     <div className="page-view home-page-view block">
@@ -1097,7 +1100,7 @@ export default function HomeClient() {
               ) : (
                 <div className="flex flex-col gap-4">
                   {/* Kickball Tournament Card */}
-                  <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-black border border-[var(--border)] shadow-md group">
+                  <div className="relative w-full aspect-[4/3] sm:aspect-[16/11] rounded-xl overflow-hidden bg-black/90 border border-[var(--border)] shadow-md group">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src="/kickball_tournament.png"
@@ -1108,9 +1111,9 @@ export default function HomeClient() {
                         (e.currentTarget as HTMLImageElement).src =
                           "/impact_texas.png";
                       }}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                      className="w-full h-full object-cover object-[center_28%] group-hover:scale-105 transition-transform duration-700"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-5">
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 via-40% to-transparent flex flex-col justify-end p-5 pointer-events-none">
                       <span className="text-[0.65rem] font-bold uppercase tracking-wider text-[var(--primary)] mb-1">
                         Disaster Relief Tournament
                       </span>
