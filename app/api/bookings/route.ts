@@ -1,11 +1,29 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { sendBookingConfirmation } from "@/lib/email/sendBookingConfirmation";
+import { checkRateLimit, getClientIp } from "@/lib/rateLimit";
 
 export async function POST(request: NextRequest) {
   try {
+    const clientIp = getClientIp(request.headers);
+    const rateCheck = checkRateLimit(clientIp, { maxRequests: 5, windowMs: 10 * 60 * 1000 });
+    if (!rateCheck.allowed) {
+      return NextResponse.json(
+        { error: "Too many reservation attempts. Please try again in a few minutes." },
+        { status: 429, headers: { "Retry-After": String(rateCheck.retryAfterSeconds) } }
+      );
+    }
+
     const supabase = await createClient();
     const body = await request.json();
+
+    // Honeypot check
+    if (body.honeypot || body._hp_title || body._hp_notes) {
+      return NextResponse.json(
+        { success: true, message: "Consultation requested." },
+        { status: 200 }
+      );
+    }
 
     const { slot_id, full_name, email, company, phone, meeting_type, notes } = body;
 

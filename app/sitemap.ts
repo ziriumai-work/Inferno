@@ -1,7 +1,7 @@
 import { MetadataRoute } from "next";
+import { SITE_URL } from "@/lib/seoConfig";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://theinfernogroup.com";
   const now = new Date();
 
   const routes = [
@@ -9,6 +9,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/about",
     "/services",
     "/capabilities",
+    "/capability-statement",
     "/tracker",
     "/partnerships",
     "/contracts",
@@ -21,13 +22,25 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/quiz",
     "/privacy",
     "/conduct",
+    "/terms",
+    "/accessibility",
   ];
 
   return routes.map((route) => ({
-    url: `${siteUrl}${route}`,
+    url: `${SITE_URL}${route}`,
     lastModified: now,
-    changeFrequency: route === "" || route === "/tracker" ? "daily" : "weekly",
-    priority: route === "" ? 1.0 : route === "/services" || route === "/capabilities" || route === "/tracker" ? 0.9 : 0.8,
+    changeFrequency:
+      route === "" || route === "/tracker" || route === "/contracts"
+        ? "daily"
+        : "weekly",
+    priority:
+      route === ""
+        ? 1.0
+        : route === "/services" ||
+            route === "/capabilities" ||
+            route === "/contracts" ||
+            route === "/tracker"
+          ? 0.9
+          : 0.8,
   }));
 }
-

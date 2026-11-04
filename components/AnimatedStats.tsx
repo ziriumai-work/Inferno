@@ -99,12 +99,12 @@ export default function AnimatedStats() {
           <div className="stat-label">Core Competencies</div>
         </div>
         <div className="stat-item">
-          <div className="stat-number">SBA<span>8(a)</span></div>
-          <div className="stat-label">HUBZone &amp; WOSB Ready</div>
+          <div className="stat-number">HUB<span>Zone</span></div>
+          <div className="stat-label">HUBZone &amp; VOSB Certified</div>
         </div>
         <div className="stat-item">
           <div className="stat-number">100<span>%</span></div>
-          <div className="stat-label">Compliance Mandate</div>
+          <div className="stat-label">Compliance-First Delivery</div>
         </div>
         <div className="stat-item">
           <div className="stat-number">24<span>/7</span></div>

@@ -136,6 +136,9 @@ export default function HomeClient() {
     }
   }, [activeStoryMedia, isVideoMuted]);
   const [isMounted, setIsMounted] = useState(false);
+  const [openJobsCount, setOpenJobsCount] = useState<number>(() =>
+    dataStore.getJobs().filter((j) => j.status === "published").length
+  );
   const [isQuizPopupOpen, setIsQuizPopupOpen] = useState(false);
   const [isQuizTriggerVisible, setIsQuizTriggerVisible] = useState(false);
   const [showQuizTooltip, setShowQuizTooltip] = useState(false);
@@ -176,6 +179,9 @@ export default function HomeClient() {
       setCommunityStories(
         dataStore.getCommunityStories().filter((s) => s.status === "published"),
       );
+      setOpenJobsCount(
+        dataStore.getJobs().filter((j) => j.status === "published").length
+      );
     };
 
     refreshData();
@@ -207,6 +213,17 @@ export default function HomeClient() {
       clearTimeout(tooltipTimer);
     };
   }, []);
+
+  // Close quiz popup on Escape key for accessibility
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && isQuizPopupOpen) {
+        setIsQuizPopupOpen(false);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isQuizPopupOpen]);
 
   // Quiz swipable / draggable icon handlers
   const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
@@ -756,8 +773,8 @@ export default function HomeClient() {
                 />
               </div>
               <h2 className="section-title">The Inferno Command</h2>
-              <p className="text-[var(--text-muted)] text-base leading-[1.7] mb-8">
-                {about.story.substring(0, 210)}...
+              <p className="text-[var(--text-muted)] text-base leading-[1.7] mb-8 line-clamp-4">
+                {about.story.split("\n\n").find((p) => p.trim().length > 0) || about.story}
               </p>
               <Link href="/about" className="btn btn-secondary no-underline">
                 Read Corporate Story
@@ -1035,10 +1052,19 @@ export default function HomeClient() {
                           muted={isVideoMuted}
                           loop
                           playsInline
-                          preload="auto"
+                          preload="metadata"
+                          poster="/hero-bg.jpg"
                           className="w-full h-full object-contain bg-black"
+                          aria-label="Inferno Ignite Scholarship Presentation Video"
                         >
                           <source src={currentVideo} type="video/mp4" />
+                          <track
+                            kind="captions"
+                            src="/captions/scholarship.vtt"
+                            srcLang="en"
+                            label="English Captions"
+                            default
+                          />
                           Your browser does not support HTML video.
                         </video>
                         <button
@@ -1091,6 +1117,22 @@ export default function HomeClient() {
                           </Link>
                         </div>
                       </div>
+
+                      {/* Accessible Video Transcript Drawer */}
+                      <details className="p-3.5 rounded-xl bg-[var(--panel-dark)] border border-[var(--border)] text-xs text-[var(--text-muted)] cursor-pointer group">
+                        <summary className="font-semibold text-[var(--text-bright)] select-none hover:text-[var(--primary)] transition-colors flex items-center justify-between">
+                          <span>Video Transcript (Inferno Ignite Presentation)</span>
+                          <span className="text-[0.7rem] uppercase text-[var(--primary)] font-mono">View Text</span>
+                        </summary>
+                        <div className="pt-3 mt-3 border-t border-[var(--border)] space-y-2 leading-relaxed">
+                          <p>
+                            &ldquo;Welcome to the Inferno Ignite Academic Scholarship presentation. The Inferno Group LLC is committed to investing in tomorrow&apos;s leaders across Greater Orlando.&rdquo;
+                          </p>
+                          <p>
+                            &ldquo;Through our Inferno Cares initiative, we provide essential coursework grants, book stipends, and academic support, empowering graduating high school seniors to achieve their educational and career goals. Service beyond the contract. The Inferno Group LLC.&rdquo;
+                          </p>
+                        </div>
+                      </details>
                     </div>
                   );
                 })()
@@ -1259,8 +1301,9 @@ export default function HomeClient() {
                 Open Positions &amp; Cadre Mobilization
               </h2>
               <p className="section-desc max-w-[650px] mt-2">
-                Recruiting corporate leaders, project managers, and deployable
-                response cadres across 12 active roles. Send resumes to{" "}
+                {openJobsCount > 0
+                  ? `Recruiting corporate leaders, project managers, and deployable response cadres across ${openJobsCount} active role${openJobsCount === 1 ? "" : "s"}. Send resumes to `
+                  : "Recruiting corporate leaders, project managers, and deployable response cadres for our emergency network. Send resumes to "}
                 <a
                   href="mailto:Jobs@theinfernogroup.com"
                   className="text-[var(--primary)] font-bold hover:underline"
@@ -1270,12 +1313,21 @@ export default function HomeClient() {
                 .
               </p>
             </div>
-            <Link
-              href="/careers"
-              className="btn btn-primary no-underline shrink-0"
-            >
-              View All 12 Openings
-            </Link>
+            {openJobsCount > 0 ? (
+              <Link
+                href="/careers"
+                className="btn btn-primary no-underline shrink-0"
+              >
+                View All {openJobsCount} Openings
+              </Link>
+            ) : (
+              <Link
+                href="/careers"
+                className="btn btn-primary no-underline shrink-0"
+              >
+                Join Our Talent Network
+              </Link>
+            )}
           </div>
 
           <div className="bg-[rgba(225,77,24,0.04)] border border-[var(--border)] rounded-2xl p-6 flex flex-col md:flex-row items-center justify-between gap-6">
@@ -1378,40 +1430,6 @@ export default function HomeClient() {
         </RevealOnMount>
       </section>
 
-      {/* TRASH DROP ZONE (APPEARS AT TOP WHEN DRAGGING QUIZ ICON) */}
-      <div
-        className={`fixed top-6 left-1/2 -translate-x-1/2 z-[2000] flex items-center gap-2.5 px-6 py-3 rounded-full transition-all duration-300 pointer-events-none ${
-          isDraggingQuiz && isQuizTriggerVisible
-            ? "opacity-100 translate-y-0 scale-100"
-            : "opacity-0 -translate-y-8 scale-90"
-        } ${
-          isHoveringTrash
-            ? "bg-red-600/90 text-white shadow-[0_0_30px_rgba(239,68,68,0.6)] scale-110 border-2 border-red-400"
-            : "bg-slate-900/85 backdrop-blur-xl text-white/90 border border-white/20 shadow-[0_10px_25px_rgba(0,0,0,0.3)]"
-        }`}
-      >
-        <svg
-          viewBox="0 0 24 24"
-          width="20"
-          height="20"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2.2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          className={`transition-transform duration-300 ${isHoveringTrash ? "rotate-12 scale-125" : ""}`}
-        >
-          <path d="M3 6h18" />
-          <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
-          <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
-          {isHoveringTrash && <line x1="10" y1="11" x2="10" y2="17" />}
-          {isHoveringTrash && <line x1="14" y1="11" x2="14" y2="17" />}
-        </svg>
-        <span className="font-semibold text-xs tracking-wider uppercase font-[family-name:var(--font-space-grotesk)]">
-          {isHoveringTrash ? "Release to Remove" : "Drag here to remove"}
-        </span>
-      </div>
-
       {/* ELIGIBILITY QUIZ TRIGGER ICON (SWIPABLE / DRAGGABLE) */}
       <div
         ref={quizRef}
@@ -1505,31 +1523,33 @@ export default function HomeClient() {
             setIsQuizTriggerVisible(false);
             setShowQuizTooltip(false);
           }}
-          className="absolute -top-[5px] -right-[5px] w-[22px] h-[22px] sm:w-[24px] sm:h-[24px] rounded-full bg-[var(--text-bright)] hover:bg-red-600 border border-[var(--border)] cursor-pointer flex items-center justify-center text-white shadow-[0_2px_10px_rgba(0,0,0,0.2)] p-0 transition-all duration-300 z-10 group"
-          aria-label="Remove quiz icon"
-          title="Remove quiz icon"
+          className="absolute -top-[5px] -right-[5px] w-[22px] h-[22px] sm:w-[24px] sm:h-[24px] rounded-full bg-[var(--text-bright)] hover:bg-zinc-700 border border-[var(--border)] cursor-pointer flex items-center justify-center text-white shadow-[0_2px_10px_rgba(0,0,0,0.2)] p-0 transition-all duration-300 z-10 group"
+          aria-label="Dismiss quiz prompt"
+          title="Dismiss quiz prompt"
         >
-          {/* Trash / Delete SVG Icon */}
+          {/* Close X SVG Icon */}
           <svg
-            width="11"
-            height="11"
+            width="10"
+            height="10"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
-            strokeWidth="2.2"
+            strokeWidth="2.5"
             strokeLinecap="round"
             strokeLinejoin="round"
             className="group-hover:scale-110 transition-transform"
           >
-            <path d="M3 6h18" />
-            <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
-            <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
           </svg>
         </button>
       </div>
 
       {/* ELIGIBILITY QUIZ CORNER POPUP (CHATBOT STYLE) */}
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Government Contractor Eligibility Assessment"
         style={
           quizPos.x !== null && quizPos.y !== null
             ? {

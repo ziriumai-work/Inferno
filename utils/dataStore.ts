@@ -782,8 +782,8 @@ const defaultAIInnovation: FeatureCard[] = [
   },
   {
     id: "ai-3",
-    title: "PII Compliant Gateways",
-    desc: "Encrypted workflows protecting survivor case files, resumes, and procurement records.",
+    title: "Secure Data Coordination",
+    desc: "Strict protocol-driven handling protecting survivor case files, resumes, and procurement records.",
     icon: "lock",
   },
 ];

@@ -69,7 +69,7 @@ function ContactFormInner() {
     setTimeout(() => {
       setIsSubmitting(false);
 
-      if (email === "fail@infernogroup.com") {
+      if (email === "fail@theinfernogroup.com") {
         setIsError(true);
         setErrorMessage(
           "Transmission Failed. Secure handshake could not be established with Inferno servers. Please verify your email and try again.",
@@ -429,10 +429,34 @@ export default function ContactPage() {
 
           {/* Right side: Form (Wrapped in Suspense) */}
           <RevealOnMount className={`reveal ${isMounted ? "active" : ""}`}>
+            <noscript>
+              <div className="contact-form-container bg-[var(--panel-dark)] border border-[var(--border)] rounded-2xl p-6 mb-6">
+                <h3 className="text-base font-bold text-[var(--text-bright)] mb-2">
+                  JavaScript Disabled
+                </h3>
+                <p className="text-xs text-[var(--text-muted)] leading-relaxed mb-4">
+                  To contact our operations, consulting, or teaming coordination desk directly, email us:
+                </p>
+                <a
+                  href="mailto:InfernoCares@theinfernogroup.com"
+                  className="btn btn-primary py-2 px-4 text-xs font-semibold no-underline inline-block"
+                >
+                  InfernoCares@theinfernogroup.com
+                </a>
+              </div>
+            </noscript>
             <Suspense
               fallback={
-                <div className="contact-form-container">
-                  Loading secure coordination form...
+                <div
+                  className="contact-form-container p-8 animate-pulse flex flex-col gap-4"
+                  aria-busy="true"
+                  aria-label="Loading coordination form"
+                >
+                  <div className="h-6 bg-white/5 rounded-md w-1/3"></div>
+                  <div className="h-10 bg-white/5 rounded-md w-full"></div>
+                  <div className="h-10 bg-white/5 rounded-md w-full"></div>
+                  <div className="h-28 bg-white/5 rounded-md w-full"></div>
+                  <div className="h-10 bg-[var(--primary)]/20 rounded-md w-1/2"></div>
                 </div>
               }
             >

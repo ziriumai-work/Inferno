@@ -1,10 +1,13 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import RevealOnMount from "@/components/RevealOnMount";
 import { partnerCardsData, PartnerCard } from "@/lib/partnerCardsData";
+import { rawMockContracts, getSolicitationStatus } from "@/lib/contractsData";
 
-export default function PartnershipsPage() {
+function PartnershipsContent() {
+  const searchParams = useSearchParams();
   const [isMounted, setIsMounted] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const partnerCards: PartnerCard[] = partnerCardsData;
@@ -19,8 +22,16 @@ export default function PartnershipsPage() {
   const [partnerType, setPartnerType] = useState("");
   const [certStatus, setCertStatus] = useState("");
   const [bondingCapacity, setBondingCapacity] = useState("");
+  const [solicitation, setSolicitation] = useState("");
   const [message, setMessage] = useState("");
+  const [honeypot, setHoneypot] = useState("");
 
+  const [solicitationNotice, setSolicitationNotice] = useState<{
+    closed: boolean;
+    deadline: string;
+  } | null>(null);
+
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
 
@@ -41,8 +52,68 @@ export default function PartnershipsPage() {
     };
   }, []);
 
+  // Check URL query parameters for ?solicitation=<id>
+  useEffect(() => {
+    const solParam = searchParams.get("solicitation");
+    if (solParam) {
+      setSolicitation(solParam);
+      setIsModalOpen(true);
+
+      // Check if solicitation is closed
+      const matched = rawMockContracts.find(
+        (c) => c.solicitation.toLowerCase() === solParam.toLowerCase(),
+      );
+      if (matched) {
+        const statusResult = getSolicitationStatus(matched.deadline);
+        if (statusResult.status === "closed" || statusResult.isPast) {
+          setSolicitationNotice({
+            closed: true,
+            deadline: matched.deadline,
+          });
+        }
+      }
+    }
+  }, [searchParams]);
+
+  const validateForm = () => {
+    const errs: Record<string, string> = {};
+    if (!company.trim()) errs.company = "Company Legal Name is required";
+    if (!contactName.trim()) errs.contactName = "Point of Contact is required";
+    if (!email.trim()) {
+      errs.email = "Work Email is required";
+    } else if (!/[^@\s]+@[^@\s]+\.[^@\s]{2,}/.test(email)) {
+      errs.email = "Please provide a valid work email address";
+    }
+    if (!naics.trim()) {
+      errs.naics = "Primary 6-digit NAICS code is required";
+    } else if (!/^[0-9]{6}$/.test(naics)) {
+      errs.naics = "NAICS code must be exactly 6 digits";
+    }
+    if (uei && !/^[A-Za-z0-9]{5,12}$/.test(uei)) {
+      errs.uei = "UEI / CAGE must be 5 to 12 alphanumeric characters";
+    }
+    if (!partnerType) errs.partnerType = "Please select a teaming arrangement interest";
+    if (!certStatus) errs.certStatus = "Please select a socioeconomic status";
+    if (!message.trim()) errs.message = "Summary of capabilities is required";
+    return errs;
+  };
+
   const handlePartnerSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Honeypot anti-spam check
+    if (honeypot) {
+      setIsSubmitting(false);
+      setIsSuccess(true);
+      return;
+    }
+
+    const validationErrors = validateForm();
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -60,11 +131,15 @@ export default function PartnershipsPage() {
           phone,
           uei,
           naics,
-          service: "Teaming & Partnerships",
+          service: solicitation
+            ? `Teaming & Partnerships (${solicitation})`
+            : "Teaming & Partnerships",
           partnerType,
           certStatus,
           bondingCapacity,
+          solicitation,
           message,
+          _hp_company_verification: honeypot,
         }),
       });
     } catch (err) {
@@ -86,7 +161,9 @@ export default function PartnershipsPage() {
       setPartnerType("");
       setCertStatus("");
       setBondingCapacity("");
+      setSolicitation("");
       setMessage("");
+      setErrors({});
     }, 1500);
   };
 
@@ -449,8 +526,13 @@ export default function PartnershipsPage() {
       </section>
 
       {/* Partner Application Modal */}
-      <div className={`modal-overlay ${isModalOpen ? "show" : ""}`}>
-        <div className="modal-content contact-form-container p-8 md:p-10 max-w-[620px]">
+      <div
+        className={`modal-overlay ${isModalOpen ? "show" : ""}`}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="partner-modal-title"
+      >
+        <div className="modal-content contact-form-container p-6 md:p-8 max-w-[660px] max-h-[92vh] overflow-y-auto">
           <button
             className="modal-close"
             onClick={() => setIsModalOpen(false)}
@@ -472,14 +554,14 @@ export default function PartnershipsPage() {
           </button>
 
           {isSuccess ? (
-            <div className="flex flex-col items-center justify-center h-full py-8">
-              <div className="success-icon-wrapper">
-                <svg viewBox="0 0 24 24">
+            <div className="flex flex-col items-center justify-center h-full py-8 text-center">
+              <div className="success-icon-wrapper mb-3">
+                <svg viewBox="0 0 24 24" className="w-8 h-8 text-emerald-400">
                   <polyline points="20 6 9 17 4 12"></polyline>
                 </svg>
               </div>
-              <h3>Teaming Profile Registered</h3>
-              <p className="text-center text-[var(--text-muted)] text-[0.95rem] mt-2">
+              <h3 className="text-xl font-bold text-white mb-2">Teaming Profile Registered</h3>
+              <p className="text-center text-[var(--text-muted)] text-[0.95rem]">
                 Your partnership profile has been transmitted to our Partner
                 Relations team. We will review your capabilities and connect
                 within 1–2 business days.
@@ -487,20 +569,68 @@ export default function PartnershipsPage() {
             </div>
           ) : (
             <>
-              <h3 className="font-[family-name:var(--font-space-grotesk)] text-[1.4rem] font-bold mb-1">
+              <h3
+                id="partner-modal-title"
+                className="font-[family-name:var(--font-space-grotesk)] text-[1.4rem] font-bold mb-1"
+              >
                 Partner &amp; Subcontractor Registration
               </h3>
-              <p className="text-[var(--text-muted)] text-[0.82rem] mb-6">
+              <p className="text-[var(--text-muted)] text-[0.82rem] mb-4">
                 Register your organization to explore subcontracting, supplier,
                 and joint-pursuit teaming opportunities with The Inferno Group
                 LLC.
               </p>
 
+              {/* Solicitation Closed Banner */}
+              {solicitationNotice && (
+                <div
+                  className="mb-5 p-3.5 rounded-lg border text-xs leading-relaxed flex items-start gap-2.5 bg-amber-500/10 border-amber-500/30 text-amber-200"
+                  role="status"
+                >
+                  <svg
+                    className="w-4 h-4 shrink-0 text-amber-400 mt-0.5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                    />
+                  </svg>
+                  <div>
+                    This solicitation closed on{" "}
+                    <strong>{solicitationNotice.deadline}</strong>. You can still
+                    register your capability for future opportunities.
+                  </div>
+                </div>
+              )}
+
               <form
                 onSubmit={handlePartnerSubmit}
-                className="flex flex-col gap-4"
+                className="flex flex-col gap-4 text-left"
+                noValidate
               >
-                <div className="form-grid-2">
+                {/* Honeypot field for anti-spam */}
+                <input
+                  type="text"
+                  name="_hp_company_verification"
+                  value={honeypot}
+                  onChange={(e) => setHoneypot(e.target.value)}
+                  style={{ display: "none" }}
+                  tabIndex={-1}
+                  autoComplete="off"
+                  aria-hidden="true"
+                />
+
+                {/* Fieldset 1: Company details */}
+                <fieldset className="border border-[var(--border)] rounded-xl p-4 flex flex-col gap-3">
+                  <legend className="text-xs font-bold text-[var(--primary)] uppercase tracking-wider px-2">
+                    Company details
+                  </legend>
+
                   <div className="form-group m-0">
                     <input
                       type="text"
@@ -508,13 +638,86 @@ export default function PartnershipsPage() {
                       className="form-input"
                       placeholder=" "
                       value={company}
-                      onChange={(e) => setCompany(e.target.value)}
+                      onChange={(e) => {
+                        setCompany(e.target.value);
+                        if (errors.company) setErrors((prev) => ({ ...prev, company: "" }));
+                      }}
+                      aria-invalid={!!errors.company}
+                      aria-describedby={errors.company ? "partner-company-error" : undefined}
                       required
                     />
                     <label htmlFor="partner-company" className="form-label">
-                      Company Legal Name
+                      Company Legal Name *
                     </label>
+                    {errors.company && (
+                      <span id="partner-company-error" className="text-xs text-red-400 mt-1 block" role="alert">
+                        {errors.company}
+                      </span>
+                    )}
                   </div>
+
+                  <div className="form-grid-2">
+                    <div className="form-group m-0">
+                      <input
+                        type="text"
+                        id="partner-uei"
+                        className="form-input uppercase"
+                        placeholder=" "
+                        value={uei}
+                        onChange={(e) => {
+                          setUei(e.target.value.toUpperCase());
+                          if (errors.uei) setErrors((prev) => ({ ...prev, uei: "" }));
+                        }}
+                        maxLength={12}
+                        pattern="[A-Za-z0-9]{5,12}"
+                        aria-invalid={!!errors.uei}
+                        aria-describedby={errors.uei ? "partner-uei-error" : undefined}
+                      />
+                      <label htmlFor="partner-uei" className="form-label">
+                        Unique Entity ID (UEI / CAGE)
+                      </label>
+                      {errors.uei && (
+                        <span id="partner-uei-error" className="text-xs text-red-400 mt-1 block" role="alert">
+                          {errors.uei}
+                        </span>
+                      )}
+                    </div>
+                    <div className="form-group m-0">
+                      <input
+                        type="text"
+                        id="partner-naics"
+                        className="form-input"
+                        placeholder=" "
+                        value={naics}
+                        onChange={(e) => {
+                          setNaics(e.target.value);
+                          if (errors.naics) setErrors((prev) => ({ ...prev, naics: "" }));
+                        }}
+                        maxLength={6}
+                        pattern="[0-9]{6}"
+                        inputMode="numeric"
+                        aria-invalid={!!errors.naics}
+                        aria-describedby={errors.naics ? "partner-naics-error" : undefined}
+                        required
+                      />
+                      <label htmlFor="partner-naics" className="form-label">
+                        Primary NAICS (e.g. 541611) *
+                      </label>
+                      {errors.naics && (
+                        <span id="partner-naics-error" className="text-xs text-red-400 mt-1 block" role="alert">
+                          {errors.naics}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </fieldset>
+
+                {/* Fieldset 2: Point of contact */}
+                <fieldset className="border border-[var(--border)] rounded-xl p-4 flex flex-col gap-3">
+                  <legend className="text-xs font-bold text-[var(--primary)] uppercase tracking-wider px-2">
+                    Point of contact
+                  </legend>
+
                   <div className="form-group m-0">
                     <input
                       type="text"
@@ -522,186 +725,217 @@ export default function PartnershipsPage() {
                       className="form-input"
                       placeholder=" "
                       value={contactName}
-                      onChange={(e) => setContactName(e.target.value)}
+                      onChange={(e) => {
+                        setContactName(e.target.value);
+                        if (errors.contactName) setErrors((prev) => ({ ...prev, contactName: "" }));
+                      }}
+                      aria-invalid={!!errors.contactName}
+                      aria-describedby={errors.contactName ? "partner-contact-error" : undefined}
                       required
                     />
                     <label htmlFor="partner-contact" className="form-label">
-                      Point of Contact
+                      Point of Contact *
                     </label>
+                    {errors.contactName && (
+                      <span id="partner-contact-error" className="text-xs text-red-400 mt-1 block" role="alert">
+                        {errors.contactName}
+                      </span>
+                    )}
                   </div>
-                </div>
 
-                <div className="form-grid-2">
-                  <div className="form-group m-0">
-                    <input
-                      type="email"
-                      id="partner-email"
-                      className="form-input"
-                      placeholder=" "
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      pattern="[^@\s]+@[^@\s]+\.[^@\s]{2,}"
-                      title="Please provide a valid email address (e.g. name@company.com)"
-                      required
-                    />
-                    <label htmlFor="partner-email" className="form-label">
-                      Work Email
-                    </label>
+                  <div className="form-grid-2">
+                    <div className="form-group m-0">
+                      <input
+                        type="email"
+                        id="partner-email"
+                        className="form-input"
+                        placeholder=" "
+                        value={email}
+                        onChange={(e) => {
+                          setEmail(e.target.value);
+                          if (errors.email) setErrors((prev) => ({ ...prev, email: "" }));
+                        }}
+                        aria-invalid={!!errors.email}
+                        aria-describedby={errors.email ? "partner-email-error" : undefined}
+                        required
+                      />
+                      <label htmlFor="partner-email" className="form-label">
+                        Work Email *
+                      </label>
+                      {errors.email && (
+                        <span id="partner-email-error" className="text-xs text-red-400 mt-1 block" role="alert">
+                          {errors.email}
+                        </span>
+                      )}
+                    </div>
+                    <div className="form-group m-0">
+                      <input
+                        type="tel"
+                        id="partner-phone"
+                        className="form-input"
+                        placeholder=" "
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
+                        pattern="^\+?[0-9\s\-\(\)]{7,15}$"
+                        inputMode="tel"
+                      />
+                      <label htmlFor="partner-phone" className="form-label">
+                        Phone Number (Optional)
+                      </label>
+                    </div>
                   </div>
-                  <div className="form-group m-0">
-                    <input
-                      type="tel"
-                      id="partner-phone"
-                      className="form-input"
-                      placeholder=" "
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      pattern="^\+?[0-9\s\-\(\)]{7,15}$"
-                      inputMode="tel"
-                      title="Please provide a valid phone number"
-                    />
-                    <label htmlFor="partner-phone" className="form-label">
-                      Phone Number (Optional)
-                    </label>
-                  </div>
-                </div>
+                </fieldset>
 
-                <div className="form-grid-2">
+                {/* Fieldset 3: Capabilities & past performance */}
+                <fieldset className="border border-[var(--border)] rounded-xl p-4 flex flex-col gap-3">
+                  <legend className="text-xs font-bold text-[var(--primary)] uppercase tracking-wider px-2">
+                    Capabilities &amp; past performance
+                  </legend>
+
                   <div className="form-group m-0">
                     <input
                       type="text"
-                      id="partner-uei"
-                      className="form-input uppercase"
-                      placeholder=" "
-                      value={uei}
-                      onChange={(e) => setUei(e.target.value.toUpperCase())}
-                      maxLength={12}
-                      pattern="[A-Za-z0-9]{5,12}"
-                      title="12-character alphanumeric Unique Entity ID or 5-character CAGE code"
-                    />
-                    <label htmlFor="partner-uei" className="form-label">
-                      Unique Entity ID (UEI / CAGE)
-                    </label>
-                  </div>
-                  <div className="form-group m-0">
-                    <input
-                      type="text"
-                      id="partner-naics"
+                      id="partner-solicitation"
                       className="form-input"
                       placeholder=" "
-                      value={naics}
-                      onChange={(e) => setNaics(e.target.value)}
-                      maxLength={6}
-                      pattern="[0-9]{6}"
-                      inputMode="numeric"
-                      title="Primary 6-digit NAICS code (e.g. 541611)"
-                      required
+                      value={solicitation}
+                      onChange={(e) => setSolicitation(e.target.value)}
                     />
-                    <label htmlFor="partner-naics" className="form-label">
-                      Primary NAICS (e.g. 541611, 561210)
+                    <label htmlFor="partner-solicitation" className="form-label">
+                      Target Solicitation / Contract ID (Optional)
                     </label>
                   </div>
-                </div>
 
-                <div className="form-grid-2">
+                  <div className="form-grid-2">
+                    <div className="form-group m-0">
+                      <select
+                        id="partner-type"
+                        className="form-input form-select"
+                        value={partnerType}
+                        onChange={(e) => {
+                          setPartnerType(e.target.value);
+                          if (errors.partnerType) setErrors((prev) => ({ ...prev, partnerType: "" }));
+                        }}
+                        aria-invalid={!!errors.partnerType}
+                        aria-describedby={errors.partnerType ? "partner-type-error" : undefined}
+                        required
+                      >
+                        <option value="" disabled hidden></option>
+                        <option value="sub">
+                          Subcontractor (Specialty Trade / Scope)
+                        </option>
+                        <option value="prime">Prime Contractor Teaming</option>
+                        <option value="supplier">Supplier / Distributor</option>
+                        <option value="emergency">
+                          Emergency Response Vendor Network
+                        </option>
+                        <option value="consulting">
+                          Professional Consulting / Advisory
+                        </option>
+                        <option value="logistics">
+                          Logistics &amp; Transportation
+                        </option>
+                      </select>
+                      <label htmlFor="partner-type" className="form-label">
+                        Teaming Arrangement Interest *
+                      </label>
+                      {errors.partnerType && (
+                        <span id="partner-type-error" className="text-xs text-red-400 mt-1 block" role="alert">
+                          {errors.partnerType}
+                        </span>
+                      )}
+                    </div>
+                    <div className="form-group m-0">
+                      <select
+                        id="partner-certs"
+                        className="form-input form-select"
+                        value={certStatus}
+                        onChange={(e) => {
+                          setCertStatus(e.target.value);
+                          if (errors.certStatus) setErrors((prev) => ({ ...prev, certStatus: "" }));
+                        }}
+                        aria-invalid={!!errors.certStatus}
+                        aria-describedby={errors.certStatus ? "partner-certs-error" : undefined}
+                        required
+                      >
+                        <option value="" disabled hidden></option>
+                        <option value="hubzone">HUBZone Certified</option>
+                        <option value="vosb">
+                          Veteran-Owned Small Business (VOSB/SDVOSB)
+                        </option>
+                        <option value="wosb">Women-Owned (WOSB / EDWOSB)</option>
+                        <option value="8a">SBA 8(a) / Small Disadvantaged</option>
+                        <option value="mbe-dbe">
+                          Minority / DBE / SBE Certified
+                        </option>
+                        <option value="small">
+                          Small Business (Self-Certified)
+                        </option>
+                        <option value="commercial">
+                          Commercial / Large Business
+                        </option>
+                      </select>
+                      <label htmlFor="partner-certs" className="form-label">
+                        Socioeconomic Status *
+                      </label>
+                      {errors.certStatus && (
+                        <span id="partner-certs-error" className="text-xs text-red-400 mt-1 block" role="alert">
+                          {errors.certStatus}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
                   <div className="form-group m-0">
                     <select
-                      id="partner-type"
+                      id="partner-bonding"
                       className="form-input form-select"
-                      value={partnerType}
-                      onChange={(e) => setPartnerType(e.target.value)}
-                      required
+                      value={bondingCapacity}
+                      onChange={(e) => setBondingCapacity(e.target.value)}
                     >
                       <option value="" disabled hidden></option>
-                      <option value="sub">
-                        Subcontractor (Specialty Trade / Scope)
+                      <option value="none">
+                        No Bonding Currently Established
                       </option>
-                      <option value="prime">Prime Contractor Teaming</option>
-                      <option value="supplier">Supplier / Distributor</option>
-                      <option value="emergency">
-                        Emergency Response Vendor Network
+                      <option value="under500k">
+                        Under $500K Single Project
                       </option>
-                      <option value="consulting">
-                        Professional Consulting / Advisory
-                      </option>
-                      <option value="logistics">
-                        Logistics &amp; Transportation
+                      <option value="500k-2m">$500K – $2 Million</option>
+                      <option value="2m-10m">$2 Million – $10 Million</option>
+                      <option value="over10m">
+                        $10 Million+ Aggregate Capacity
                       </option>
                     </select>
-                    <label htmlFor="partner-type" className="form-label">
-                      Teaming Arrangement Interest
+                    <label htmlFor="partner-bonding" className="form-label">
+                      Bonding Capacity Range (If Applicable)
                     </label>
                   </div>
+
                   <div className="form-group m-0">
-                    <select
-                      id="partner-certs"
-                      className="form-input form-select"
-                      value={certStatus}
-                      onChange={(e) => setCertStatus(e.target.value)}
+                    <textarea
+                      id="partner-msg"
+                      className="form-input"
+                      rows={3}
+                      placeholder=" "
+                      value={message}
+                      onChange={(e) => {
+                        setMessage(e.target.value);
+                        if (errors.message) setErrors((prev) => ({ ...prev, message: "" }));
+                      }}
+                      aria-invalid={!!errors.message}
+                      aria-describedby={errors.message ? "partner-msg-error" : undefined}
                       required
-                    >
-                      <option value="" disabled hidden></option>
-                      <option value="hubzone">HUBZone Certified</option>
-                      <option value="vosb">
-                        Veteran-Owned Small Business (VOSB/SDVOSB)
-                      </option>
-                      <option value="wosb">Women-Owned (WOSB / EDWOSB)</option>
-                      <option value="8a">SBA 8(a) / Small Disadvantaged</option>
-                      <option value="mbe-dbe">
-                        Minority / DBE / SBE Certified
-                      </option>
-                      <option value="small">
-                        Small Business (Self-Certified)
-                      </option>
-                      <option value="commercial">
-                        Commercial / Large Business
-                      </option>
-                    </select>
-                    <label htmlFor="partner-certs" className="form-label">
-                      Socioeconomic Status
+                    ></textarea>
+                    <label htmlFor="partner-msg" className="form-label">
+                      Summary of Capabilities, Geographic Reach &amp; Past Work *
                     </label>
+                    {errors.message && (
+                      <span id="partner-msg-error" className="text-xs text-red-400 mt-1 block" role="alert">
+                        {errors.message}
+                      </span>
+                    )}
                   </div>
-                </div>
-
-                <div className="form-group m-0">
-                  <select
-                    id="partner-bonding"
-                    className="form-input form-select"
-                    value={bondingCapacity}
-                    onChange={(e) => setBondingCapacity(e.target.value)}
-                  >
-                    <option value="" disabled hidden></option>
-                    <option value="none">
-                      No Bonding Currently Established
-                    </option>
-                    <option value="under500k">
-                      Under $500K Single Project
-                    </option>
-                    <option value="500k-2m">$500K – $2 Million</option>
-                    <option value="2m-10m">$2 Million – $10 Million</option>
-                    <option value="over10m">
-                      $10 Million+ Aggregate Capacity
-                    </option>
-                  </select>
-                  <label htmlFor="partner-bonding" className="form-label">
-                    Bonding Capacity Range (If Applicable)
-                  </label>
-                </div>
-
-                <div className="form-group m-0">
-                  <textarea
-                    id="partner-msg"
-                    className="form-input"
-                    rows={3}
-                    placeholder=" "
-                    value={message}
-                    onChange={(e) => setMessage(e.target.value)}
-                    required
-                  ></textarea>
-                  <label htmlFor="partner-msg" className="form-label">
-                    Summary of Capabilities, Geographic Reach &amp; Past Work
-                  </label>
-                </div>
+                </fieldset>
 
                 <button
                   type="submit"
@@ -765,5 +999,22 @@ export default function PartnershipsPage() {
         }
       `}</style>
     </div>
+  );
+}
+
+export default function PartnershipsPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="py-24 text-center">
+          <div className="animate-pulse flex flex-col items-center">
+            <div className="h-8 bg-slate-800 rounded w-64 mb-4"></div>
+            <div className="h-4 bg-slate-800 rounded w-96"></div>
+          </div>
+        </div>
+      }
+    >
+      <PartnershipsContent />
+    </Suspense>
   );
 }

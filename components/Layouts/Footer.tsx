@@ -155,10 +155,16 @@ export default function Footer() {
       </div>
 
       <div className="footer-bottom">
-        <div className="footer-copy">
-          &copy; {new Date().getFullYear()} {settings?.companyName || "The Inferno Group LLC"}. All rights reserved. &middot;{" "}
-          <Link href="/privacy">Privacy Policy</Link> &middot;{" "}
+        <div className="footer-copy flex flex-wrap items-center justify-center gap-x-2 gap-y-1">
+          <span>&copy; {new Date().getFullYear()} {settings?.companyName || "The Inferno Group LLC"}. All rights reserved.</span>
+          <span>&middot;</span>
+          <Link href="/privacy">Privacy Policy</Link>
+          <span>&middot;</span>
+          <Link href="/terms">Terms of Use</Link>
+          <span>&middot;</span>
           <Link href="/conduct">Standards of Conduct</Link>
+          <span>&middot;</span>
+          <Link href="/accessibility">Accessibility</Link>
         </div>
         <div className="footer-disclaimer">
           Government Advisory Specialists &nbsp;&middot;&nbsp; Emergency

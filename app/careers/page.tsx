@@ -32,7 +32,9 @@ const generalCadreJob: Job = {
 };
 
 export default function CareersPage() {
-  const [jobs, setJobs] = useState<Job[]>([]);
+  const [jobs, setJobs] = useState<Job[]>(() =>
+    dataStore.getJobs().filter((j) => j.status === "published")
+  );
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedDept, setSelectedDept] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
@@ -147,6 +149,24 @@ export default function CareersPage() {
           </div>
         </div>
 
+        {/* NoScript Fallback */}
+        <noscript>
+          <div className="bg-[var(--panel-dark)] border border-[var(--border)] rounded-2xl p-6 mb-8 text-center max-w-[850px] mx-auto">
+            <h3 className="text-base font-bold text-[var(--text-bright)] mb-2">
+              Join The Inferno Group Talent Network
+            </h3>
+            <p className="text-xs text-[var(--text-muted)] max-w-[600px] mx-auto mb-4 leading-relaxed">
+              To apply for open disaster recovery positions or submit your credentials for our deployable cadre without JavaScript, email your resume and cover letter directly to our recruiting desk:
+            </p>
+            <a
+              href="mailto:InfernoCares@theinfernogroup.com"
+              className="btn btn-primary py-2 px-6 text-xs font-semibold no-underline inline-block"
+            >
+              Email Resume to InfernoCares@theinfernogroup.com
+            </a>
+          </div>
+        </noscript>
+
         {/* Jobs Listing */}
         <div
           className={`faq-container reveal flex flex-col gap-8 ${isMounted ? "active" : ""}`}
@@ -223,9 +243,33 @@ export default function CareersPage() {
                 </p>
               </div>
             ))
+          ) : jobs.length === 0 ? (
+            <div className="text-center p-12 sm:p-16 text-[var(--text-muted)] bg-[var(--panel-dark)] border border-[var(--border)] rounded-2xl flex flex-col items-center gap-3">
+              <h4 className="text-base font-bold text-[var(--text-bright)]">
+                No Open Positions Currently Posted
+              </h4>
+              <p className="text-xs max-w-[500px]">
+                We are actively screening pre-qualified talent for upcoming federal surge deployments. Please submit an application to our General Cadre below.
+              </p>
+            </div>
           ) : (
-            <div className="text-center p-16 text-[var(--text-muted)] bg-[var(--panel-dark)] border border-[var(--border)] rounded-2xl">
-              No careers currently open match your filter parameters.
+            <div className="text-center p-12 sm:p-16 text-[var(--text-muted)] bg-[var(--panel-dark)] border border-[var(--border)] rounded-2xl flex flex-col items-center gap-3">
+              <h4 className="text-base font-bold text-[var(--text-bright)]">
+                No Openings Match Your Filters
+              </h4>
+              <p className="text-xs max-w-[500px]">
+                Try selecting &ldquo;All Departments&rdquo; or clearing your search term to see all {jobs.length} available opportunities.
+              </p>
+              <button
+                onClick={() => {
+                  setSearchQuery("");
+                  setSelectedDept("all");
+                  setCurrentPage(1);
+                }}
+                className="btn btn-secondary py-1.5 px-4 text-xs mt-2"
+              >
+                Reset Filters
+              </button>
             </div>
           )}
         </div>

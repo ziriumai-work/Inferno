@@ -7,7 +7,7 @@ const securityHeaders = [
   },
   {
     key: "Strict-Transport-Security",
-    value: "max-age=63072000; includeSubDomains; preload",
+    value: "max-age=31536000; includeSubDomains",
   },
   {
     key: "X-Frame-Options",
@@ -23,7 +23,7 @@ const securityHeaders = [
   },
   {
     key: "Permissions-Policy",
-    value: "camera=(), microphone=(), geolocation=(), browsing-topics=()",
+    value: "camera=(), microphone=(), geolocation=()",
   },
   {
     key: "Cross-Origin-Opener-Policy",
@@ -37,12 +37,12 @@ const securityHeaders = [
     key: "Content-Security-Policy",
     value: [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.supabase.co https://unpkg.com https://cdn.jsdelivr.net",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.supabase.co https://challenges.cloudflare.com https://unpkg.com https://cdn.jsdelivr.net",
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com",
       "font-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com data:",
-      "img-src 'self' data: blob: https:",
-      "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://www.nhc.noaa.gov",
-      "frame-src 'self' https://www.google.com https://maps.google.com",
+      "img-src 'self' data: blob: https: https://*.tile.openstreetmap.org",
+      "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://www.nhc.noaa.gov https://*.weather.gov https://*.tile.openstreetmap.org https://api.sam.gov https://challenges.cloudflare.com",
+      "frame-src 'self' https://challenges.cloudflare.com https://www.google.com https://maps.google.com",
       "frame-ancestors 'none'",
       "object-src 'none'",
       "base-uri 'self'",
@@ -68,11 +68,44 @@ const nextConfig: NextConfig = {
     optimizePackageImports: ["@supabase/supabase-js"],
   },
   allowedDevOrigins: ["192.168.1.212", "http://localhost:3001"],
+  async redirects() {
+    return [
+      {
+        source: "/capabilities.pdf",
+        destination: "/documents/The_Inferno_Group_LLC_Capability_Statement.pdf",
+        permanent: true,
+      },
+      {
+        source: "/capability_statement.pdf",
+        destination: "/documents/The_Inferno_Group_LLC_Capability_Statement.pdf",
+        permanent: true,
+      },
+      {
+        source: "/capability-statement.pdf",
+        destination: "/documents/The_Inferno_Group_LLC_Capability_Statement.pdf",
+        permanent: true,
+      },
+      {
+        source: "/capability-statement",
+        destination: "/capabilities/statement",
+        permanent: true,
+      },
+    ];
+  },
   async headers() {
     return [
       {
         source: "/:path*",
         headers: securityHeaders,
+      },
+      {
+        source: "/api/:path*",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "no-store, max-age=0, must-revalidate",
+          },
+        ],
       },
       {
         source: "/:all*(svg|jpg|jpeg|png|webp|avif|mp4|ico)",

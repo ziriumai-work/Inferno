@@ -44,7 +44,7 @@ export async function sendBookingConfirmation(
     process.env.RESEND_FROM_EMAIL ||
     "The Inferno Group <onboarding@resend.dev>";
   const adminNotificationEmail =
-    process.env.ADMIN_NOTIFICATION_EMAIL || "operations@infernogroup.com";
+    process.env.ADMIN_NOTIFICATION_EMAIL || "operations@theinfernogroup.com";
 
   const meetingTitle =
     CONSULT_TYPE_NAMES[params.meetingType] || "Operations Review Consultation";

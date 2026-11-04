@@ -14,9 +14,13 @@ import {
 
 export default function AboutClient() {
   const [isMounted, setIsMounted] = useState(false);
-  const [about, setAbout] = useState<AboutData | null>(null);
-  const [team, setTeam] = useState<TeamMember[]>([]);
-  const [stories, setStories] = useState<CommunityStory[]>([]);
+  const [about, setAbout] = useState<AboutData>(() => dataStore.getAbout());
+  const [team, setTeam] = useState<TeamMember[]>(() =>
+    dataStore.getTeam().filter((t) => t.status === "published")
+  );
+  const [stories, setStories] = useState<CommunityStory[]>(() =>
+    dataStore.getCommunityStories().filter((s) => s.status === "published")
+  );
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
   const [selectedStoryPhotos, setSelectedStoryPhotos] = useState<Record<string, number>>({});
 
@@ -52,14 +56,6 @@ export default function AboutClient() {
     setCopiedCode(label);
     setTimeout(() => setCopiedCode(null), 2500);
   };
-
-  if (!isMounted || !about) {
-    return (
-      <div className="page-view block text-center py-24 px-8">
-        <h2>Loading Intelligence...</h2>
-      </div>
-    );
-  }
 
   // Helper to map icon names to SVGs
   const getIconSvg = (iconName: string) => {

@@ -6,14 +6,15 @@ import TrackerAlert from "@/components/TrackerAlert";
 import CMSRealtimeProvider from "@/components/CMSRealtimeProvider";
 import "./globals.css";
 
+import { SITE_URL, corporateJsonLd } from "@/lib/seoConfig";
+
 const Chatbot = dynamic(() => import("@/components/Chatbot"));
 
 export const metadata: Metadata = {
-  metadataBase: new URL(
-    process.env.NEXT_PUBLIC_SITE_URL || "https://theinfernogroup.com",
-  ),
+  metadataBase: new URL(SITE_URL),
   title: "The Inferno Group LLC | Government Consulting & Emergency Management Services",
-  description: "The Inferno Group LLC is a premier government consulting firm specializing in Emergency Management, disaster recovery, public & individual assistance, SAM.gov registration, and strategic business development.",
+  description:
+    "The Inferno Group LLC is a HUBZone and Veteran-Owned government consulting firm specializing in Emergency Management, disaster recovery, public & individual assistance, and strategic public sector execution.",
 };
 
 export default function RootLayout({
@@ -37,6 +38,10 @@ export default function RootLayout({
         <link
           href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Outfit:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap"
           rel="stylesheet"
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(corporateJsonLd) }}
         />
       </head>
       {/* Body/html presentation stays in globals.css. These carried Tailwind

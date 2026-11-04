@@ -3,21 +3,30 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import RevealOnMount from "@/components/RevealOnMount";
-import { contractsData } from "@/lib/contractsData";
+import {
+  contractsData,
+  rawMockContracts,
+  getSolicitationStatus,
+} from "@/lib/contractsData";
 import { dataStore } from "@/utils/dataStore";
 
 export default function ContractsPage() {
   const [isMounted, setIsMounted] = useState(false);
-  const [contracts, setContracts] = useState<Contract[]>(contractsData);
+  // In dev/test use rawMockContracts so user/QA can inspect behavior; in prod use contractsData
+  const initialData =
+    process.env.NODE_ENV === "production" ? contractsData : rawMockContracts;
+  const [contracts, setContracts] = useState<Contract[]>(initialData);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedNaics, setSelectedNaics] = useState("all");
+  const [showClosed, setShowClosed] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [lastRefreshed, setLastRefreshed] = useState<string>("");
+  const [lastRefreshedDate, setLastRefreshedDate] = useState<Date>(new Date());
+  const [relativeTime, setRelativeTime] = useState("just now");
 
   // Teaming / Review Modal State
   const [selectedContract, setSelectedContract] = useState<Contract | null>(
-    null,
+    null
   );
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [partnerCompany, setPartnerCompany] = useState("");
@@ -30,16 +39,42 @@ export default function ContractsPage() {
 
   const itemsPerPage = 4;
 
+  const updateRelativeTime = (date: Date) => {
+    const seconds = Math.floor((new Date().getTime() - date.getTime()) / 1000);
+    if (seconds < 30) {
+      setRelativeTime("just now");
+    } else if (seconds < 60) {
+      setRelativeTime(`${seconds} seconds ago`);
+    } else if (seconds < 3600) {
+      const mins = Math.floor(seconds / 60);
+      setRelativeTime(`${mins} ${mins === 1 ? "minute" : "minutes"} ago`);
+    } else {
+      setRelativeTime(date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }));
+    }
+  };
+
   useEffect(() => {
     const refreshContracts = () => {
-      setContracts(dataStore.getContracts());
-      setLastRefreshed(new Date().toLocaleTimeString());
+      const stored = dataStore.getContracts();
+      // Ensure we don't present mock items as active
+      if (stored && stored.length > 0) {
+        setContracts(stored);
+      } else {
+        setContracts(process.env.NODE_ENV === "production" ? [] : rawMockContracts);
+      }
+      const now = new Date();
+      setLastRefreshedDate(now);
+      updateRelativeTime(now);
     };
 
     refreshContracts();
     const timer = setTimeout(() => {
       setIsMounted(true);
     }, 50);
+
+    const interval = setInterval(() => {
+      updateRelativeTime(lastRefreshedDate);
+    }, 15000);
 
     window.addEventListener("storage", refreshContracts);
     window.addEventListener("cms-update", refreshContracts);
@@ -48,15 +83,31 @@ export default function ContractsPage() {
       window.removeEventListener("storage", refreshContracts);
       window.removeEventListener("cms-update", refreshContracts);
       clearTimeout(timer);
+      clearInterval(interval);
     };
-  }, []);
+  }, [lastRefreshedDate]);
 
-  const handleRefresh = () => {
+  const handleRefresh = async () => {
     setIsRefreshing(true);
-    setTimeout(() => {
-      setIsRefreshing(false);
-      setLastRefreshed(new Date().toLocaleTimeString());
-    }, 1200);
+    try {
+      // Check SAM.gov opportunities stub/API route
+      const res = await fetch("/api/sam-gov/opportunities");
+      if (res.ok) {
+        const json = await res.json();
+        if (json.opportunities && Array.isArray(json.opportunities) && json.opportunities.length > 0) {
+          setContracts(json.opportunities);
+        }
+      }
+    } catch {
+      // Fallback silently
+    } finally {
+      setTimeout(() => {
+        setIsRefreshing(false);
+        const now = new Date();
+        setLastRefreshedDate(now);
+        updateRelativeTime(now);
+      }, 600);
+    }
   };
 
   const openReviewModal = (contract: Contract) => {
@@ -72,7 +123,6 @@ export default function ContractsPage() {
       setIsSubmitting(false);
       setIsSuccess(true);
 
-      // Save teaming lead and sync to Supabase database
       void dataStore.submitLead({
         type: "CONTRACT_REVIEW",
         solicitation: selectedContract?.solicitation,
@@ -98,10 +148,28 @@ export default function ContractsPage() {
         setReviewNotes("");
         setSelectedContract(null);
       }, 1600);
-    }, 1200);
+    }, 1000);
   };
 
-  const filteredContracts = contracts.filter((contract) => {
+  // Enhance each contract with status derived dynamically from deadline
+  const contractsWithDynamicStatus = contracts.map((c) => {
+    const statusMeta = getSolicitationStatus(c.deadline);
+    return {
+      ...c,
+      statusMeta,
+    };
+  });
+
+  const totalClosedCount = contractsWithDynamicStatus.filter(
+    (c) => c.statusMeta.status === "closed"
+  ).length;
+
+  const filteredContracts = contractsWithDynamicStatus.filter((contract) => {
+    // If showClosed is false, hide closed solicitations
+    if (!showClosed && contract.statusMeta.status === "closed") {
+      return false;
+    }
+
     const matchesNaics =
       selectedNaics === "all" || contract.naics === selectedNaics;
     const matchesSearch =
@@ -113,14 +181,11 @@ export default function ContractsPage() {
     return matchesNaics && matchesSearch;
   });
 
-  // Pagination calculations
+  // Pagination calculations strictly derived from filtered results
+  const totalPages = Math.max(1, Math.ceil(filteredContracts.length / itemsPerPage));
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentItems = filteredContracts.slice(
-    indexOfFirstItem,
-    indexOfLastItem,
-  );
-  const totalPages = Math.ceil(filteredContracts.length / itemsPerPage);
+  const currentItems = filteredContracts.slice(indexOfFirstItem, indexOfLastItem);
 
   const naicsList = [
     { code: "all", label: "All Classifications" },
@@ -152,13 +217,17 @@ export default function ContractsPage() {
             NAICS codes, HUBZone, and VOSB socioeconomic parameters.
           </p>
           <div className="flex flex-wrap items-center justify-center gap-4 pt-2">
-            <span className="text-xs text-[var(--text-muted)] font-[family-name:var(--font-jetbrains-mono)]">
-              Feed Synced: {lastRefreshed}
+            <span className="text-xs text-[var(--text-muted)] font-[family-name:var(--font-jetbrains-mono)] flex items-center gap-1.5">
+              <span>Last synced:</span>
+              <time dateTime={lastRefreshedDate.toISOString()} className="font-semibold text-[var(--text-bright)]">
+                {relativeTime}
+              </time>
             </span>
             <button
               onClick={handleRefresh}
               className="btn btn-secondary py-2 px-4 text-xs flex items-center gap-2"
               disabled={isRefreshing}
+              aria-label="Refresh opportunities feed"
             >
               <svg
                 className={isRefreshing ? "animate-spin" : ""}
@@ -168,12 +237,13 @@ export default function ContractsPage() {
                 fill="none"
                 stroke="currentColor"
                 strokeWidth="2.5"
+                aria-hidden="true"
               >
                 <path d="M23 4v6h-6"></path>
                 <path d="M1 20v-6h6"></path>
                 <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
               </svg>
-              {isRefreshing ? "Syncing..." : "Sync Feed"}
+              <span>{isRefreshing ? "Syncing..." : "Refresh Feed"}</span>
             </button>
           </div>
         </RevealOnMount>
@@ -222,7 +292,7 @@ export default function ContractsPage() {
 
         {/* Filters & Search */}
         <RevealOnMount
-          className={`faq-controls reveal flex flex-col gap-6 mb-10 max-w-[840px] mx-auto ${isMounted ? "active" : ""}`}
+          className={`faq-controls reveal flex flex-col gap-6 mb-8 max-w-[840px] mx-auto ${isMounted ? "active" : ""}`}
         >
           <div className="form-group m-0">
             <input
@@ -237,10 +307,10 @@ export default function ContractsPage() {
               }}
             />
             <label htmlFor="contract-search" className="form-label">
-              Search by Solicitation ID, Title, Agency, Set-Aside, or
-              Location...
+              Search by Solicitation ID, Title, Agency, Set-Aside, or Location...
             </label>
           </div>
+
           <div className="faq-tabs flex flex-wrap gap-2 justify-center">
             {naicsList.map((naics) => (
               <button
@@ -257,6 +327,24 @@ export default function ContractsPage() {
               </button>
             ))}
           </div>
+
+          {/* Toggle for Closed Opportunities */}
+          {totalClosedCount > 0 && (
+            <div className="flex items-center justify-center gap-2 pt-1">
+              <label className="flex items-center gap-2 cursor-pointer text-xs text-[var(--text-muted)] select-none hover:text-[var(--text-bright)] transition-colors">
+                <input
+                  type="checkbox"
+                  checked={showClosed}
+                  onChange={(e) => {
+                    setShowClosed(e.target.checked);
+                    setCurrentPage(1);
+                  }}
+                  className="rounded border-[var(--border)] accent-[var(--primary)] w-4 h-4"
+                />
+                <span>Show closed / concluded opportunities ({totalClosedCount})</span>
+              </label>
+            </div>
+          )}
         </RevealOnMount>
 
         {/* Opportunities Feed */}
@@ -295,8 +383,10 @@ export default function ContractsPage() {
                       </span>
                     </p>
                   </div>
-                  <span className="text-xs py-1 px-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 rounded-full font-semibold shrink-0">
-                    {contract.status}
+                  <span
+                    className={`text-xs py-1 px-3 border rounded-full font-semibold shrink-0 ${contract.statusMeta.badgeClass}`}
+                  >
+                    {contract.statusMeta.label}
                   </span>
                 </div>
 
@@ -309,7 +399,13 @@ export default function ContractsPage() {
                   </div>
                   <div>
                     Deadline:{" "}
-                    <strong className="text-[var(--primary)] font-semibold">
+                    <strong
+                      className={
+                        contract.statusMeta.isPast
+                          ? "text-zinc-400 line-through"
+                          : "text-[var(--primary)] font-semibold"
+                      }
+                    >
                       {contract.deadline}
                     </strong>
                   </div>
@@ -325,7 +421,13 @@ export default function ContractsPage() {
                   <span className="text-xs text-[var(--text-muted)] italic">
                     Bonding: Up to 100% Performance &amp; Payment available
                   </span>
-                  <div className="flex gap-3">
+                  <div className="flex flex-wrap gap-3">
+                    <Link
+                      href={`/partnerships?solicitation=${encodeURIComponent(contract.solicitation)}`}
+                      className="btn btn-secondary py-2 px-4 text-xs no-underline inline-flex items-center gap-1.5"
+                    >
+                      Team on this
+                    </Link>
                     <button
                       className="btn btn-primary py-2 px-5 text-xs"
                       onClick={() => openReviewModal(contract)}
@@ -337,19 +439,46 @@ export default function ContractsPage() {
               </div>
             ))
           ) : (
-            <div className="text-center p-16 text-[var(--text-muted)] bg-[var(--panel-dark)] border border-[var(--border)] rounded-2xl">
-              No contracting opportunities currently match your search filters.
+            <div className="text-center p-12 md:p-16 text-[var(--text-muted)] bg-[var(--panel-dark)] border border-[var(--border)] rounded-2xl flex flex-col items-center gap-4">
+              <svg
+                width="40"
+                height="40"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                className="text-[var(--text-muted)]/60"
+              >
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+              <div className="max-w-[480px]">
+                <h4 className="text-[1.1rem] font-bold text-[var(--text-bright)] mb-1">
+                  No open opportunities right now
+                </h4>
+                <p className="text-xs text-[var(--text-muted)] leading-relaxed">
+                  Register as a teaming partner to be notified immediately when solicitations
+                  matching your socioeconomic class or NAICS codes are released.
+                </p>
+              </div>
+              <Link
+                href="/partnerships"
+                className="btn btn-primary py-2.5 px-6 text-xs mt-2 no-underline"
+              >
+                Register as a Teaming Partner
+              </Link>
             </div>
           )}
         </div>
 
-        {/* Pagination controls */}
+        {/* Pagination controls: hidden when totalPages <= 1 */}
         {totalPages > 1 && (
           <div className="flex justify-center items-center gap-4 mt-10">
             <button
               onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
               disabled={currentPage === 1}
               className="btn btn-secondary py-2 px-4 text-xs min-w-[40px]"
+              aria-label="Previous page"
             >
               Prev
             </button>
@@ -360,6 +489,7 @@ export default function ContractsPage() {
               onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
               disabled={currentPage === totalPages}
               className="btn btn-secondary py-2 px-4 text-xs min-w-[40px]"
+              aria-label="Next page"
             >
               Next
             </button>
@@ -589,14 +719,6 @@ export default function ContractsPage() {
           )}
         </div>
       </div>
-
-      <style jsx global>{`
-        @keyframes spin {
-          100% {
-            transform: rotate(360deg);
-          }
-        }
-      `}</style>
     </div>
   );
 }

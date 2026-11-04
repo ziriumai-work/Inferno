@@ -362,13 +362,15 @@ export default function TrackerPage() {
         {/* Navigation Tabs */}
         <div
           className={`reveal flex justify-center gap-2.5 mb-8 flex-wrap ${isMounted ? "active" : ""}`}
+          role="tablist"
+          aria-label="Tracker Views"
         >
           {[
             {
               key: "map",
               label: "Live Interactive Map",
               icon: (
-                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.2">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden="true">
                   <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon>
                   <line x1="8" y1="2" x2="8" y2="18"></line>
                   <line x1="16" y1="6" x2="16" y2="22"></line>
@@ -379,7 +381,7 @@ export default function TrackerPage() {
               key: "forecast",
               label: "Forecast Table & Track Log",
               icon: (
-                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.2">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden="true">
                   <line x1="18" y1="20" x2="18" y2="10"></line>
                   <line x1="12" y1="20" x2="12" y2="4"></line>
                   <line x1="6" y1="20" x2="6" y2="14"></line>
@@ -390,7 +392,7 @@ export default function TrackerPage() {
               key: "warnings",
               label: "Watches & Warnings",
               icon: (
-                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.2">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden="true">
                   <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
                   <line x1="12" y1="9" x2="12" y2="13"></line>
                   <line x1="12" y1="17" x2="12.01" y2="17"></line>
@@ -402,6 +404,10 @@ export default function TrackerPage() {
             return (
               <button
                 key={tab.key}
+                role="tab"
+                id={`tracker-tab-${tab.key}`}
+                aria-selected={isActive}
+                aria-controls={`tracker-panel-${tab.key}`}
                 onClick={() => setActiveTab(tab.key as any)}
                 className={`py-2 px-4 rounded-xl text-xs font-semibold inline-flex items-center gap-2 transition-all cursor-pointer ${
                   isActive
@@ -418,7 +424,12 @@ export default function TrackerPage() {
 
         {/* Tab 1: Live Interactive Map & System Details */}
         {activeTab === "map" && (
-          <div className="flex flex-col gap-8">
+          <div
+            id="tracker-panel-map"
+            role="tabpanel"
+            aria-labelledby="tracker-tab-map"
+            className="flex flex-col gap-8"
+          >
             {/* Top Consolidated Controls Bar (Region, Forecast Horizon, Disturbances Filter) */}
             <div
               className={`glow-card reveal bg-white border border-[var(--border)] rounded-2xl py-4 sm:py-5 px-5 sm:px-6 flex flex-col gap-4 shadow-xs ${isMounted ? "active" : ""}`}
@@ -824,12 +835,81 @@ export default function TrackerPage() {
                 </div>
               </div>
             </div>
+
+            {/* Accessible Table Fallback for Screen Readers & Non-GIS Devices */}
+            <details className="glow-card bg-white border border-[var(--border)] rounded-2xl p-5 shadow-xs cursor-pointer group">
+              <summary className="font-bold text-xs uppercase tracking-wider text-[var(--primary)] select-none hover:underline flex items-center justify-between">
+                <span>Accessible Table View: Active &amp; Monitored Storm Systems ({visibleStorms.length})</span>
+                <span className="text-[0.7rem] font-mono text-[var(--text-muted)]">Toggle Data Grid</span>
+              </summary>
+              <div className="overflow-x-auto mt-4 pt-4 border-t border-[var(--border)]">
+                <table className="w-full text-xs text-left text-[var(--text-bright)]">
+                  <thead className="bg-gray-50 text-[var(--text-muted)] uppercase tracking-wider font-semibold border-b border-[var(--border)]">
+                    <tr>
+                      <th scope="col" className="p-3">System Name</th>
+                      <th scope="col" className="p-3">Category</th>
+                      <th scope="col" className="p-3">Max Winds</th>
+                      <th scope="col" className="p-3">Coordinates</th>
+                      <th scope="col" className="p-3">Movement</th>
+                      <th scope="col" className="p-3">Min Pressure</th>
+                      <th scope="col" className="p-3">Advisory Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[var(--border)]">
+                    {visibleStorms.length > 0 ? (
+                      visibleStorms.map((storm) => (
+                        <tr key={storm.id} className="hover:bg-gray-50/80">
+                          <td className="p-3 font-bold">{storm.name}</td>
+                          <td className="p-3">
+                            <span className="px-2 py-0.5 rounded text-[0.7rem] font-bold bg-amber-50 text-amber-900 border border-amber-200">
+                              {storm.category || "Tropical System"}
+                            </span>
+                          </td>
+                          <td className="p-3 font-mono">{storm.maxSustainedWindMph || 0} mph</td>
+                          <td className="p-3 font-mono">
+                            {storm.latitude?.toFixed(1)}°N, {Math.abs(storm.longitude || 0).toFixed(1)}°W
+                          </td>
+                          <td className="p-3">
+                            {storm.movementDirection
+                              ? `${storm.movementDirection} at ${storm.movementSpeedMph || 0} mph`
+                              : "Tracking"}
+                          </td>
+                          <td className="p-3 font-mono">
+                            {storm.minimumCentralPressureMb
+                              ? `${storm.minimumCentralPressureMb} mb`
+                              : "N/A"}
+                          </td>
+                          <td className="p-3">
+                            <span className={`px-2 py-0.5 rounded-full text-[0.68rem] font-semibold ${
+                              storm.isHistorical ? "bg-purple-100 text-purple-800" : "bg-emerald-100 text-emerald-800"
+                            }`}>
+                              {storm.isHistorical ? "Archived Post-Storm" : "Active NOAA Advisory"}
+                            </span>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={7} className="p-6 text-center text-[var(--text-muted)]">
+                          No active tropical cyclones currently monitored in this basin.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </details>
           </div>
         )}
 
         {/* Tab 2: Forecast Points or Historical Track Log */}
         {activeTab === "forecast" && (
-          <div className="glow-card bg-white border border-[var(--border)] rounded-[20px] p-6 sm:p-8 shadow-xs">
+          <div
+            id="tracker-panel-forecast"
+            role="tabpanel"
+            aria-labelledby="tracker-tab-forecast"
+            className="glow-card bg-white border border-[var(--border)] rounded-[20px] p-6 sm:p-8 shadow-xs"
+          >
             <div className="flex justify-between items-center mb-5 flex-wrap gap-2.5">
               <h3 className="font-[family-name:var(--font-space-grotesk)] text-[1.25rem] font-bold text-[var(--text-bright)]">
                 {activeStorm?.isHistorical
@@ -937,7 +1017,12 @@ export default function TrackerPage() {
 
         {/* Tab 3: Coastal Watches & Warnings */}
         {activeTab === "warnings" && (
-          <div className="glow-card bg-white border border-[var(--border)] rounded-[20px] p-6 sm:p-8 shadow-xs">
+          <div
+            id="tracker-panel-warnings"
+            role="tabpanel"
+            aria-labelledby="tracker-tab-warnings"
+            className="glow-card bg-white border border-[var(--border)] rounded-[20px] p-6 sm:p-8 shadow-xs"
+          >
             <h3 className="font-[family-name:var(--font-space-grotesk)] text-[1.25rem] font-bold text-[var(--text-bright)] mb-6">
               {activeStorm?.isHistorical
                 ? `Coastal Watches & Warnings Issued During System (${activeStorm ? activeStorm.name : ""})`

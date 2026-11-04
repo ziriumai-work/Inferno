@@ -1,76 +1,59 @@
-"use client";
+import type { Metadata } from "next";
 
-import React, { useEffect, useState } from "react";
-import RevealOnMount from "@/components/RevealOnMount";
-import { dataStore, LegalPage } from "@/utils/dataStore";
+export const metadata: Metadata = {
+  title: "Standards of Conduct & Ethics | The Inferno Group LLC",
+  description:
+    "The Inferno Group LLC's ethical standards, procurement integrity protocols, and FAR compliance guidelines.",
+  alternates: {
+    canonical: "https://www.theinfernogroup.com/conduct",
+  },
+};
+
+const conductSections = [
+  {
+    title: "1. Procurement Integrity and Ethics",
+    body: "The Inferno Group LLC enforces absolute transparency, integrity, and ethical conduct across all federal, state, and commercial engagements in accordance with the Procurement Integrity Act (41 U.S.C. §§ 2101-2107). Our staff and partners are held to the highest standards of fair competition and federal procurement ethics.",
+  },
+  {
+    title: "2. Conflict of Interest Guidelines",
+    body: "Personnel and teaming subcontractors must prevent actual, apparent, or potential Organizational Conflicts of Interest (OCI) or personal conflicts. Any potential conflict must be disclosed immediately to corporate compliance officers prior to proposal engagement.",
+  },
+  {
+    title: "3. Anti-Kickback & FAR Compliance",
+    body: "We adhere strictly to the Anti-Kickback Act of 1986 and Federal Acquisition Regulation (FAR) Part 3.502. We prohibit kickbacks, bribes, or improper gratuities in any procurement, teaming agreement, or vendor relationship.",
+  },
+  {
+    title: "4. Workforce & Equal Opportunity",
+    body: "We uphold equal opportunity, fair treatment, and merit-based advancement across all deployment and staffing cadres in compliance with federal labor standards and E-Verify requirements.",
+  },
+];
 
 export default function ConductPage() {
-  const [conduct, setConduct] = useState<LegalPage | null>(null);
-  const [isMounted, setIsMounted] = useState(false);
-
-  useEffect(() => {
-    const refreshConduct = () => setConduct(dataStore.getLegalConduct());
-    refreshConduct();
-    setIsMounted(true);
-
-    window.addEventListener("storage", refreshConduct);
-    window.addEventListener("cms-update", refreshConduct);
-
-    return () => {
-      window.removeEventListener("storage", refreshConduct);
-      window.removeEventListener("cms-update", refreshConduct);
-    };
-  }, []);
-
-  if (!isMounted || !conduct) {
-    return (
-      <div className="page-view block text-center py-24 px-8">
-        <h2>Loading Standards of Conduct...</h2>
-      </div>
-    );
-  }
-
-  // Simple markdown renderer to make headers look beautiful
-  const renderContent = (text: string) => {
-    return text.split("\n\n").map((block, idx) => {
-      if (block.startsWith("###")) {
-        return (
-          <h3 
-            key={idx} 
-            className="font-[family-name:var(--font-space-grotesk)] text-[1.25rem] font-[750] mt-8 mb-3 text-[var(--text-bright)]"
-          >
-            {block.replace("###", "").trim()}
-          </h3>
-        );
-      }
-      return (
-        <p key={idx} className="text-[var(--text-muted)] text-[0.95rem] leading-[1.7] mb-4">
-          {block}
-        </p>
-      );
-    });
-  };
-
   return (
     <div className="page-view block">
-      <section id="standards-of-conduct" className="max-w-[800px] mx-auto py-16 px-8">
-        <RevealOnMount className="text-center max-w-[850px] mx-auto mb-10">
-          <div className="section-eyebrow">Ethical Guidelines</div>
-          <h1 className="section-title">{conduct.title}</h1>
+      <section id="standards-of-conduct" className="max-w-[800px] mx-auto py-16 px-6 sm:px-8">
+        <div className="text-center max-w-[850px] mx-auto mb-10">
+          <div className="section-eyebrow">Corporate Ethics</div>
+          <h1 className="section-title">Standards of Conduct</h1>
           <p className="section-desc max-w-[760px] mx-auto text-center mb-8">
-            The Inferno Group LLC guidelines regarding anti-kickback provisions, conflicts of interest, and procurement integrity.
+            Ethical frameworks, procurement integrity policies, and compliance parameters for The Inferno Group LLC.
           </p>
-        </RevealOnMount>
+        </div>
 
-        <RevealOnMount>
-          <div 
-            className="glow-card bg-[var(--glass)] border border-[var(--border)] rounded-[20px] p-12 shadow-[0_10px_30px_rgba(0,0,0,0.02)]"
-          >
-            <div className="flex flex-col gap-4">
-              {renderContent(conduct.content)}
-            </div>
+        <div className="glow-card bg-[var(--glass)] border border-[var(--border)] rounded-[20px] p-8 sm:p-12 shadow-[0_10px_30px_rgba(0,0,0,0.02)]">
+          <div className="flex flex-col gap-6">
+            {conductSections.map((section, idx) => (
+              <div key={idx} className="flex flex-col gap-2">
+                <h2 className="font-[family-name:var(--font-space-grotesk)] text-[1.2rem] sm:text-[1.3rem] font-[750] text-[var(--text-bright)]">
+                  {section.title}
+                </h2>
+                <p className="text-[var(--text-muted)] text-[0.95rem] leading-[1.7]">
+                  {section.body}
+                </p>
+              </div>
+            ))}
           </div>
-        </RevealOnMount>
+        </div>
       </section>
     </div>
   );

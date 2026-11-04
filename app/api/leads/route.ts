@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { checkRateLimit, getClientIp } from "@/lib/rateLimit";
 
 export async function GET() {
   try {
@@ -47,8 +48,34 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate Limiting (5 requests per 10 minutes per IP)
+    const clientIp = getClientIp(request.headers);
+    const rateCheck = checkRateLimit(clientIp, { maxRequests: 5, windowMs: 10 * 60 * 1000 });
+    if (!rateCheck.allowed) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Too many submission attempts. Please wait a few minutes before trying again.",
+        },
+        {
+          status: 429,
+          headers: {
+            "Retry-After": String(rateCheck.retryAfterSeconds),
+          },
+        }
+      );
+    }
+
     const supabase = await createClient();
     const body = await request.json();
+
+    // Bot protection: Honeypot trap check
+    if (body.honeypot || body._hp_company_verification || body._hp_website) {
+      return NextResponse.json(
+        { success: true, message: "Inquiry received and queued for review." },
+        { status: 200 }
+      );
+    }
 
     // BUG-03: Empty or invalid payload rejection
     if (!body || typeof body !== "object" || Object.keys(body).length === 0) {
@@ -63,6 +90,14 @@ export async function POST(request: NextRequest) {
     const phone = (body.phone || "").trim();
     const uei = (body.uei || "").trim();
     const naics = (body.naics || "").trim();
+
+    // Bounds checking
+    if (name.length > 100 || email.length > 120 || phone.length > 30) {
+      return NextResponse.json(
+        { success: false, error: "Input values exceed maximum character limits." },
+        { status: 400 }
+      );
+    }
 
     // Required fields check
     if (!email || !name) {

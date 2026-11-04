@@ -45,8 +45,28 @@ function normalizeBasin(rawBasin?: string): BasinType {
   return "AL";
 }
 
+function isAllowedNoaaUrl(urlStr?: string): boolean {
+  if (!urlStr) return false;
+  try {
+    const parsed = new URL(urlStr);
+    if (parsed.protocol !== "https:" && parsed.protocol !== "http:") return false;
+    const hostname = parsed.hostname.toLowerCase();
+    return (
+      hostname === "nhc.noaa.gov" ||
+      hostname.endsWith(".nhc.noaa.gov") ||
+      hostname === "weather.noaa.gov" ||
+      hostname.endsWith(".weather.noaa.gov") ||
+      hostname === "api.weather.gov" ||
+      hostname.endsWith(".weather.gov") ||
+      hostname.endsWith(".ncep.noaa.gov")
+    );
+  } catch {
+    return false;
+  }
+}
+
 async function fetchTextUrl(url?: string): Promise<string | null> {
-  if (!url) return null;
+  if (!url || !isAllowedNoaaUrl(url)) return null;
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 6000);
   try {
@@ -67,7 +87,7 @@ async function fetchTextUrl(url?: string): Promise<string | null> {
 }
 
 async function fetchKmzKmlText(url?: string): Promise<string | null> {
-  if (!url) return null;
+  if (!url || !isAllowedNoaaUrl(url)) return null;
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 6000);
   try {
@@ -158,7 +178,7 @@ export async function fetchRawStorms(forceRefresh = false) {
     const res = await fetch(CURRENT_STORMS_URL, {
       signal: controller.signal,
       headers: {
-        "User-Agent": "InfernoGroup-HurricaneDashboard/2.0 (contact: ops@infernogroup.com)",
+        "User-Agent": "InfernoGroup-HurricaneDashboard/2.0 (contact: ops@theinfernogroup.com)",
       },
       ...(forceRefresh
         ? { cache: "no-store" as const }
@@ -670,7 +690,7 @@ export async function fetchActiveNWSAlerts(): Promise<RealtimeNWSAlert[]> {
     const res = await fetch(url, {
       signal: controller.signal,
       headers: {
-        "User-Agent": "InfernoGroup-HurricaneDashboard/2.0 (contact: ops@infernogroup.com)",
+        "User-Agent": "InfernoGroup-HurricaneDashboard/2.0 (contact: ops@theinfernogroup.com)",
         "Accept": "application/geo+json",
       },
       next: { revalidate: TRACKER_UPDATE_INTERVAL_SECONDS },

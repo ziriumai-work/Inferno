@@ -14,14 +14,35 @@ export default function Chatbot() {
   const [messages, setMessages] = useState<Message[]>([
     {
       sender: "assistant",
-      text: "Inferno Operations Desk active. I can answer inquiries regarding SBA certifications, FEMA program compliance, cost accounting, and strategic teaming configurations. Select a question below to coordinate your query.",
+      text: "Inferno Operations Desk (AI-assisted automated triage). I can answer inquiries regarding our socioeconomic credentials (HUBZone / VOSB), FEMA program compliance, cost accounting, and strategic teaming configurations. For human coordination, email InfernoCares@theinfernogroup.com. Select a query below to begin:",
       timestamp: new Date(0), // stable SSR default
     },
   ]);
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const streamIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const closeBtnRef = useRef<HTMLButtonElement>(null);
   const [isMounted, setIsMounted] = useState(false);
+
+  // Focus management and Escape key handling
+  useEffect(() => {
+    if (isOpen) {
+      closeBtnRef.current?.focus();
+    } else if (hasOpened) {
+      triggerRef.current?.focus();
+    }
+  }, [isOpen, hasOpened]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && isOpen) {
+        setIsOpen(false);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen]);
 
   // Fix hydration + tooltip popup every 20 seconds
   const [showTooltip, setShowTooltip] = useState(false);
@@ -196,12 +217,16 @@ export default function Chatbot() {
 
       {/* Floating Action Button */}
       <button
+        ref={triggerRef}
         className={`chatbot-fab ${isOpen ? "open" : ""}`}
         onClick={() => {
           setHasOpened(true);
           setIsOpen(!isOpen);
         }}
-        aria-label="Toggle AI Assistant"
+        aria-label={isOpen ? "Close Operations Desk automated chat" : "Open Operations Desk automated chat"}
+        aria-haspopup="dialog"
+        aria-expanded={isOpen}
+        aria-controls="operations-desk-chat"
       >
         {isOpen ? (
           <svg
@@ -235,6 +260,10 @@ export default function Chatbot() {
 
       {/* Chat Window Panel */}
       <div
+        id="operations-desk-chat"
+        role="dialog"
+        aria-modal="false"
+        aria-label="Operations Desk Automated Assistant"
         className={`chatbot-window ${isOpen ? "open" : ""}`}
         style={!hasOpened && !isOpen ? { display: "none" } : undefined}
       >
@@ -244,12 +273,13 @@ export default function Chatbot() {
             <h4>Inferno Operations Desk</h4>
             <div className="flex items-center gap-[0.35rem] text-xs opacity-85">
               <span className="chat-indicator"></span>
-              Secure GovCon AI Desk
+              AI-assisted triage / Automated desk
             </div>
           </div>
           <button
+            ref={closeBtnRef}
             onClick={() => setIsOpen(false)}
-            aria-label="Close assistant"
+            aria-label="Close Operations Desk automated chat"
             className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white/80 hover:text-white transition-all cursor-pointer border border-white/15 active:scale-90"
           >
             <svg
@@ -269,7 +299,12 @@ export default function Chatbot() {
         </div>
 
         {/* Messages */}
-        <div className="chat-messages">
+        <div
+          className="chat-messages"
+          role="log"
+          aria-live="polite"
+          aria-atomic="false"
+        >
           {messages.map((msg, idx) => (
             <div key={idx} className={`chat-bubble-wrapper ${msg.sender}`}>
               <div className="chat-bubble">
@@ -497,6 +532,10 @@ export default function Chatbot() {
         .preset-btn:disabled {
           opacity: 0.55;
           cursor: not-allowed;
+        }
+        .preset-btn:focus-visible {
+          outline: 2px solid var(--primary);
+          outline-offset: 2px;
         }
 
         /* Typing indicator dots */

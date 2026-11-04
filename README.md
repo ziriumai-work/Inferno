@@ -174,6 +174,8 @@ Create a `.env.local` file in the root directory:
 cp .env.example .env.local
 ```
 
+> 📖 **Full Credentials & Services Reference**: For in-depth documentation, official service links, developer dashboards, setup steps, and security guidelines for Supabase, Resend, Google Cloud, Microsoft Graph, and NOAA NHC, see **[CREDENTIALS_AND_INTEGRATIONS.md](./CREDENTIALS_AND_INTEGRATIONS.md)**.
+
 Populate the required configuration keys:
 
 ```ini
