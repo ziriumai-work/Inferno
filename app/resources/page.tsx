@@ -11,9 +11,11 @@ export default function ResourcesPage() {
   const [resources, setResources] = useState<Resource[]>(resourcesData);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCat, setSelectedCat] = useState("all");
-  
+
   // Download states
-  const [selectedResource, setSelectedResource] = useState<Resource | null>(null);
+  const [selectedResource, setSelectedResource] = useState<Resource | null>(
+    null,
+  );
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -68,32 +70,34 @@ export default function ResourcesPage() {
       // Trigger document export
       const element = document.createElement("a");
       if (selectedResource.id === "capability-statement") {
-        element.href = "/documents/The_Inferno_Group_LLC_Capability_Statement.pdf";
+        element.href =
+          "/documents/The_Inferno_Group_LLC_Capability_Statement.pdf";
         element.download = "The_Inferno_Group_LLC_Capability_Statement.pdf";
       } else {
-        const fileText = `=================================================================\n` +
-                         `THE INFERNO GROUP LLC - INTEL & COMPLIANCE RESOURCE TRANSMISSION\n` +
-                         `=================================================================\n\n` +
-                         `DOCUMENT: ${selectedResource.title}\n` +
-                         `CATEGORY: ${selectedResource.category}\n` +
-                         `FORMAT: ${selectedResource.fileType}\n` +
-                         `AUTHORIZED TO: ${name} (${org})\n` +
-                         `WORK EMAIL: ${email}\n` +
-                         `ISSUED ON: ${new Date().toLocaleDateString()}\n\n` +
-                         `CORPORATE OVERVIEW & CREDENTIALS:\n` +
-                         `• Entity: The Inferno Group LLC\n` +
-                         `• Unique Entity ID (UEI): QW6RHJACHA56\n` +
-                         `• CAGE Code: 22VP2\n` +
-                         `• Status: SBA HUBZone Certified & Veteran-Owned Small Business (VOSB)\n` +
-                         `• Primary NAICS: 541611 (Admin & General Management Consulting)\n` +
-                         `• Secondary NAICS: 624230, 561210, 562910, 238320, 561720, 561790, 238990, 423990, 488510, 561422\n` +
-                         `• Bonding Capacity: Bid, Performance (up to 100%), and Payment (up to 100%)\n\n` +
-                         `DOCUMENT SUMMARY:\n` +
-                         `${selectedResource.description}\n\n` +
-                         `COMPLIANCE & CONTACT:\n` +
-                         `The Inferno Group LLC | Contracts & Alliances\n` +
-                         `Email: Contact@theinfernogroup.com\n` +
-                         `Portal: https://theinfernogroup.com\n`;
+        const fileText =
+          `=================================================================\n` +
+          `THE INFERNO GROUP LLC - INTEL & COMPLIANCE RESOURCE TRANSMISSION\n` +
+          `=================================================================\n\n` +
+          `DOCUMENT: ${selectedResource.title}\n` +
+          `CATEGORY: ${selectedResource.category}\n` +
+          `FORMAT: ${selectedResource.fileType}\n` +
+          `AUTHORIZED TO: ${name} (${org})\n` +
+          `WORK EMAIL: ${email}\n` +
+          `ISSUED ON: ${new Date().toLocaleDateString()}\n\n` +
+          `CORPORATE OVERVIEW & CREDENTIALS:\n` +
+          `• Entity: The Inferno Group LLC\n` +
+          `• Unique Entity ID (UEI): QW6RHJACHA56\n` +
+          `• CAGE Code: 22VP2\n` +
+          `• Status: SBA HUBZone Certified & Veteran-Owned Small Business (VOSB)\n` +
+          `• Primary NAICS: 541611 (Admin & General Management Consulting)\n` +
+          `• Secondary NAICS: 624230, 561210, 562910, 238320, 561720, 561790, 238990, 423990, 488510, 561422\n` +
+          `• Bonding Capacity: Bid, Performance (up to 100%), and Payment (up to 100%)\n\n` +
+          `DOCUMENT SUMMARY:\n` +
+          `${selectedResource.description}\n\n` +
+          `COMPLIANCE & CONTACT:\n` +
+          `The Inferno Group LLC | Contracts & Alliances\n` +
+          `Email: Contact@theinfernogroup.com\n` +
+          `Portal: https://theinfernogroup.com\n`;
         const file = new Blob([fileText], { type: "text/plain" });
         element.href = URL.createObjectURL(file);
         element.download = `${selectedResource.id}_TIG_Compliance_Package.txt`;
@@ -111,7 +115,6 @@ export default function ResourcesPage() {
         setOrg("");
         setSelectedResource(null);
       }, 1500);
-
     }, 1200);
   };
 
@@ -136,16 +139,24 @@ export default function ResourcesPage() {
   return (
     <div className="page-view block">
       <section id="resources">
-        <RevealOnMount className={`reveal ${isMounted ? "active" : ""}`}>
+        <RevealOnMount
+          className={`reveal text-center max-w-[850px] mx-auto mb-10 ${isMounted ? "active" : ""}`}
+        >
           <div className="section-eyebrow">Intel &amp; Compliance Library</div>
-          <h1 className="section-title">Resources, Playbooks &amp; Guidelines</h1>
-          <p className="section-desc max-w-[850px] mx-auto">
-            Access downloadable compliance playbooks, FEMA Public Assistance checklists, DCAA indirect cost rate templates, and official corporate capability statements.
+          <h1 className="section-title">
+            Resources, Playbooks &amp; Guidelines
+          </h1>
+          <p className="section-desc max-w-[760px] mx-auto text-center">
+            Access downloadable compliance playbooks, FEMA Public Assistance
+            checklists, DCAA indirect cost rate templates, and official
+            corporate capability statements.
           </p>
         </RevealOnMount>
 
         {/* Search & Filters */}
-        <RevealOnMount className={`faq-controls reveal flex flex-col gap-6 mt-10 mb-12 max-w-[840px] mx-auto ${isMounted ? "active" : ""}`}>
+        <RevealOnMount
+          className={`faq-controls reveal flex flex-col gap-6 mt-10 mb-12 max-w-[840px] mx-auto ${isMounted ? "active" : ""}`}
+        >
           <div className="form-group m-0">
             <input
               type="text"
@@ -156,7 +167,8 @@ export default function ResourcesPage() {
               onChange={(e) => setSearchQuery(e.target.value)}
             />
             <label htmlFor="resource-search" className="form-label">
-              Search playbooks, templates, checklists (e.g. FEMA, DCAA, HUBZone)...
+              Search playbooks, templates, checklists (e.g. FEMA, DCAA,
+              HUBZone)...
             </label>
           </div>
           <div className="faq-tabs flex flex-wrap gap-2 justify-center">
@@ -175,7 +187,9 @@ export default function ResourcesPage() {
         </RevealOnMount>
 
         {/* Resources Grid */}
-        <div className={`faq-container reveal flex flex-col gap-6 max-w-[900px] mx-auto ${isMounted ? "active" : ""}`}>
+        <div
+          className={`faq-container reveal flex flex-col gap-6 max-w-[900px] mx-auto ${isMounted ? "active" : ""}`}
+        >
           {filteredResources.length > 0 ? (
             filteredResources.map((res) => (
               <div
@@ -191,12 +205,19 @@ export default function ResourcesPage() {
                       {res.title}
                     </h3>
                   </div>
-                  <button 
+                  <button
                     onClick={() => handleDownloadClick(res)}
                     className="btn btn-primary flex items-center gap-2 text-xs py-2 px-5 shrink-0"
                   >
                     Download Resource
-                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <svg
+                      viewBox="0 0 24 24"
+                      width="14"
+                      height="14"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                    >
                       <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                       <polyline points="7 10 12 15 17 10"></polyline>
                       <line x1="12" y1="15" x2="12" y2="3"></line>
@@ -208,10 +229,25 @@ export default function ResourcesPage() {
                   {res.description}
                 </p>
 
-                <div className="flex flex-wrap gap-6 text-xs text-[var(--text-muted)] border-t border-dashed border-[var(--border)] pt-3.5">
-                  <span>Format: <strong className="text-[var(--text-bright)] font-mono">{res.fileType}</strong></span>
-                  <span>Payload: <strong className="text-[var(--text-bright)] font-mono">{res.fileSize}</strong></span>
-                  <span>Accesses: <strong className="text-[var(--text-bright)] font-mono">{res.downloads} downloads</strong></span>
+                <div className="flex flex-wrap gap-6 text-xs text-[var(--text-muted)] border-t border-[var(--border)] pt-3.5">
+                  <span>
+                    Format:{" "}
+                    <strong className="text-[var(--text-bright)] font-mono">
+                      {res.fileType}
+                    </strong>
+                  </span>
+                  <span>
+                    Payload:{" "}
+                    <strong className="text-[var(--text-bright)] font-mono">
+                      {res.fileSize}
+                    </strong>
+                  </span>
+                  <span>
+                    Accesses:{" "}
+                    <strong className="text-[var(--text-bright)] font-mono">
+                      {res.downloads} downloads
+                    </strong>
+                  </span>
                 </div>
               </div>
             ))
@@ -223,19 +259,29 @@ export default function ResourcesPage() {
         </div>
 
         {/* Bottom Teaming Callout */}
-        <RevealOnMount className={`mt-16 text-center reveal ${isMounted ? "active" : ""}`}>
+        <RevealOnMount
+          className={`mt-16 text-center reveal ${isMounted ? "active" : ""}`}
+        >
           <div className="bg-[var(--panel-dark)] border border-[var(--border)] rounded-[24px] p-8 max-w-[760px] mx-auto">
             <h3 className="font-[family-name:var(--font-space-grotesk)] text-[1.3rem] font-bold text-[var(--text-bright)] mb-2">
               Need Customized Playbooks or Teaming Advisory?
             </h3>
             <p className="text-xs text-[var(--text-muted)] max-w-[550px] mx-auto mb-6 leading-[1.7]">
-              The Inferno Group LLC provides tailored emergency management consulting, DCAA rate formulation, and SBA socioeconomic application guidance for primes and small businesses.
+              The Inferno Group LLC provides tailored emergency management
+              consulting, DCAA rate formulation, and SBA socioeconomic
+              application guidance for primes and small businesses.
             </p>
             <div className="flex flex-wrap gap-4 justify-center">
-              <Link href="/contact" className="btn btn-primary py-2.5 px-6 text-xs no-underline">
+              <Link
+                href="/contact"
+                className="btn btn-primary py-2.5 px-6 text-xs no-underline"
+              >
                 Contact Advisory Desk
               </Link>
-              <Link href="/capabilities" className="btn btn-secondary py-2.5 px-6 text-xs no-underline">
+              <Link
+                href="/capabilities"
+                className="btn btn-secondary py-2.5 px-6 text-xs no-underline"
+              >
                 View Credentials &amp; NAICS
               </Link>
             </div>
@@ -246,15 +292,24 @@ export default function ResourcesPage() {
       {/* Gated Download Modal */}
       <div className={`modal-overlay ${isModalOpen ? "show" : ""}`}>
         <div className="modal-content contact-form-container p-8 md:p-10 max-w-[580px]">
-          <button 
-            className="modal-close" 
+          <button
+            className="modal-close"
             onClick={() => {
               setIsModalOpen(false);
               setSelectedResource(null);
-            }} 
+            }}
             aria-label="Close modal"
           >
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
               <line x1="18" y1="6" x2="6" y2="18"></line>
               <line x1="6" y1="6" x2="18" y2="18"></line>
             </svg>
@@ -269,7 +324,9 @@ export default function ResourcesPage() {
               </div>
               <h3>Download Transmitted</h3>
               <p className="text-center text-[var(--text-muted)] text-[0.92rem] mt-2">
-                Your credentials have been verified. The download for <strong>{selectedResource?.title}</strong> has been generated and initiated.
+                Your credentials have been verified. The download for{" "}
+                <strong>{selectedResource?.title}</strong> has been generated
+                and initiated.
               </p>
             </div>
           ) : (
@@ -278,10 +335,16 @@ export default function ResourcesPage() {
                 Resource Download Authorization
               </h3>
               <p className="text-[var(--text-muted)] text-[0.82rem] mb-6">
-                Document: <strong className="text-[var(--text-bright)]">{selectedResource?.title}</strong>
+                Document:{" "}
+                <strong className="text-[var(--text-bright)]">
+                  {selectedResource?.title}
+                </strong>
               </p>
 
-              <form onSubmit={handleDownloadSubmit} className="flex flex-col gap-4">
+              <form
+                onSubmit={handleDownloadSubmit}
+                className="flex flex-col gap-4"
+              >
                 <div className="form-group m-0">
                   <input
                     type="text"
@@ -292,7 +355,9 @@ export default function ResourcesPage() {
                     onChange={(e) => setName(e.target.value)}
                     required
                   />
-                  <label htmlFor="res-name" className="form-label">Full Name</label>
+                  <label htmlFor="res-name" className="form-label">
+                    Full Name
+                  </label>
                 </div>
 
                 <div className="form-group m-0">
@@ -305,7 +370,9 @@ export default function ResourcesPage() {
                     onChange={(e) => setOrg(e.target.value)}
                     required
                   />
-                  <label htmlFor="res-org" className="form-label">Organization / Agency / Prime</label>
+                  <label htmlFor="res-org" className="form-label">
+                    Organization / Agency / Prime
+                  </label>
                 </div>
 
                 <div className="form-group m-0">
@@ -318,10 +385,16 @@ export default function ResourcesPage() {
                     onChange={(e) => setEmail(e.target.value)}
                     required
                   />
-                  <label htmlFor="res-email" className="form-label">Work Email</label>
+                  <label htmlFor="res-email" className="form-label">
+                    Work Email
+                  </label>
                 </div>
 
-                <button type="submit" className="btn-submit mt-2" disabled={isSubmitting}>
+                <button
+                  type="submit"
+                  className="btn-submit mt-2"
+                  disabled={isSubmitting}
+                >
                   {isSubmitting ? (
                     <>
                       Authorizing...
@@ -337,7 +410,12 @@ export default function ResourcesPage() {
                         <line x1="12" y1="2" x2="12" y2="6"></line>
                         <line x1="12" y1="18" x2="12" y2="22"></line>
                         <line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line>
-                        <line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line>
+                        <line
+                          x1="16.24"
+                          y1="16.24"
+                          x2="19.07"
+                          y2="19.07"
+                        ></line>
                         <line x1="2" y1="12" x2="6" y2="12"></line>
                         <line x1="18" y1="12" x2="22" y2="12"></line>
                         <line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line>
@@ -347,7 +425,15 @@ export default function ResourcesPage() {
                   ) : (
                     <>
                       Authorize &amp; Download Document
-                      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.5" className="ml-2">
+                      <svg
+                        viewBox="0 0 24 24"
+                        width="16"
+                        height="16"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.5"
+                        className="ml-2"
+                      >
                         <line x1="22" y1="2" x2="11" y2="13"></line>
                         <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
                       </svg>
@@ -369,4 +455,3 @@ export default function ResourcesPage() {
     </div>
   );
 }
-

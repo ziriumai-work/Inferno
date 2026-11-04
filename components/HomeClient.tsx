@@ -113,8 +113,28 @@ export default function HomeClient() {
   const [activeStoryMedia, setActiveStoryMedia] = useState<
     "scholarship" | "kickball"
   >("scholarship");
-  const [activePhotoIdx, setActivePhotoIdx] = useState(0);
-  const [isPlayingVideo, setIsPlayingVideo] = useState(false);
+  const [activeKickballPhotoIdx, setActiveKickballPhotoIdx] = useState(0);
+  const [isVideoMuted, setIsVideoMuted] = useState(true);
+  const scholarshipVideoRef = useRef<HTMLVideoElement>(null);
+
+  const toggleScholarshipMute = () => {
+    if (scholarshipVideoRef.current) {
+      scholarshipVideoRef.current.muted = !scholarshipVideoRef.current.muted;
+      setIsVideoMuted(scholarshipVideoRef.current.muted);
+    }
+  };
+
+  useEffect(() => {
+    if (activeStoryMedia === "scholarship" && scholarshipVideoRef.current) {
+      scholarshipVideoRef.current.muted = isVideoMuted;
+      const playPromise = scholarshipVideoRef.current.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(() => {
+          // Autoplay policy handled safely
+        });
+      }
+    }
+  }, [activeStoryMedia, isVideoMuted]);
   const [isMounted, setIsMounted] = useState(false);
   const [isQuizPopupOpen, setIsQuizPopupOpen] = useState(false);
   const [isQuizTriggerVisible, setIsQuizTriggerVisible] = useState(false);
@@ -521,7 +541,7 @@ export default function HomeClient() {
             <h2 className="section-title">
               Dual-Pillar Operational Excellence
             </h2>
-            <p className="section-desc mt-3">
+            <p className="section-desc max-w-[760px] mx-auto mt-3 text-center">
               Bridging high-stakes emergency command and sustainable commercial
               growth—delivering proven disaster recovery for public agencies and
               revenue-scaling strategy for independent and small businesses.
@@ -780,7 +800,7 @@ export default function HomeClient() {
             <h2 className="section-title">
               Built to Partner. Ready to Perform.
             </h2>
-            <p className="section-desc mt-3">
+            <p className="section-desc max-w-[700px] mx-auto mt-3 text-center">
               We partner with qualified subcontractors, specialty trades,
               consultants, suppliers, and emerging businesses to deliver
               compliant, high-impact results.
@@ -881,7 +901,6 @@ export default function HomeClient() {
                   type="button"
                   onClick={() => {
                     setActiveStoryMedia("kickball");
-                    setIsPlayingVideo(false);
                   }}
                   className={`w-full text-left flex items-start gap-3 p-4 rounded-xl border transition-all ${
                     activeStoryMedia === "kickball"
@@ -912,7 +931,6 @@ export default function HomeClient() {
                   type="button"
                   onClick={() => {
                     setActiveStoryMedia("scholarship");
-                    setIsPlayingVideo(false);
                   }}
                   className={`w-full text-left flex items-start gap-3 p-4 rounded-xl border transition-all ${
                     activeStoryMedia === "scholarship"
@@ -969,7 +987,6 @@ export default function HomeClient() {
                     type="button"
                     onClick={() => {
                       setActiveStoryMedia("scholarship");
-                      setIsPlayingVideo(false);
                     }}
                     className={`px-3 py-1 rounded-full text-[0.7rem] font-bold transition-all ${
                       activeStoryMedia === "scholarship"
@@ -983,7 +1000,6 @@ export default function HomeClient() {
                     type="button"
                     onClick={() => {
                       setActiveStoryMedia("kickball");
-                      setIsPlayingVideo(false);
                     }}
                     className={`px-3 py-1 rounded-full text-[0.7rem] font-bold transition-all ${
                       activeStoryMedia === "kickball"
@@ -997,135 +1013,220 @@ export default function HomeClient() {
               </div>
 
               {activeStoryMedia === "scholarship" ? (
-                <div className="flex flex-col gap-4">
-                  {/* Video & Ceremony Presentation */}
-                  <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-black border border-[var(--border)] shadow-md group">
-                    {isPlayingVideo ? (
-                      <video
-                        src="/scholarship_video.mp4"
-                        controls
-                        autoPlay
-                        className="w-full h-full object-cover"
-                      >
-                        Your browser does not support HTML video.
-                      </video>
-                    ) : (
-                      <>
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={
-                            activePhotoIdx === 0
-                              ? "/scholarship_ceremony.png"
-                              : "/impact_debris.png"
-                          }
-                          alt="The Inferno Ignite Scholarship Recipients"
-                          loading="lazy"
-                          decoding="async"
-                          onError={(e) => {
-                            (e.currentTarget as HTMLImageElement).src =
-                              "/impact_debris.png";
-                          }}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 opacity-90"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent flex flex-col justify-end p-5">
-                          <span className="text-[0.65rem] font-bold uppercase tracking-wider text-white/80 mb-1">
-                            Inferno Ignite Academic Awards
-                          </span>
-                          <h4 className="text-white text-base font-bold leading-tight mb-3 font-[family-name:var(--font-space-grotesk)]">
-                            Investing in Tomorrow&apos;s Scholars
-                          </h4>
-                          <button
-                            type="button"
-                            onClick={() => setIsPlayingVideo(true)}
-                            className="inline-flex items-center gap-2 self-start px-3.5 py-1.5 rounded-full bg-[var(--primary)] text-white text-xs font-bold hover:bg-[#c93f10] shadow-md transition-all"
-                          >
-                            <svg
-                              width="12"
-                              height="12"
-                              viewBox="0 0 24 24"
-                              fill="currentColor"
-                            >
-                              <polygon points="5 3 19 12 5 21 5 3"></polygon>
-                            </svg>
-                            Watch Scholarship Video
-                          </button>
-                        </div>
-                      </>
-                    )}
-                  </div>
+                (() => {
+                  const scholarshipStory = communityStories.find(
+                    (s) =>
+                      s.id === "inferno-ignite-scholarship" ||
+                      s.title.toLowerCase().includes("scholarship"),
+                  );
+                  const currentVideo =
+                    scholarshipStory?.videoUrl || "/scholarship_video.mp4";
 
-                  {/* Scholarship Photo Thumbnails */}
-                  <div>
-                    <span className="text-[0.7rem] font-bold text-[var(--text-muted)] uppercase tracking-wider block mb-2">
-                      Event Photo Gallery
-                    </span>
-                    <div className="grid grid-cols-3 gap-2">
-                      {[
-                        {
-                          label: "Award Ceremony",
-                          src: "/scholarship_ceremony.png",
-                          fallback: "/impact_debris.png",
-                        },
-                      ].map((thumb, idx) => (
-                        <button
-                          key={idx}
-                          type="button"
-                          onClick={() => {
-                            setActivePhotoIdx(idx);
-                            setIsPlayingVideo(false);
-                          }}
-                          className={`relative rounded-lg overflow-hidden border aspect-video transition-all ${
-                            activePhotoIdx === idx && !isPlayingVideo
-                              ? "border-[var(--secondary)] ring-2 ring-[var(--secondary)]/30"
-                              : "border-[var(--border)] opacity-75 hover:opacity-100"
-                          }`}
+                  return (
+                    <div id="scholarship-ignite" className="flex flex-col gap-4">
+                      {/* Real Scholarship Video Player */}
+                      <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-black border border-[var(--border)] shadow-md group">
+                        <video
+                          key={currentVideo}
+                          ref={scholarshipVideoRef}
+                          src={currentVideo}
+                          controls
+                          autoPlay
+                          muted={isVideoMuted}
+                          loop
+                          playsInline
+                          preload="auto"
+                          className="w-full h-full object-contain bg-black"
                         >
+                          <source src={currentVideo} type="video/mp4" />
+                          Your browser does not support HTML video.
+                        </video>
+                        <button
+                          type="button"
+                          onClick={toggleScholarshipMute}
+                          className="absolute top-3 right-3 z-30 px-3 py-1.5 rounded-full bg-black/80 hover:bg-black text-white text-xs font-semibold backdrop-blur-md flex items-center gap-1.5 border border-white/25 shadow-lg transition-all cursor-pointer"
+                        >
+                          {isVideoMuted ? (
+                            <>
+                              <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
+                                <path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z" />
+                              </svg>
+                              <span>Unmute Audio</span>
+                            </>
+                          ) : (
+                            <>
+                              <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
+                                <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z" />
+                              </svg>
+                              <span>Mute Audio</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
+
+                      {/* Video Presentation Briefing Card */}
+                      <div className="p-4 rounded-xl bg-[rgba(26,86,196,0.05)] border border-[rgba(26,86,196,0.18)] flex flex-col gap-2.5">
+                        <div className="flex items-center justify-between text-xs">
+                          <div className="flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full bg-[var(--secondary)] animate-pulse" />
+                            <span className="text-[var(--text-bright)] font-bold font-[family-name:var(--font-space-grotesk)]">
+                              Official Presentation Video
+                            </span>
+                          </div>
+                          <span className="text-[0.65rem] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-[rgba(26,86,196,0.12)] text-[var(--secondary)]">
+                            Inferno Ignite 2026
+                          </span>
+                        </div>
+                        <p className="text-xs text-[var(--text-muted)] leading-relaxed">
+                          {scholarshipStory?.summary ||
+                            "Watch the official presentation video capturing the Inferno Ignite Academic Scholarship awards—providing annual book stipends and essential coursework grants for graduating Greater Orlando high school seniors entering higher education and technical programs."}
+                        </p>
+                        <div className="pt-2 border-t border-[var(--border)] flex items-center justify-between text-[0.7rem] text-[var(--text-muted)]">
+                          <span>Subcategory: Youth Education &amp; Opportunity</span>
+                          <Link
+                            href="/about#about-impact"
+                            className="text-[var(--secondary)] font-bold hover:underline"
+                          >
+                            View Impact Report &rarr;
+                          </Link>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()
+              ) : (
+                <div className="flex flex-col gap-4">
+                  {(() => {
+                    const kickballStory = communityStories.find(
+                      (s) =>
+                        s.id === "kicking-for-relief" ||
+                        s.title.toLowerCase().includes("kickball"),
+                    );
+                    const dynamicGallery =
+                      kickballStory?.gallery && kickballStory.gallery.length > 0
+                        ? kickballStory.gallery
+                        : [
+                            "/kickball_tournament.png",
+                            "/kickball_action_1.jpg",
+                            "/kickball_action_2.jpg",
+                            "/kickball_action_3.jpg",
+                          ];
+
+                    const defaultLabels = [
+                      "Championship Team",
+                      "Match Action 1",
+                      "Match Action 2",
+                      "Match Action 3",
+                    ];
+                    const defaultTags = [
+                      "Disaster Relief Tournament",
+                      "Tournament Play",
+                      "Relief Sports",
+                      "Charity Highlights",
+                    ];
+                    const defaultTitles = [
+                      "Kicking for Relief Annual Fundraiser",
+                      "Field Action & Community Spirit",
+                      "Teaming for Community Resilience",
+                      "Kicking for Relief Highlights",
+                    ];
+
+                    const kickballPhotos = dynamicGallery.map((src, i) => ({
+                      label: defaultLabels[i] || `Tournament Photo ${i + 1}`,
+                      src,
+                      tag: defaultTags[i] || "Community Tournament",
+                      title:
+                        defaultTitles[i] ||
+                        kickballStory?.title ||
+                        "Kicking for Relief",
+                      desc:
+                        kickballStory?.summary ||
+                        "Uniting businesses, emergency leaders, and volunteers to raise critical funds for disaster-affected families.",
+                    }));
+
+                    const currentKickball =
+                      kickballPhotos[activeKickballPhotoIdx] || kickballPhotos[0];
+
+                    return (
+                      <>
+                        {/* Kickball Tournament Card */}
+                        <div className="relative w-full aspect-[4/3] sm:aspect-[16/11] rounded-xl overflow-hidden bg-black/95 border border-[var(--border)] shadow-md group">
+                          {/* Ambient blurred backdrop for seamless framing */}
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
-                            src={thumb.src}
-                            alt={thumb.label}
+                            src={currentKickball.src}
+                            alt=""
+                            aria-hidden="true"
+                            className="absolute inset-0 w-full h-full object-cover blur-xl opacity-35 scale-110 pointer-events-none"
+                          />
+
+                          {/* Main image with object-contain to display full action & players */}
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            key={currentKickball.src}
+                            src={currentKickball.src}
+                            alt={currentKickball.title}
                             loading="lazy"
                             decoding="async"
                             onError={(e) => {
                               (e.currentTarget as HTMLImageElement).src =
-                                thumb.fallback;
+                                "/kickball_tournament.png";
                             }}
-                            className="w-full h-full object-cover"
+                            className="relative z-10 w-full h-full object-contain transition-transform duration-700 group-hover:scale-105"
                           />
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="flex flex-col gap-4">
-                  {/* Kickball Tournament Card */}
-                  <div className="relative w-full aspect-[4/3] sm:aspect-[16/11] rounded-xl overflow-hidden bg-black/90 border border-[var(--border)] shadow-md group">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src="/kickball_tournament.png"
-                      alt="Kicking for Relief Charity Kickball Tournament"
-                      loading="lazy"
-                      decoding="async"
-                      onError={(e) => {
-                        (e.currentTarget as HTMLImageElement).src =
-                          "/impact_texas.png";
-                      }}
-                      className="w-full h-full object-cover object-[center_28%] group-hover:scale-105 transition-transform duration-700"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 via-40% to-transparent flex flex-col justify-end p-5 pointer-events-none">
-                      <span className="text-[0.65rem] font-bold uppercase tracking-wider text-[var(--primary)] mb-1">
-                        Disaster Relief Tournament
-                      </span>
-                      <h4 className="text-white text-base font-bold leading-tight font-[family-name:var(--font-space-grotesk)]">
-                        Kicking for Relief Annual Fundraiser
-                      </h4>
-                      <p className="text-white/80 text-xs mt-1">
-                        Uniting businesses, emergency leaders, and volunteers to
-                        raise critical funds for disaster-affected families.
-                      </p>
-                    </div>
-                  </div>
+
+                          <div className="absolute inset-0 z-20 bg-gradient-to-t from-black/85 via-black/30 via-40% to-transparent flex flex-col justify-end p-5 pointer-events-none">
+                            <span className="text-[0.65rem] font-bold uppercase tracking-wider text-[var(--primary)] mb-1">
+                              {currentKickball.tag}
+                            </span>
+                            <h4 className="text-white text-base font-bold leading-tight font-[family-name:var(--font-space-grotesk)]">
+                              {currentKickball.title}
+                            </h4>
+                            <p className="text-white/80 text-xs mt-1">
+                              {currentKickball.desc}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Kickball Photo Thumbnails Gallery */}
+                        <div>
+                          <span className="text-[0.7rem] font-bold text-[var(--text-muted)] uppercase tracking-wider block mb-2">
+                            Tournament Photo Gallery
+                          </span>
+                          <div className="grid grid-cols-4 gap-2">
+                            {kickballPhotos.map((thumb, idx) => (
+                              <button
+                                key={idx}
+                                type="button"
+                                onClick={() => setActiveKickballPhotoIdx(idx)}
+                                className={`relative rounded-lg overflow-hidden border aspect-video transition-all cursor-pointer ${
+                                  activeKickballPhotoIdx === idx
+                                    ? "border-[var(--primary)] ring-2 ring-[var(--primary)]/30 scale-[1.02]"
+                                    : "border-[var(--border)] opacity-75 hover:opacity-100"
+                                }`}
+                              >
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img
+                                  src={thumb.src}
+                                  alt={thumb.label}
+                                  loading="lazy"
+                                  decoding="async"
+                                  onError={(e) => {
+                                    (e.currentTarget as HTMLImageElement).src =
+                                      "/kickball_tournament.png";
+                                  }}
+                                  className="w-full h-full object-cover"
+                                />
+                                <div className="absolute inset-x-0 bottom-0 bg-black/60 py-0.5 px-1 text-[0.58rem] text-white/90 text-center truncate font-medium">
+                                  {thumb.label}
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      </>
+                    );
+                  })()}
 
                   <div className="p-3.5 rounded-xl bg-[rgba(225,77,24,0.05)] border border-[rgba(225,77,24,0.15)] flex items-center justify-between text-xs">
                     <span className="text-[var(--text-bright)] font-semibold">
@@ -1224,7 +1325,7 @@ export default function HomeClient() {
               <TypewriterText text="Next-Gen Delivery" speed={40} delay={200} />
             </div>
             <h2 className="section-title">AI &amp; Innovation</h2>
-            <p className="section-desc">
+            <p className="section-desc max-w-[650px] mx-auto text-center">
               Automated procurement matching, encrypted data gateways, and live
               weather intelligence.
             </p>

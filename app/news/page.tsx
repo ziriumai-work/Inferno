@@ -49,10 +49,12 @@ export default function NewsPage() {
   return (
     <div className="page-view block">
       <section id="news">
-        <RevealOnMount className={`reveal ${isMounted ? "active" : ""}`}>
+        <RevealOnMount
+          className={`reveal text-center max-w-[850px] mx-auto mb-10 ${isMounted ? "active" : ""}`}
+        >
           <div className="section-eyebrow">Firm Intel &amp; Bulletins</div>
           <h1 className="section-title">News, Insights &amp; Operational Bulletins</h1>
-          <p className="section-desc max-w-[850px] mx-auto">
+          <p className="section-desc max-w-[760px] mx-auto text-center">
             Briefings on FEMA Public Assistance, SBA HUBZone &amp; VOSB contracting, DCAA compliance, and Inferno Cares community initiatives.
           </p>
         </RevealOnMount>

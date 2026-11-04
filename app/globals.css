@@ -718,6 +718,16 @@
     margin-top: clamp(20px, 4vw, 80px);
   }
 
+  /* ── CONSISTENT SUBPAGE VIEWPORT OFFSET & HERO ALIGNMENT ── */
+  main > .page-view:not(.home-page-view) {
+    padding-top: clamp(4.5rem, 6vw, 6.5rem);
+    min-height: 80vh;
+  }
+  main > .page-view:not(.home-page-view) > section:first-of-type {
+    margin-top: 0;
+    padding-top: clamp(1rem, 2.5vw, 2.5rem);
+  }
+
   .section-eyebrow {
     font-family: var(--font-jetbrains-mono), monospace;
     font-size: clamp(0.72rem, 0.9vw, 0.82rem);
@@ -744,6 +754,11 @@
     max-width: 600px;
     line-height: 1.75;
     margin-bottom: 2.5rem;
+  }
+  .text-center .section-desc {
+    margin-left: auto;
+    margin-right: auto;
+    text-align: center;
   }
 
   /* ── SERVICES DIRECTORY (SPLIT SCROLL) ── */

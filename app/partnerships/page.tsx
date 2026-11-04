@@ -94,11 +94,11 @@ export default function PartnershipsPage() {
     <div className="page-view block">
       <section id="partnerships">
         <RevealOnMount
-          className={`reveal text-center ${isMounted ? "active" : ""}`}
+          className={`reveal text-center max-w-[850px] mx-auto mb-10 ${isMounted ? "active" : ""}`}
         >
           <div className="section-eyebrow">Partners &amp; Subcontractors</div>
           <h1 className="section-title">Built to Partner. Ready to Perform.</h1>
-          <p className="section-desc max-w-[850px] mx-auto mb-8 leading-[1.8]">
+          <p className="section-desc max-w-[760px] mx-auto text-center mb-8 leading-[1.8]">
             We partner with qualified subcontractors, specialty trades,
             consultants, suppliers, and emerging businesses to deliver
             responsive, compliant solutions for government and commercial

@@ -67,9 +67,14 @@ export default function FAQPage() {
   return (
     <div className="page-view block">
       <section id="faq">
-        <RevealOnMount className={`reveal ${isMounted ? "active" : ""}`}>
+        <RevealOnMount
+          className={`reveal text-center max-w-[850px] mx-auto mb-10 ${isMounted ? "active" : ""}`}
+        >
+          <div className="section-eyebrow">
+            Contracting &amp; Compliance Inquiries
+          </div>
           <h1 className="section-title">Frequently Asked Questions</h1>
-          <p className="section-desc max-w-[800px] mx-auto mb-8">
+          <p className="section-desc max-w-[760px] mx-auto text-center mb-6">
             Answers regarding The Inferno Group LLC&apos;s federal credentials
             (UEI / CAGE), HUBZone &amp; VOSB status, emergency response
             capabilities, bonding capacity, and teaming criteria.
@@ -147,7 +152,7 @@ export default function FAQPage() {
                       isOpen ? "max-h-[600px] opacity-100" : "max-h-0 opacity-0"
                     }`}
                   >
-                    <div className="faq-content-inner px-6 pb-6 pt-1 text-[var(--text-muted)] text-[0.92rem] leading-[1.75] border-t border-dashed border-[var(--border)] mt-2">
+                    <div className="faq-content-inner px-6 pb-6 pt-1 text-[var(--text-muted)] text-[0.92rem] leading-[1.75]">
                       {item.answer}
                     </div>
                   </div>

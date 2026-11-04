@@ -361,12 +361,12 @@ export default function ContactPage() {
             className={`contact-info-panel reveal ${isMounted ? "active" : ""}`}
           >
             <div className="section-eyebrow">Get In Touch</div>
-            <h1>
+            <h1 className="section-title text-[var(--text-bright)] leading-tight">
               Ready to Move?
               <br />
               Let&apos;s Connect.
             </h1>
-            <p>
+            <p className="section-desc">
               Whether targeting set-aside contracts, organizing emergency
               programs, or establishing strategic joint ventures, our advisory
               specialists are ready to coordinate your plan.

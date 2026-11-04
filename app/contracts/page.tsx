@@ -138,22 +138,20 @@ export default function ContractsPage() {
       <section id="contracts">
         {/* Header */}
         <RevealOnMount
-          className={`reveal flex flex-wrap justify-between items-end gap-6 ${isMounted ? "active" : ""}`}
+          className={`reveal text-center max-w-[850px] mx-auto mb-10 ${isMounted ? "active" : ""}`}
         >
-          <div>
-            <div className="section-eyebrow">
-              B2G &amp; Public Sector Opportunities
-            </div>
-            <h1 className="section-title">
-              Active Government Contracts &amp; Pursuits
-            </h1>
-            <p className="section-desc max-w-[820px]">
-              Federal, state, and regional emergency management and consulting
-              solicitations matching The Inferno Group LLC&apos;s registered
-              NAICS codes, HUBZone, and VOSB socioeconomic parameters.
-            </p>
+          <div className="section-eyebrow">
+            B2G &amp; Public Sector Opportunities
           </div>
-          <div className="flex items-center gap-4">
+          <h1 className="section-title">
+            Active Government Contracts &amp; Pursuits
+          </h1>
+          <p className="section-desc max-w-[760px] mx-auto text-center mb-6">
+            Federal, state, and regional emergency management and consulting
+            solicitations matching The Inferno Group LLC&apos;s registered
+            NAICS codes, HUBZone, and VOSB socioeconomic parameters.
+          </p>
+          <div className="flex flex-wrap items-center justify-center gap-4 pt-2">
             <span className="text-xs text-[var(--text-muted)] font-[family-name:var(--font-jetbrains-mono)]">
               Feed Synced: {lastRefreshed}
             </span>

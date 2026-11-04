@@ -117,10 +117,12 @@ function CapabilitiesContent() {
   return (
     <div className="page-view block">
       <section id="capabilities">
-        <RevealOnMount className={`reveal ${isMounted ? "active" : ""}`}>
+        <RevealOnMount
+          className={`reveal text-center max-w-[850px] mx-auto mb-12 ${isMounted ? "active" : ""}`}
+        >
           <div className="section-eyebrow">Federal Credentials &amp; Teaming</div>
           <h1 className="section-title">Corporate Capabilities &amp; Contracting Readiness</h1>
-          <p className="section-desc max-w-[850px] mx-auto">
+          <p className="section-desc max-w-[760px] mx-auto text-center">
             The Inferno Group LLC (TIG) is a HUBZone Certified and Veteran-Owned Small Business (VOSB). We support federal, state, and local agencies while partnering with prime contractors across high-consequence procurements.
           </p>
         </RevealOnMount>

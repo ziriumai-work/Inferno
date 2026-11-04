@@ -284,14 +284,16 @@ export default function TrackerPage() {
   return (
     <div className="page-view block">
       <section id="tracker" className="max-w-[1400px] mx-auto">
-        <div className={`reveal ${isMounted ? "active" : ""}`}>
+        <div
+          className={`reveal text-center max-w-[850px] mx-auto mb-8 ${isMounted ? "active" : ""}`}
+        >
           <div className="section-eyebrow">
             NOAA / NHC Real-Time Intelligence
           </div>
           <h1 className="section-title">
             Hurricane Tracker &amp; Intelligence Dashboard
           </h1>
-          <p className="section-desc">
+          <p className="section-desc max-w-[760px] mx-auto text-center">
             Live NOAA National Hurricane Center tracking—featuring forecast
             cones, tropical disturbances, wind radii, and coastal advisories.
           </p>

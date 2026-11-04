@@ -250,10 +250,12 @@ export default function CalendarPage() {
   return (
     <div className="page-view block">
       <section id="calendar">
-        <div className={`reveal ${isMounted ? "active" : ""}`}>
+        <div
+          className={`reveal text-center max-w-[850px] mx-auto mb-10 ${isMounted ? "active" : ""}`}
+        >
           <div className="section-eyebrow">Alliances &amp; Contracting</div>
           <h1 className="section-title">Operations Booking Window</h1>
-          <p className="section-desc">
+          <p className="section-desc max-w-[760px] mx-auto text-center">
             Coordinate availability grids and schedule direct consultations with contracting desk officers.
           </p>
         </div>

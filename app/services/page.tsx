@@ -160,50 +160,52 @@ export default function ServicesPage() {
   return (
     <div className="page-view block">
       <section id="services">
-        <RevealOnMount className={`reveal ${isMounted ? "active" : ""}`}>
+        <RevealOnMount
+          className={`reveal text-center max-w-[850px] mx-auto mb-12 ${isMounted ? "active" : ""}`}
+        >
           <div className="section-eyebrow">Services Directory</div>
           <h1 className="section-title">Government &amp; Commercial Solutions</h1>
-          <p className="section-desc">
+          <p className="section-desc max-w-[760px] mx-auto text-center">
             Full-lifecycle emergency management and federal grant compliance, paired with strategic growth and revenue advisory for independent and small businesses.
           </p>
-
-          {/* Solutions Category Filter Bar */}
-          <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 mt-6 sm:mt-8 mb-4">
-            <button
-              type="button"
-              onClick={() => handleFilterChange("all")}
-              className={`px-3.5 sm:px-4 py-2 rounded-full text-[0.72rem] sm:text-xs font-bold transition-all min-h-[38px] ${
-                filterCategory === "all"
-                  ? "bg-[var(--primary)] text-white shadow-sm"
-                  : "bg-[var(--glass)] border border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text-bright)]"
-              }`}
-            >
-              All Capabilities ({servicesData.length})
-            </button>
-            <button
-              type="button"
-              onClick={() => handleFilterChange("small-business")}
-              className={`px-3.5 sm:px-4 py-2 rounded-full text-[0.72rem] sm:text-xs font-bold transition-all min-h-[38px] ${
-                filterCategory === "small-business"
-                  ? "bg-[var(--secondary)] text-white shadow-sm"
-                  : "bg-[var(--glass)] border border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text-bright)]"
-              }`}
-            >
-              Small Business &amp; Commercial Advisory
-            </button>
-            <button
-              type="button"
-              onClick={() => handleFilterChange("emergency")}
-              className={`px-3.5 sm:px-4 py-2 rounded-full text-[0.72rem] sm:text-xs font-bold transition-all min-h-[38px] ${
-                filterCategory === "emergency"
-                  ? "bg-[var(--primary)] text-white shadow-sm"
-                  : "bg-[var(--glass)] border border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text-bright)]"
-              }`}
-            >
-              Emergency Management &amp; Recovery
-            </button>
-          </div>
         </RevealOnMount>
+
+        {/* Solutions Category Filter Bar */}
+        <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 mt-4 mb-10">
+          <button
+            type="button"
+            onClick={() => handleFilterChange("all")}
+            className={`px-3.5 sm:px-4 py-2 rounded-full text-[0.72rem] sm:text-xs font-bold transition-all min-h-[38px] ${
+              filterCategory === "all"
+                ? "bg-[var(--primary)] text-white shadow-sm"
+                : "bg-[var(--glass)] border border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text-bright)]"
+            }`}
+          >
+            All Capabilities ({servicesData.length})
+          </button>
+          <button
+            type="button"
+            onClick={() => handleFilterChange("small-business")}
+            className={`px-3.5 sm:px-4 py-2 rounded-full text-[0.72rem] sm:text-xs font-bold transition-all min-h-[38px] ${
+              filterCategory === "small-business"
+                ? "bg-[var(--secondary)] text-white shadow-sm"
+                : "bg-[var(--glass)] border border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text-bright)]"
+            }`}
+          >
+            Small Business &amp; Commercial Advisory
+          </button>
+          <button
+            type="button"
+            onClick={() => handleFilterChange("emergency")}
+            className={`px-3.5 sm:px-4 py-2 rounded-full text-[0.72rem] sm:text-xs font-bold transition-all min-h-[38px] ${
+              filterCategory === "emergency"
+                ? "bg-[var(--primary)] text-white shadow-sm"
+                : "bg-[var(--glass)] border border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text-bright)]"
+            }`}
+          >
+            Emergency Management &amp; Recovery
+          </button>
+        </div>
 
         {displayedServices.length > 0 ? (
           <div className="services-container">

@@ -134,10 +134,12 @@ export default function QuizPage() {
   return (
     <div className="page-view block">
       <section id="quiz">
-        <div className={`reveal ${isMounted ? "active" : ""}`}>
+        <div
+          className={`reveal text-center max-w-[850px] mx-auto mb-10 ${isMounted ? "active" : ""}`}
+        >
           <div className="section-eyebrow">Interactive Assessment</div>
           <h1 className="section-title">Certification Eligibility Quiz</h1>
-          <p className="section-desc">
+          <p className="section-desc max-w-[760px] mx-auto text-center">
             Analyze your business parameters against local, state, and federal socioeconomic set-aside frameworks.
           </p>
         </div>

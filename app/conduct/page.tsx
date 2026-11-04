@@ -54,10 +54,10 @@ export default function ConductPage() {
   return (
     <div className="page-view block">
       <section id="standards-of-conduct" className="max-w-[800px] mx-auto py-16 px-8">
-        <RevealOnMount>
+        <RevealOnMount className="text-center max-w-[850px] mx-auto mb-10">
           <div className="section-eyebrow">Ethical Guidelines</div>
           <h1 className="section-title">{conduct.title}</h1>
-          <p className="section-desc mb-12">
+          <p className="section-desc max-w-[760px] mx-auto text-center mb-8">
             The Inferno Group LLC guidelines regarding anti-kickback provisions, conflicts of interest, and procurement integrity.
           </p>
         </RevealOnMount>

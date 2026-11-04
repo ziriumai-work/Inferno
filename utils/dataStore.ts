@@ -170,7 +170,7 @@ export interface CommunityStory {
   title: string;
   summary: string;
   content: string;
-  image: string; // Base64 or standard asset URL
+  image?: string; // Optional Base64 or standard asset URL
   videoUrl?: string; // Optional video asset or embed URL
   gallery?: string[]; // Optional supporting photo array
   featured: boolean;
@@ -667,7 +667,12 @@ const defaultCommunityStories: CommunityStory[] = [
     content:
       "TIG hosts the 'Kicking for Relief' Kickball Tournament to unite corporate partners, volunteers, and emergency professionals. 100% of proceeds go directly toward immediate relief for storm-displaced households.",
     image: "/kickball_tournament.png",
-    gallery: ["/kickball_tournament.png"],
+    gallery: [
+      "/kickball_tournament.png",
+      "/kickball_action_1.jpg",
+      "/kickball_action_2.jpg",
+      "/kickball_action_3.jpg",
+    ],
     featured: true,
     status: "published",
   },
@@ -678,13 +683,9 @@ const defaultCommunityStories: CommunityStory[] = [
       "Annual academic stipends and book scholarships for graduating high school seniors entering college.",
     content:
       "The Inferno Ignite Scholarship awards annual book stipends and micro-grants to Greater Orlando high school seniors entering college or technical programs—removing financial barriers for textbooks and essential coursework tools.",
-    image: "/scholarship_ceremony.png",
+    image: "/logo.png",
     videoUrl: "/scholarship_video.mp4",
-    gallery: [
-      "/scholarship_ceremony.png",
-      "/scholarship_recipients.png",
-      "/impact_debris.png",
-    ],
+    gallery: [],
     featured: true,
     status: "published",
   },
@@ -1538,6 +1539,24 @@ function getStoreItem<T>(key: string, defaultValue: T): T {
 
     if (key.startsWith("inferno_community") && Array.isArray(parsed)) {
       (parsed as CommunityStory[]).forEach((s) => {
+        if (s.id === "kicking-for-relief") {
+          if (!s.gallery || s.gallery.length < 4 || s.gallery.includes("/impact_texas.png")) {
+            s.gallery = [
+              "/kickball_tournament.png",
+              "/kickball_action_1.jpg",
+              "/kickball_action_2.jpg",
+              "/kickball_action_3.jpg",
+            ];
+            migrated = true;
+          }
+        }
+        if (s.id === "inferno-ignite-scholarship") {
+          if (s.videoUrl !== "/scholarship_video.mp4" || (s.gallery && s.gallery.length > 0)) {
+            s.videoUrl = "/scholarship_video.mp4";
+            s.gallery = [];
+            migrated = true;
+          }
+        }
         const needsCorrection =
           !s.image ||
           s.image.includes("placeholder") ||
@@ -1661,11 +1680,11 @@ export const dataStore = {
   // Community stories
   getCommunityStories: (): CommunityStory[] =>
     getStoreItem<CommunityStory[]>(
-      "inferno_community_v6",
+      "inferno_community_v7",
       defaultCommunityStories,
     ),
   saveCommunityStories: (stories: CommunityStory[]): void =>
-    setStoreItem<CommunityStory[]>("inferno_community_v6", stories),
+    setStoreItem<CommunityStory[]>("inferno_community_v7", stories),
 
   // News
   getArticles: (): Article[] =>
@@ -1778,7 +1797,7 @@ export const dataStore = {
     setStoreItem("inferno_services_v5", defaultServices);
     setStoreItem("inferno_stats_v3", defaultStats);
     setStoreItem("inferno_testimonials_v5", defaultTestimonials);
-    setStoreItem("inferno_community_v6", defaultCommunityStories);
+    setStoreItem("inferno_community_v7", defaultCommunityStories);
     setStoreItem("inferno_articles_v5", defaultArticles);
     setStoreItem("inferno_ai_innovation_v2", defaultAIInnovation);
     setStoreItem("inferno_jobs_v5", defaultJobs);
@@ -1906,7 +1925,7 @@ export const dataStore = {
         { key: "inferno_services_v5", value: dataStore.getServices() },
         { key: "inferno_stats_v3", value: dataStore.getStats() },
         { key: "inferno_testimonials_v5", value: dataStore.getTestimonials() },
-        { key: "inferno_community_v6", value: dataStore.getCommunityStories() },
+        { key: "inferno_community_v7", value: dataStore.getCommunityStories() },
         { key: "inferno_articles_v5", value: dataStore.getArticles() },
         { key: "inferno_ai_innovation_v2", value: dataStore.getAIInnovation() },
         { key: "inferno_jobs_v5", value: dataStore.getJobs() },

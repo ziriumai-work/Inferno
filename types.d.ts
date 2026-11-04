@@ -76,7 +76,9 @@ interface CommunityStory {
   title: string;
   summary: string;
   content: string;
-  image: string;
+  image?: string;
+  videoUrl?: string;
+  gallery?: string[];
   featured: boolean;
   status: "draft" | "published";
 }

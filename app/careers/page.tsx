@@ -82,10 +82,12 @@ export default function CareersPage() {
   return (
     <div className="page-view block">
       <section id="careers">
-        <RevealOnMount className={`reveal ${isMounted ? "active" : ""}`}>
+        <RevealOnMount
+          className={`reveal text-center max-w-[850px] mx-auto mb-10 ${isMounted ? "active" : ""}`}
+        >
           <div className="section-eyebrow">Join the Mission</div>
           <h1 className="section-title">Open Positions</h1>
-          <p className="section-desc mb-4">
+          <p className="section-desc max-w-[760px] mx-auto text-center mb-6">
             We assemble high-performance teams to coordinate critical disaster
             response programs, federal compliance reviews, and strategic growth.
           </p>

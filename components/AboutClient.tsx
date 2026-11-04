@@ -18,7 +18,6 @@ export default function AboutClient() {
   const [team, setTeam] = useState<TeamMember[]>([]);
   const [stories, setStories] = useState<CommunityStory[]>([]);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
-  const [playingVideoStoryId, setPlayingVideoStoryId] = useState<string | null>(null);
   const [selectedStoryPhotos, setSelectedStoryPhotos] = useState<Record<string, number>>({});
 
   // Selected team member for modal detail view
@@ -166,7 +165,7 @@ export default function AboutClient() {
     <div className="page-view block overflow-x-clip">
       {/* HERO / STORY SECTION */}
       <section id="about-hero" className="pt-16 md:pt-24 pb-8 overflow-hidden">
-        <RevealOnMount direction="left">
+        <RevealOnMount direction="up" className="text-center max-w-[850px] mx-auto mb-12">
           <div className="section-eyebrow">
             <TypewriterText
               text="Corporate Briefing • Who We Are"
@@ -175,7 +174,7 @@ export default function AboutClient() {
             />
           </div>
           <h1 className="section-title">About The Inferno Group</h1>
-          <p className="section-desc">
+          <p className="section-desc max-w-[760px] mx-auto text-center">
             Advisors in crisis management, regulatory compliance, and strategic
             public sector business growth.
           </p>
@@ -704,10 +703,25 @@ export default function AboutClient() {
         <div className="flex flex-col gap-12 mb-16">
           {stories.map((story, idx) => {
             const isEven = idx % 2 === 0;
+            const isScholarship =
+              story.id.includes("scholarship") ||
+              story.title.toLowerCase().includes("scholarship") ||
+              story.id === "inferno-ignite-scholarship";
+
+            const effectiveVideoUrl =
+              story.videoUrl ||
+              (isScholarship ? "/scholarship_video.mp4" : undefined);
+
             const currentPhotoIdx = selectedStoryPhotos[story.id] ?? 0;
-            const galleryList = story.gallery && story.gallery.length > 0 ? story.gallery : [story.image];
-            const currentImg = galleryList[currentPhotoIdx] || story.image;
-            const isVideoActive = playingVideoStoryId === story.id;
+            const galleryList = effectiveVideoUrl
+              ? []
+              : story.gallery && story.gallery.length > 0
+              ? story.gallery
+              : story.image
+              ? [story.image]
+              : [];
+            const currentImg =
+              galleryList[currentPhotoIdx] || story.image || "/kickball_tournament.png";
 
             return (
               <RevealOnMount
@@ -715,20 +729,44 @@ export default function AboutClient() {
                 direction={isEven ? "left" : "right"}
                 delay={idx * 150}
               >
-                <div className="glow-card grid grid-cols-1 lg:grid-cols-[1fr_1.2fr] bg-[var(--glass)] border border-[var(--border)] rounded-[24px] p-8 md:p-10 gap-10 md:gap-12 items-center">
+                <div
+                  id={
+                    story.id === "inferno-ignite-scholarship"
+                      ? "scholarship-ignite"
+                      : story.id
+                  }
+                  className="glow-card grid grid-cols-1 lg:grid-cols-[1fr_1.2fr] bg-[var(--glass)] border border-[var(--border)] rounded-[24px] p-8 md:p-10 gap-10 md:gap-12 items-center"
+                >
                   <div className={`flex flex-col gap-3 ${isEven ? "order-0" : "order-1"}`}>
-                    <div className={`relative w-full ${story.id === "kicking-for-relief" ? "aspect-[4/3] sm:aspect-[16/11]" : "aspect-video"} rounded-2xl overflow-hidden bg-black border border-[var(--border)] shadow-md group`}>
-                      {isVideoActive && story.videoUrl ? (
-                        <video
-                          src={story.videoUrl}
-                          controls
-                          autoPlay
-                          className="w-full h-full object-cover"
-                        >
-                          Your browser does not support HTML5 video.
-                        </video>
+                    <div className={`relative w-full ${story.id === "kicking-for-relief" ? "aspect-[4/3] sm:aspect-[16/11]" : "aspect-video"} rounded-2xl overflow-hidden bg-black/95 border border-[var(--border)] shadow-md group`}>
+                      {effectiveVideoUrl ? (
+                        <div className="relative w-full h-full bg-black">
+                          <video
+                            src={effectiveVideoUrl}
+                            controls
+                            autoPlay
+                            muted
+                            loop
+                            playsInline
+                            preload="auto"
+                            className="w-full h-full object-contain bg-black"
+                          >
+                            <source src={effectiveVideoUrl} type="video/mp4" />
+                            Your browser does not support HTML5 video.
+                          </video>
+                        </div>
                       ) : (
                         <>
+                          {/* Ambient background blur for kickball portrait photos */}
+                          {story.id === "kicking-for-relief" && (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={currentImg}
+                              alt=""
+                              aria-hidden="true"
+                              className="absolute inset-0 w-full h-full object-cover blur-xl opacity-35 scale-110 pointer-events-none"
+                            />
+                          )}
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
                             src={
@@ -742,36 +780,20 @@ export default function AboutClient() {
                             decoding="async"
                             onError={(e) => {
                               (e.currentTarget as HTMLImageElement).src =
-                                story.id.includes("scholarship")
-                                  ? "/impact_debris.png"
-                                  : "/impact_texas.png";
+                                "/kickball_tournament.png";
                             }}
-                            className={`w-full h-full object-cover transition-transform duration-700 hover:scale-105 ${
+                            className={`relative z-10 w-full h-full ${
                               story.id === "kicking-for-relief"
-                                ? "object-[center_28%]"
-                                : "object-center"
-                            }`}
+                                ? "object-contain"
+                                : "object-cover"
+                            } transition-transform duration-700 hover:scale-105`}
                           />
-                          {story.videoUrl && (
-                            <div className="absolute inset-0 bg-black/40 flex items-center justify-center pointer-events-none group-hover:bg-black/50 transition-colors">
-                              <button
-                                type="button"
-                                onClick={() => setPlayingVideoStoryId(story.id)}
-                                className="pointer-events-auto px-4 py-2 rounded-full bg-[var(--primary)] text-white text-xs font-bold flex items-center gap-2 shadow-lg hover:scale-105 transition-transform"
-                              >
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                                  <polygon points="5 3 19 12 5 21 5 3"></polygon>
-                                </svg>
-                                Play Video
-                              </button>
-                            </div>
-                          )}
                         </>
                       )}
                     </div>
 
-                    {/* Thumbnail gallery if multiple photos */}
-                    {galleryList.length > 1 && (
+                    {/* Thumbnail gallery only for photo stories (never for scholarship video) */}
+                    {galleryList.length > 1 && !effectiveVideoUrl && (
                       <div className="flex items-center gap-2 pt-1">
                         {galleryList.map((photo, pIdx) => (
                           <button
@@ -782,10 +804,9 @@ export default function AboutClient() {
                                 ...prev,
                                 [story.id]: pIdx,
                               }));
-                              setPlayingVideoStoryId(null);
                             }}
                             className={`w-16 h-10 rounded-lg overflow-hidden border transition-all ${
-                              currentPhotoIdx === pIdx && !isVideoActive
+                              currentPhotoIdx === pIdx
                                 ? "border-[var(--primary)] ring-2 ring-[var(--primary)]/30 scale-105"
                                 : "border-[var(--border)] opacity-70 hover:opacity-100"
                             }`}
@@ -798,9 +819,7 @@ export default function AboutClient() {
                               decoding="async"
                               onError={(e) => {
                                 (e.currentTarget as HTMLImageElement).src =
-                                  story.id.includes("scholarship")
-                                    ? "/impact_debris.png"
-                                    : "/impact_texas.png";
+                                  "/kickball_tournament.png";
                               }}
                               className="w-full h-full object-cover"
                             />

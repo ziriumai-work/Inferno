@@ -199,8 +199,23 @@ function ImageDropzone({
   const [showManualUrl, setShowManualUrl] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFile = (file: File) => {
+  const handleFile = async (file: File) => {
     if (!file || !file.type.startsWith("image/")) return;
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+      if (data.success && data.url) {
+        onChange(data.url);
+        return;
+      }
+    } catch {
+      // Fallback to FileReader if server upload encounters an issue
+    }
     const reader = new FileReader();
     reader.onload = (e) => {
       const result = e.target?.result as string;
@@ -394,6 +409,472 @@ function ImageDropzone({
           </button>
         </div>
       )}
+    </div>
+  );
+}
+
+function VideoDropzone({
+  value,
+  onChange,
+  label = "Initiative Presentation Video",
+  placeholderHint = "Upload MP4, WebM or MOV video, or enter video path/URL",
+}: {
+  value?: string;
+  onChange: (val: string) => void;
+  label?: string;
+  placeholderHint?: string;
+}) {
+  const [isDragging, setIsDragging] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<string | null>(null);
+  const [showManualUrl, setShowManualUrl] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFile = async (file: File) => {
+    if (!file) return;
+    const isVideo =
+      file.type.startsWith("video/") ||
+      file.name.match(/\.(mp4|webm|mov|ogg)$/i);
+    if (!isVideo) {
+      setErrorMessage("Please select a video file (MP4, WebM, or MOV).");
+      return;
+    }
+
+    setErrorMessage(null);
+    setIsUploading(true);
+    setUploadProgress(
+      `Uploading ${file.name} (${(file.size / (1024 * 1024)).toFixed(1)} MB)...`,
+    );
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+      if (data.success && data.url) {
+        onChange(data.url);
+        setUploadProgress(null);
+        return;
+      }
+      throw new Error(data.error || "Server upload failed");
+    } catch (err: any) {
+      if (file.size < 15 * 1024 * 1024) {
+        setUploadProgress("Converting to local embedded video...");
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const result = e.target?.result as string;
+          if (result) onChange(result);
+          setUploadProgress(null);
+        };
+        reader.readAsDataURL(file);
+      } else {
+        setErrorMessage(
+          `Upload notice: ${err.message || "File too large for direct browser storage. Enter path or provide video URL."}`,
+        );
+        setUploadProgress(null);
+      }
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const hasVideo = Boolean(value && value.trim().length > 0);
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between">
+        <label className="text-xs font-semibold text-[var(--adm-text-primary)] font-[family-name:var(--font-space-grotesk)] flex items-center gap-1.5">
+          <svg
+            className="w-4 h-4 text-[var(--secondary)]"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <polygon points="23 7 16 12 23 17 23 7" />
+            <rect width="15" height="14" x="1" y="5" rx="2" ry="2" />
+          </svg>
+          {label}
+        </label>
+        <button
+          type="button"
+          onClick={() => setShowManualUrl(!showManualUrl)}
+          className="text-[11px] text-[var(--adm-text-muted)] hover:text-[var(--primary)] transition-colors underline cursor-pointer"
+        >
+          {showManualUrl ? "Hide manual URL" : "Enter URL/path manually"}
+        </button>
+      </div>
+
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="video/mp4,video/webm,video/quicktime,video/ogg"
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) handleFile(file);
+          e.target.value = "";
+        }}
+      />
+
+      <div
+        onDragOver={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          setIsDragging(true);
+        }}
+        onDragEnter={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          setIsDragging(true);
+        }}
+        onDragLeave={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          setIsDragging(false);
+        }}
+        onDrop={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          setIsDragging(false);
+          if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+            handleFile(e.dataTransfer.files[0]);
+          }
+        }}
+        onClick={() => !isUploading && fileInputRef.current?.click()}
+        className={`relative group cursor-pointer rounded-2xl border-2 border-dashed transition-all overflow-hidden flex flex-col items-center justify-center p-4 text-center ${
+          isDragging
+            ? "border-[var(--secondary)] bg-[rgba(26,86,196,0.12)] scale-[1.01]"
+            : "border-[var(--adm-card-border)] hover:border-[var(--secondary)] bg-[var(--adm-card-subtle)] hover:bg-[var(--adm-card)]"
+        }`}
+      >
+        {isUploading ? (
+          <div className="py-8 flex flex-col items-center gap-3">
+            <div className="w-8 h-8 border-3 border-[var(--secondary)] border-t-transparent rounded-full animate-spin"></div>
+            <p className="text-xs font-semibold text-[var(--adm-text-primary)] font-[family-name:var(--font-space-grotesk)]">
+              {uploadProgress || "Uploading video..."}
+            </p>
+            <span className="text-[10px] text-[var(--adm-text-muted)]">
+              Saving video and preparing playback
+            </span>
+          </div>
+        ) : hasVideo ? (
+          <div className="w-full flex flex-col items-center gap-3">
+            <div
+              className="relative w-full aspect-video max-h-56 rounded-xl overflow-hidden bg-black border border-[var(--adm-card-border)] shadow-xs flex items-center justify-center"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <video
+                key={value}
+                src={value}
+                controls
+                playsInline
+                preload="metadata"
+                className="w-full h-full object-contain bg-black"
+              >
+                Your browser does not support HTML video.
+              </video>
+            </div>
+
+            <div className="flex items-center gap-2 flex-wrap justify-between w-full px-1">
+              <span className="text-[11px] text-[var(--adm-text-muted)] truncate max-w-[260px] font-mono">
+                {value?.startsWith("data:")
+                  ? "Video loaded (embedded data)"
+                  : value}
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    fileInputRef.current?.click();
+                  }}
+                  className="px-2.5 py-1 rounded-lg text-[10px] font-semibold text-[var(--secondary)] hover:bg-[var(--secondary)]/10 border border-[var(--secondary)]/30 transition-all cursor-pointer"
+                >
+                  Change Video
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onChange("");
+                  }}
+                  className="px-2.5 py-1 rounded-lg text-[10px] font-semibold text-red-500 hover:text-white hover:bg-red-500/80 border border-red-500/30 transition-all cursor-pointer"
+                >
+                  Remove
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="py-5 px-3 flex flex-col items-center">
+            <div className="w-12 h-12 mb-2.5 rounded-2xl bg-[rgba(26,86,196,0.1)] text-[var(--secondary)] flex items-center justify-center transition-transform group-hover:scale-110 shadow-xs">
+              <svg
+                className="w-6 h-6"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <polygon points="23 7 16 12 23 17 23 7" />
+                <rect width="15" height="14" x="1" y="5" rx="2" ry="2" />
+              </svg>
+            </div>
+            <p className="text-xs font-semibold text-[var(--adm-text-primary)] font-[family-name:var(--font-space-grotesk)]">
+              Drag &amp; drop a video here, or{" "}
+              <span className="text-[var(--secondary)] underline underline-offset-2">
+                browse files
+              </span>
+            </p>
+            <p className="text-[11px] text-[var(--adm-text-muted)] mt-1">
+              {placeholderHint}
+            </p>
+          </div>
+        )}
+      </div>
+
+      {errorMessage && (
+        <p className="text-[11px] text-red-500 font-medium">{errorMessage}</p>
+      )}
+
+      {/* Manual URL input toggle */}
+      {showManualUrl && (
+        <div className="flex gap-2 items-center pt-1">
+          <input
+            type="text"
+            value={value || ""}
+            onChange={(e) => onChange(e.target.value)}
+            placeholder="/scholarship_video.mp4 or https://example.com/video.mp4"
+            className="flex-1 bg-[var(--adm-card-subtle)] border border-[var(--adm-card-border)] focus:bg-[var(--adm-card)] focus:border-[var(--secondary)] rounded-xl px-3 py-2 text-xs outline-none text-[var(--adm-text-primary)] font-mono"
+          />
+          <button
+            type="button"
+            onClick={() => setShowManualUrl(false)}
+            className="px-3 py-2 text-xs rounded-xl bg-[var(--adm-card-subtle)] border border-[var(--adm-card-border)] text-[var(--adm-text-secondary)] hover:text-[var(--adm-text-primary)] cursor-pointer"
+          >
+            Done
+          </button>
+        </div>
+      )}
+
+      {/* Preset shortcut for official scholarship video */}
+      <div className="flex items-center gap-2 pt-1">
+        <span className="text-[10px] text-[var(--adm-text-muted)] font-medium">
+          Quick Shortcut:
+        </span>
+        <button
+          type="button"
+          onClick={() => onChange("/scholarship_video.mp4")}
+          className="text-[10px] px-2 py-0.5 rounded-md bg-[var(--adm-card-subtle)] hover:bg-[var(--secondary)]/10 text-[var(--adm-text-primary)] hover:text-[var(--secondary)] border border-[var(--adm-card-border)] font-mono transition-colors cursor-pointer"
+        >
+          /scholarship_video.mp4
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function GalleryManager({
+  gallery = [],
+  onChange,
+  label = "Tournament & Community Photo Gallery",
+}: {
+  gallery?: string[];
+  onChange: (items: string[]) => void;
+  label?: string;
+}) {
+  const [isUploading, setIsUploading] = useState(false);
+  const [newUrl, setNewUrl] = useState("");
+  const [showAddUrl, setShowAddUrl] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleUploadFiles = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    setIsUploading(true);
+    const addedPhotos: string[] = [];
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      if (!file.type.startsWith("image/")) continue;
+      try {
+        const formData = new FormData();
+        formData.append("file", file);
+        const res = await fetch("/api/upload", {
+          method: "POST",
+          body: formData,
+        });
+        const data = await res.json();
+        if (data.success && data.url) {
+          addedPhotos.push(data.url);
+          continue;
+        }
+      } catch {
+        // Fallback to FileReader
+      }
+      const dataUrl = await new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onload = (e) => resolve((e.target?.result as string) || "");
+        reader.readAsDataURL(file);
+      });
+      if (dataUrl) addedPhotos.push(dataUrl);
+    }
+
+    if (addedPhotos.length > 0) {
+      onChange([...gallery, ...addedPhotos]);
+    }
+    setIsUploading(false);
+  };
+
+  const handleRemovePhoto = (idx: number) => {
+    const updated = gallery.filter((_, i) => i !== idx);
+    onChange(updated);
+  };
+
+  const handleAddManual = () => {
+    if (!newUrl.trim()) return;
+    onChange([...gallery, newUrl.trim()]);
+    setNewUrl("");
+    setShowAddUrl(false);
+  };
+
+  return (
+    <div className="space-y-3 pt-2 border-t border-[var(--adm-card-border)]">
+      <div className="flex items-center justify-between">
+        <label className="text-xs font-semibold text-[var(--adm-text-primary)] font-[family-name:var(--font-space-grotesk)] flex items-center gap-1.5">
+          <svg
+            className="w-4 h-4 text-[var(--primary)]"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
+            <circle cx="9" cy="9" r="2" />
+            <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
+          </svg>
+          {label} ({gallery.length} photos)
+        </label>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setShowAddUrl(!showAddUrl)}
+            className="text-[11px] text-[var(--adm-text-muted)] hover:text-[var(--primary)] underline cursor-pointer"
+          >
+            {showAddUrl ? "Cancel URL" : "+ Add by URL"}
+          </button>
+          <button
+            type="button"
+            disabled={isUploading}
+            onClick={() => fileInputRef.current?.click()}
+            className="px-2.5 py-1 bg-[var(--primary)] hover:bg-[#c84113] text-white text-[11px] font-semibold rounded-lg cursor-pointer flex items-center gap-1 shadow-xs"
+          >
+            {isUploading ? "Uploading..." : "+ Upload Photos"}
+          </button>
+        </div>
+      </div>
+
+      <input
+        ref={fileInputRef}
+        type="file"
+        multiple
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => {
+          handleUploadFiles(e.target.files);
+          e.target.value = "";
+        }}
+      />
+
+      {showAddUrl && (
+        <div className="flex gap-2 items-center p-2 rounded-xl bg-[var(--adm-card)] border border-[var(--adm-card-border)]">
+          <input
+            type="text"
+            value={newUrl}
+            onChange={(e) => setNewUrl(e.target.value)}
+            placeholder="/kickball_action_1.jpg or https://..."
+            className="flex-1 bg-[var(--adm-card-subtle)] border border-[var(--adm-card-border)] rounded-lg px-2.5 py-1.5 text-xs text-[var(--adm-text-primary)] font-mono outline-none"
+          />
+          <button
+            type="button"
+            onClick={handleAddManual}
+            className="px-3 py-1.5 bg-[var(--primary)] text-white text-xs font-semibold rounded-lg cursor-pointer"
+          >
+            Add
+          </button>
+        </div>
+      )}
+
+      {gallery.length > 0 ? (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+          {gallery.map((photo, pIdx) => (
+            <div
+              key={pIdx}
+              className="group relative aspect-video rounded-xl overflow-hidden border border-[var(--adm-card-border)] bg-[var(--adm-card)] shadow-xs"
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={photo}
+                alt={`Gallery photo ${pIdx + 1}`}
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute top-1 left-1 px-1.5 py-0.5 rounded-md bg-black/75 text-[9px] text-white font-mono font-bold">
+                {String(pIdx + 1).padStart(2, "0")}
+              </div>
+              <button
+                type="button"
+                onClick={() => handleRemovePhoto(pIdx)}
+                className="absolute top-1 right-1 w-6 h-6 rounded-md bg-red-600/90 hover:bg-red-700 text-white flex items-center justify-center opacity-85 group-hover:opacity-100 transition-opacity cursor-pointer shadow-md"
+                title="Remove photo"
+              >
+                ✕
+              </button>
+              <div className="absolute inset-x-0 bottom-0 bg-black/70 px-1 py-0.5 text-[9px] text-white/90 truncate font-mono">
+                {photo.split("/").pop()}
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div
+          onClick={() => fileInputRef.current?.click()}
+          className="p-4 rounded-xl border border-dashed border-[var(--adm-card-border)] hover:border-[var(--primary)] text-center cursor-pointer bg-[var(--adm-card-subtle)]"
+        >
+          <p className="text-xs text-[var(--adm-text-muted)]">
+            No gallery photos added yet. Click &ldquo;+ Upload Photos&rdquo; to add tournament or initiative photos.
+          </p>
+        </div>
+      )}
+
+      {/* Presets for kickball tournament */}
+      <div className="flex items-center gap-2 pt-1">
+        <span className="text-[10px] text-[var(--adm-text-muted)] font-medium">
+          Quick Shortcut:
+        </span>
+        <button
+          type="button"
+          onClick={() =>
+            onChange([
+              "/kickball_tournament.png",
+              "/kickball_action_1.jpg",
+              "/kickball_action_2.jpg",
+              "/kickball_action_3.jpg",
+            ])
+          }
+          className="text-[10px] px-2 py-0.5 rounded-md bg-[var(--adm-card-subtle)] hover:bg-[var(--primary)]/10 text-[var(--adm-text-primary)] hover:text-[var(--primary)] border border-[var(--adm-card-border)] transition-colors cursor-pointer"
+        >
+          Reset to 4 Official Kickball Photos
+        </button>
+      </div>
     </div>
   );
 }
@@ -5916,6 +6397,8 @@ export default function AdminPage() {
                           summary: "",
                           content: "",
                           image: "/logo.png",
+                          videoUrl: "",
+                          gallery: [],
                           featured: true,
                           status: "published",
                         },
@@ -5936,7 +6419,7 @@ export default function AdminPage() {
                     >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
-                        src={story.image}
+                        src={story.image || "/logo.png"}
                         alt={story.title}
                         className="w-20 h-20 rounded-xl object-cover bg-[var(--adm-card)] shrink-0 border border-[var(--adm-card-border)]"
                       />
@@ -5947,6 +6430,26 @@ export default function AdminPage() {
                         <p className="text-xs text-[var(--adm-text-muted)] line-clamp-2 mt-1 leading-relaxed">
                           {story.summary}
                         </p>
+
+                        <div className="flex items-center gap-1.5 mt-2 flex-wrap">
+                          {story.videoUrl && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[rgba(26,86,196,0.12)] text-[var(--secondary)] border border-[rgba(26,86,196,0.25)]">
+                              <svg className="w-2.5 h-2.5 fill-current" viewBox="0 0 24 24">
+                                <polygon points="5 3 19 12 5 21 5 3" />
+                              </svg>
+                              Video Media
+                            </span>
+                          )}
+                          {story.gallery && story.gallery.length > 0 && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[rgba(225,77,24,0.1)] text-[var(--primary)] border border-[rgba(225,77,24,0.2)]">
+                              <svg className="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
+                                <circle cx="9" cy="9" r="2" />
+                              </svg>
+                              {story.gallery.length} Photos
+                            </span>
+                          )}
+                        </div>
                         <div className="flex items-center gap-2 mt-3 pt-3 border-t border-[var(--adm-card-border)]">
                           <AdminEditButton
                             onClick={() =>
@@ -7582,25 +8085,65 @@ export default function AdminPage() {
 
             {/* COMMUNITY STORY MODAL */}
             {editModal.type === "community" && (
-              <div className="space-y-3 text-xs">
+              <div className="space-y-4 text-xs">
                 <div>
                   <label className="block font-semibold text-[var(--adm-text-primary)] mb-1 font-[family-name:var(--font-space-grotesk)]">
                     Initiative Title
                   </label>
                   <input
                     type="text"
-                    value={editModal.item.title}
+                    value={editModal.item.title || ""}
                     onChange={(e) =>
                       setEditModal({
                         ...editModal,
                         item: { ...editModal.item, title: e.target.value },
                       })
                     }
-                    className="w-full bg-[var(--adm-card-subtle)] border border-[var(--adm-card-border)] focus:bg-[var(--adm-card)] focus:border-[var(--primary)] rounded-xl p-2 text-xs"
+                    placeholder="e.g. The Inferno Ignite Scholarship or Kicking for Relief"
+                    className="w-full bg-[var(--adm-card-subtle)] border border-[var(--adm-card-border)] focus:bg-[var(--adm-card)] focus:border-[var(--primary)] rounded-xl p-2.5 text-xs outline-none"
                   />
                 </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block font-semibold text-[var(--adm-text-primary)] mb-1 font-[family-name:var(--font-space-grotesk)]">
+                      Summary
+                    </label>
+                    <textarea
+                      rows={3}
+                      value={editModal.item.summary || ""}
+                      onChange={(e) =>
+                        setEditModal({
+                          ...editModal,
+                          item: { ...editModal.item, summary: e.target.value },
+                        })
+                      }
+                      placeholder="Brief overview shown on cards and previews..."
+                      className="w-full bg-[var(--adm-card-subtle)] border border-[var(--adm-card-border)] focus:bg-[var(--adm-card)] focus:border-[var(--primary)] rounded-xl p-2.5 text-xs outline-none"
+                    ></textarea>
+                  </div>
+                  <div>
+                    <label className="block font-semibold text-[var(--adm-text-primary)] mb-1 font-[family-name:var(--font-space-grotesk)]">
+                      Detailed Story
+                    </label>
+                    <textarea
+                      rows={3}
+                      value={editModal.item.content || ""}
+                      onChange={(e) =>
+                        setEditModal({
+                          ...editModal,
+                          item: { ...editModal.item, content: e.target.value },
+                        })
+                      }
+                      placeholder="Full initiative background, eligibility, and impact metrics..."
+                      className="w-full bg-[var(--adm-card-subtle)] border border-[var(--adm-card-border)] focus:bg-[var(--adm-card)] focus:border-[var(--primary)] rounded-xl p-2.5 text-xs outline-none"
+                    ></textarea>
+                  </div>
+                </div>
+
+                {/* Primary Feature Image */}
                 <ImageDropzone
-                  label="Story Feature Image"
+                  label="Story Feature / Cover Image"
                   value={editModal.item.image || ""}
                   onChange={(val) =>
                     setEditModal({
@@ -7609,38 +8152,59 @@ export default function AdminPage() {
                     })
                   }
                   aspectRatio="wide"
+                  placeholderHint="Drop cover photo here, or browse files (saved to /uploads)"
                 />
-                <div>
-                  <label className="block font-semibold text-[var(--adm-text-primary)] mb-1 font-[family-name:var(--font-space-grotesk)]">
-                    Summary
-                  </label>
-                  <textarea
-                    rows={2}
-                    value={editModal.item.summary}
-                    onChange={(e) =>
+
+                {/* Presentation Video (Dedicated to Scholarship & Video Initiatives) */}
+                <div className="p-4 rounded-2xl bg-[var(--adm-card)] border border-[var(--adm-card-border)] space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-[var(--adm-text-primary)] font-[family-name:var(--font-space-grotesk)] flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-[var(--secondary)]"></span>
+                      Official Video Presentation (e.g. Scholarship)
+                    </span>
+                    <span className="text-[10px] text-[var(--adm-text-muted)] font-mono">
+                      MP4 / WebM / MOV
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-[var(--adm-text-muted)]">
+                    Upload or specify the video file for this initiative. If provided, the initiative player will stream this video with autoplay and audio controls.
+                  </p>
+                  <VideoDropzone
+                    label="Upload or Replace Video File"
+                    value={editModal.item.videoUrl || ""}
+                    onChange={(val) =>
                       setEditModal({
                         ...editModal,
-                        item: { ...editModal.item, summary: e.target.value },
+                        item: { ...editModal.item, videoUrl: val },
                       })
                     }
-                    className="w-full bg-[var(--adm-card-subtle)] border border-[var(--adm-card-border)] focus:bg-[var(--adm-card)] focus:border-[var(--primary)] rounded-xl p-2 text-xs"
-                  ></textarea>
+                  />
                 </div>
-                <div>
-                  <label className="block font-semibold text-[var(--adm-text-primary)] mb-1 font-[family-name:var(--font-space-grotesk)]">
-                    Detailed Story
-                  </label>
-                  <textarea
-                    rows={4}
-                    value={editModal.item.content}
-                    onChange={(e) =>
+
+                {/* Photo Gallery Manager (Dedicated to Kickball Tournament & Multi-Photo Initiatives) */}
+                <div className="p-4 rounded-2xl bg-[var(--adm-card)] border border-[var(--adm-card-border)] space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-[var(--adm-text-primary)] font-[family-name:var(--font-space-grotesk)] flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-[var(--primary)]"></span>
+                      Action Photo Gallery (e.g. Kickball Tournament)
+                    </span>
+                    <span className="text-[10px] text-[var(--adm-text-muted)] font-mono">
+                      Multiple Images
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-[var(--adm-text-muted)]">
+                    Upload tournament action photos, team shots, and event highlights. These render in the interactive gallery on the homepage and about page.
+                  </p>
+                  <GalleryManager
+                    label="Initiative Gallery Photos"
+                    gallery={editModal.item.gallery || []}
+                    onChange={(val) =>
                       setEditModal({
                         ...editModal,
-                        item: { ...editModal.item, content: e.target.value },
+                        item: { ...editModal.item, gallery: val },
                       })
                     }
-                    className="w-full bg-[var(--adm-card-subtle)] border border-[var(--adm-card-border)] focus:bg-[var(--adm-card)] focus:border-[var(--primary)] rounded-xl p-2 text-xs"
-                  ></textarea>
+                  />
                 </div>
               </div>
             )}
