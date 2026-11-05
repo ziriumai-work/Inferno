@@ -48,17 +48,20 @@ export default function NewsPage() {
 
   return (
     <div className="page-view block">
-      <section id="news">
+      {/* Full-viewport page hero: nothing below it is visible until scroll */}
+      <section id="news-hero" className="page-hero-full">
         <RevealOnMount
           className={`reveal text-center max-w-[850px] mx-auto mb-10 ${isMounted ? "active" : ""}`}
         >
-          <div className="section-eyebrow">Firm Intel &amp; Bulletins</div>
           <h1 className="section-title">News, Insights &amp; Operational Bulletins</h1>
           <p className="section-desc max-w-[760px] mx-auto text-center">
             Briefings on FEMA Public Assistance, SBA HUBZone &amp; VOSB contracting, DCAA compliance, and Inferno Cares community initiatives.
           </p>
         </RevealOnMount>
 
+      </section>
+
+      <section id="news">
         <div className="grid grid-cols-1 lg:grid-cols-[1.5fr_1fr] gap-8 sm:gap-12 mt-6 sm:mt-10 items-start">
           {/* Left Column: News Articles List */}
           <div className="flex flex-col gap-6 sm:gap-8">
@@ -194,7 +197,7 @@ export default function NewsPage() {
               <div className="flex gap-2">
                 <Link href="/tracker" className="btn btn-secondary py-1.5 px-3 text-xs w-full text-center no-underline">
                   Launch Storm Tracker
-                </Link>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></Link>
               </div>
             </div>
 
@@ -260,7 +263,7 @@ export default function NewsPage() {
                 className="btn btn-secondary w-full mt-5 no-underline text-center py-2 text-xs block"
               >
                 Follow The Inferno Group on LinkedIn
-              </a>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></a>
             </div>
           </div>
         </div>

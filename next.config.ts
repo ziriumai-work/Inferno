@@ -98,13 +98,39 @@ const nextConfig: NextConfig = {
         source: "/:path*",
         headers: securityHeaders,
       },
+      /* Never cache anything that is user-specific, authenticated or a
+         mutation. This list is deliberately explicit: the previous
+         blanket "/api/:path*" rule also stripped caching from the
+         public NOAA endpoints, which set their own correct
+         Cache-Control headers and were being overridden. */
       {
-        source: "/api/:path*",
+        source: "/api/bookings/:path*",
         headers: [
-          {
-            key: "Cache-Control",
-            value: "no-store, max-age=0, must-revalidate",
-          },
+          { key: "Cache-Control", value: "no-store, max-age=0, must-revalidate" },
+        ],
+      },
+      {
+        source: "/api/leads/:path*",
+        headers: [
+          { key: "Cache-Control", value: "no-store, max-age=0, must-revalidate" },
+        ],
+      },
+      {
+        source: "/api/upload",
+        headers: [
+          { key: "Cache-Control", value: "no-store, max-age=0, must-revalidate" },
+        ],
+      },
+      {
+        source: "/api/cms",
+        headers: [
+          { key: "Cache-Control", value: "no-store, max-age=0, must-revalidate" },
+        ],
+      },
+      {
+        source: "/auth/:path*",
+        headers: [
+          { key: "Cache-Control", value: "no-store, max-age=0, must-revalidate" },
         ],
       },
       {

@@ -138,11 +138,11 @@ export default function ResourcesPage() {
 
   return (
     <div className="page-view block">
-      <section id="resources">
+      {/* Full-viewport page hero: nothing below it is visible until scroll */}
+      <section id="resources-hero" className="page-hero-full">
         <RevealOnMount
           className={`reveal text-center max-w-[850px] mx-auto mb-10 ${isMounted ? "active" : ""}`}
         >
-          <div className="section-eyebrow">Intel &amp; Compliance Library</div>
           <h1 className="section-title">
             Resources, Playbooks &amp; Guidelines
           </h1>
@@ -190,6 +190,9 @@ export default function ResourcesPage() {
           </div>
         </RevealOnMount>
 
+      </section>
+
+      <section id="resources">
         {/* Resources Grid */}
         <div
           className={`faq-container reveal flex flex-col gap-6 max-w-[900px] mx-auto ${isMounted ? "active" : ""}`}
@@ -281,13 +284,13 @@ export default function ResourcesPage() {
                 className="btn btn-primary py-2.5 px-6 text-xs no-underline"
               >
                 Contact Advisory Desk
-              </Link>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"></rect><polyline points="22 6 12 13 2 6"></polyline></svg></Link>
               <Link
                 href="/capabilities"
                 className="btn btn-secondary py-2.5 px-6 text-xs no-underline"
               >
                 View Credentials &amp; NAICS
-              </Link>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg></Link>
             </div>
           </div>
         </RevealOnMount>

@@ -37,7 +37,8 @@ export async function GET(
 
     return NextResponse.json(storm, {
       headers: {
-        "Cache-Control": "no-store",
+        // Public storm detail, no auth. Same cadence as the storm list.
+        "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300",
         "Access-Control-Allow-Origin": "*",
       },
     });

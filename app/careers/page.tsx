@@ -94,11 +94,11 @@ export default function CareersPage() {
 
   return (
     <div className="page-view block">
-      <section id="careers">
+      {/* Full-viewport page hero: nothing below it is visible until scroll */}
+      <section id="careers-hero" className="page-hero-full">
         <RevealOnMount
           className={`reveal text-center max-w-[850px] mx-auto mb-10 ${isMounted ? "active" : ""}`}
         >
-          <div className="section-eyebrow">Join the Mission</div>
           <h1 className="section-title">Open Positions</h1>
           <p className="section-desc max-w-[760px] mx-auto text-center mb-6">
             We assemble high-performance teams to coordinate critical disaster
@@ -160,6 +160,9 @@ export default function CareersPage() {
           </div>
         </div>
 
+      </section>
+
+      <section id="careers">
         {/* NoScript Fallback */}
         <noscript>
           <div className="bg-[var(--panel-dark)] border border-[var(--border)] rounded-2xl p-6 mb-8 text-center max-w-[850px] mx-auto">
@@ -174,7 +177,7 @@ export default function CareersPage() {
               className="btn btn-primary py-2 px-6 text-xs font-semibold no-underline inline-block"
             >
               Email Resume to InfernoCares@theinfernogroup.com
-            </a>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"></rect><polyline points="22 6 12 13 2 6"></polyline></svg></a>
           </div>
         </noscript>
 
@@ -240,7 +243,7 @@ export default function CareersPage() {
                       className="btn btn-primary no-underline w-full sm:w-auto text-center justify-center"
                     >
                       Apply for Position
-                    </Link>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg></Link>
                     <span className="text-[0.72rem] text-[var(--text-muted)] text-center sm:text-right">
                       Last Date:{" "}
                       <strong className="text-[var(--primary)]">
@@ -280,7 +283,7 @@ export default function CareersPage() {
                 className="btn btn-secondary py-1.5 px-4 text-xs mt-2"
               >
                 Reset Filters
-              </button>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></button>
             </div>
           )}
         </div>
@@ -294,7 +297,7 @@ export default function CareersPage() {
               className="btn btn-secondary py-2 px-4 min-w-[40px]"
             >
               Prev
-            </button>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></button>
             <span className="text-xs text-[var(--text-muted)]">
               Page {currentPage} of {totalPages}
             </span>
@@ -304,7 +307,7 @@ export default function CareersPage() {
               className="btn btn-secondary py-2 px-4 min-w-[40px]"
             >
               Next
-            </button>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></button>
           </div>
         )}
 

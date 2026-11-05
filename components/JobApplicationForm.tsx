@@ -430,7 +430,7 @@ export default function JobApplicationForm({
             className="btn btn-secondary py-2.5 px-6 text-xs font-semibold w-full sm:w-auto"
           >
             Submit Another Application
-          </button>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></button>
         </div>
       )}
 

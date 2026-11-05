@@ -169,11 +169,11 @@ function PartnershipsContent() {
 
   return (
     <div className="page-view block">
-      <section id="partnerships">
+      {/* Full-viewport page hero: nothing below it is visible until scroll */}
+      <section id="partnerships-hero" className="page-hero-full">
         <RevealOnMount
-          className={`reveal text-center max-w-[850px] mx-auto mb-10 ${isMounted ? "active" : ""}`}
+          className={`reveal text-center max-w-[850px] mx-auto ${isMounted ? "active" : ""}`}
         >
-          <div className="section-eyebrow">Partners &amp; Subcontractors</div>
           <h1 className="section-title">Built to Partner. Ready to Perform.</h1>
           <p className="section-desc max-w-[760px] mx-auto text-center mb-8 leading-[1.8]">
             We partner with qualified subcontractors, specialty trades,
@@ -181,7 +181,7 @@ function PartnershipsContent() {
             responsive, compliant solutions for government and commercial
             clients.
           </p>
-          <div className="flex flex-wrap justify-center gap-4 mb-12">
+          <div className="hero-cta-row">
             <button
               className="btn btn-primary px-7 py-3 text-sm"
               onClick={() => setIsModalOpen(true)}
@@ -206,7 +206,9 @@ function PartnershipsContent() {
             </button>
           </div>
         </RevealOnMount>
+      </section>
 
+      <section id="partnerships">
         {/* 4 Teaming Pillars */}
         <div className={`partner-grid reveal ${isMounted ? "active" : ""}`}>
           {partnerCards.map((card, index) => (
@@ -520,7 +522,7 @@ function PartnershipsContent() {
               onClick={() => setIsModalOpen(true)}
             >
               Register Teaming Profile Now
-            </button>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg></button>
           </div>
         </div>
       </section>

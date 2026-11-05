@@ -123,7 +123,7 @@ function ContactFormInner() {
           onClick={() => setIsSubmitted(false)}
         >
           Dismiss
-        </button>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
       </div>
 
       {/* Interactive Error Overlay */}
@@ -142,7 +142,7 @@ function ContactFormInner() {
           onClick={() => setIsError(false)}
         >
           Try Again
-        </button>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M21.5 2v6h-6"></path><path d="M21.34 15.57a10 10 0 1 1-.57-8.38"></path></svg></button>
       </div>
 
       <form id="coordination-form" onSubmit={handleFormSubmit}>
@@ -442,7 +442,7 @@ export default function ContactPage() {
                   className="btn btn-primary py-2 px-4 text-xs font-semibold no-underline inline-block"
                 >
                   InfernoCares@theinfernogroup.com
-                </a>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"></rect><polyline points="22 6 12 13 2 6"></polyline></svg></a>
               </div>
             </noscript>
             <Suspense

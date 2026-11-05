@@ -47,7 +47,7 @@ function HeroInteractiveBackground({
   const handleMouseLeave = () => {
     if (rafRef.current) cancelAnimationFrame(rafRef.current);
     if (containerRef.current) {
-      containerRef.current.style.transform = "scale(1.03) translate(0px, 0px)";
+      containerRef.current.style.transform = "scale(1) translate(0px, 0px)";
       containerRef.current.style.transition =
         "transform 0.8s cubic-bezier(0.16, 1, 0.3, 1)";
     }
@@ -69,7 +69,7 @@ function HeroInteractiveBackground({
         ref={containerRef}
         className="w-full h-full absolute inset-0 pointer-events-none"
         style={{
-          transform: "scale(1.03) translate(0px, 0px)",
+          transform: "scale(1) translate(0px, 0px)",
           transition: "transform 0.6s cubic-bezier(0.16, 1, 0.3, 1)",
         }}
       >
@@ -381,7 +381,7 @@ export default function HomeClient() {
   return (
     <div className="page-view home-page-view block">
       {/* HERO SECTION */}
-      <section className="hero mt-0">
+      <section className="hero">
         <HeroInteractiveBackground
           fallbackImage={hero?.fallbackImage || "/hero-bg.jpg"}
         />
@@ -791,7 +791,7 @@ export default function HomeClient() {
               </p>
               <Link href="/about" className="btn btn-secondary no-underline">
                 Read Corporate Story
-              </Link>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></Link>
             </RevealOnMount>
 
             <RevealOnMount direction="right">
@@ -906,7 +906,7 @@ export default function HomeClient() {
           </p>
           <Link href="/partnerships" className="btn btn-primary no-underline">
             Register Teaming Profile
-          </Link>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg></Link>
         </div>
       </section>
 
@@ -994,7 +994,7 @@ export default function HomeClient() {
                   className="btn btn-secondary no-underline text-xs"
                 >
                   Learn About Inferno Cares
-                </Link>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></Link>
                 <a
                   href="mailto:InfernoCares@theinfernogroup.com"
                   className="text-xs font-bold text-[var(--primary)] hover:underline"
@@ -1332,14 +1332,14 @@ export default function HomeClient() {
                 className="btn btn-primary no-underline shrink-0"
               >
                 View All {openJobsCount} Openings
-              </Link>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></Link>
             ) : (
               <Link
                 href="/careers"
                 className="btn btn-primary no-underline shrink-0"
               >
                 Join Our Talent Network
-              </Link>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg></Link>
             )}
           </div>
 
@@ -1374,7 +1374,7 @@ export default function HomeClient() {
               className="btn btn-secondary no-underline text-xs shrink-0"
             >
               Explore Career Portal
-            </Link>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></Link>
           </div>
         </RevealOnMount>
       </section>
@@ -1647,7 +1647,7 @@ export default function HomeClient() {
             }}
           >
             Take Quiz
-          </Link>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></Link>
           <button
             className="btn btn-secondary flex-1 justify-center text-xs py-2 px-4 h-auto min-h-0"
             onClick={() => {
@@ -1656,7 +1656,7 @@ export default function HomeClient() {
             }}
           >
             Dismiss
-          </button>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
         </div>
       </div>
     </div>

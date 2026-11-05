@@ -159,22 +159,65 @@ export default function AboutClient() {
 
   return (
     <div className="page-view block overflow-x-clip">
-      {/* HERO / STORY SECTION */}
-      <section id="about-hero" className="pt-16 md:pt-24 pb-8 overflow-hidden">
-        <RevealOnMount direction="up" className="text-center max-w-[850px] mx-auto mb-12">
-          <div className="section-eyebrow">
-            <TypewriterText
-              text="Corporate Briefing • Who We Are"
-              speed={40}
-              delay={200}
-            />
-          </div>
+      {/* Full-viewport page hero: nothing below it is visible until scroll */}
+      <section id="about-hero" className="page-hero-full">
+        <RevealOnMount direction="up" className="text-left sm:text-center max-w-[850px] mx-auto w-full">
           <h1 className="section-title">About The Inferno Group</h1>
-          <p className="section-desc max-w-[760px] mx-auto text-center">
+          <p className="section-desc max-w-[760px] mx-auto text-left sm:text-center">
             Advisors in crisis management, regulatory compliance, and strategic
-            public sector business growth.
+            public sector business growth. We help federal, state and local
+            agencies prepare before a disaster, respond during it, and recover
+            after it.
           </p>
+
+          {/* Credentials at a glance */}
+          <ul className="hero-credentials">
+            <li>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                <polyline points="9 12 11 14 15 10"></polyline>
+              </svg>
+              HUBZone Certified (SBA)
+            </li>
+            <li>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <circle cx="12" cy="8" r="6"></circle>
+                <path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"></path>
+              </svg>
+              Veteran-Owned Small Business
+            </li>
+            <li>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                <circle cx="12" cy="10" r="3"></circle>
+              </svg>
+              Orlando, FL &middot; Nationwide Operations
+            </li>
+          </ul>
+
+          <div className="hero-cta-row">
+            <a href="#about-team" className="btn btn-primary no-underline">
+              Meet Our Leadership
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                <circle cx="9" cy="7" r="4"></circle>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+              </svg>
+            </a>
+            <Link href="/capabilities" className="btn btn-secondary no-underline">
+              View Our Capabilities
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+                <polyline points="12 5 19 12 12 19"></polyline>
+              </svg>
+            </Link>
+          </div>
         </RevealOnMount>
+      </section>
+
+      {/* STORY SECTION */}
+      <section id="about-story" className="pb-8 overflow-hidden">
 
         <div className="grid grid-cols-1 lg:grid-cols-[1.25fr_1fr] gap-8 lg:gap-12 mt-12 items-start min-w-0 w-full">
           <RevealOnMount direction="left" className="about-story-text min-w-0 w-full">
@@ -344,13 +387,13 @@ export default function AboutClient() {
                     className="btn btn-primary text-xs py-2.5 px-3 text-center justify-center no-underline"
                   >
                     Initiate Contact
-                  </Link>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"></rect><polyline points="22 6 12 13 2 6"></polyline></svg></Link>
                   <Link
                     href="/partnerships"
                     className="btn btn-secondary text-xs py-2.5 px-3 text-center justify-center no-underline"
                   >
                     Partner With Us
-                  </Link>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg></Link>
                 </div>
               </div>
             </div>
@@ -377,13 +420,13 @@ export default function AboutClient() {
                   className="btn btn-secondary text-xs py-2 px-4 no-underline"
                 >
                   Download Capability Statement
-                </Link>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg></Link>
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-8">
               {/* HUBZone Card */}
-              <div className="bg-[var(--glass)] border border-[var(--border)] rounded-2xl p-6 flex items-start gap-4">
+              <div className="bg-[var(--glass)] border border-[var(--border)] rounded-2xl p-5 sm:p-6 flex flex-col sm:flex-row items-start gap-3 sm:gap-4">
                 <div className="w-12 h-12 rounded-xl bg-[rgba(225,77,24,0.1)] text-[var(--primary)] flex items-center justify-center shrink-0">
                   <svg
                     className="w-6 h-6"
@@ -396,8 +439,8 @@ export default function AboutClient() {
                     <polyline points="9 12 11 14 15 10"></polyline>
                   </svg>
                 </div>
-                <div>
-                  <div className="flex items-center gap-2">
+                <div className="min-w-0 w-full">
+                  <div className="flex flex-wrap items-center gap-2">
                     <h4 className="font-[family-name:var(--font-space-grotesk)] text-[1.15rem] font-bold text-[var(--text-bright)]">
                       HUBZone Certified
                     </h4>
@@ -416,7 +459,7 @@ export default function AboutClient() {
               </div>
 
               {/* VOSB Card */}
-              <div className="bg-[var(--glass)] border border-[var(--border)] rounded-2xl p-6 flex items-start gap-4">
+              <div className="bg-[var(--glass)] border border-[var(--border)] rounded-2xl p-5 sm:p-6 flex flex-col sm:flex-row items-start gap-3 sm:gap-4">
                 <div className="w-12 h-12 rounded-xl bg-[var(--navy)]/10 text-[var(--navy)] flex items-center justify-center shrink-0">
                   <svg
                     className="w-6 h-6"
@@ -428,8 +471,8 @@ export default function AboutClient() {
                     <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
                   </svg>
                 </div>
-                <div>
-                  <div className="flex items-center gap-2">
+                <div className="min-w-0 w-full">
+                  <div className="flex flex-wrap items-center gap-2">
                     <h4 className="font-[family-name:var(--font-space-grotesk)] text-[1.15rem] font-bold text-[var(--text-bright)]">
                       Veteran-Owned Small Business (VOSB)
                     </h4>
@@ -968,7 +1011,7 @@ export default function AboutClient() {
                   className="btn btn-primary no-underline px-6 py-3 text-xs md:text-sm"
                 >
                   Apply as Subcontractor / Partner
-                </Link>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg></Link>
                 <Link
                   href="/contact"
                   className="btn text-white bg-white/10 hover:bg-white/20 border border-white/20 no-underline px-6 py-3 text-xs md:text-sm"
@@ -1065,7 +1108,7 @@ export default function AboutClient() {
                 className="btn btn-secondary px-6 py-2 text-xs cursor-pointer"
               >
                 Close Briefing
-              </button>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></button>
             </div>
           </div>
         </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import dynamic from "next/dynamic";
 import StormOverviewCards from "@/components/StormOverviewCards";
 import {
@@ -283,13 +284,11 @@ export default function TrackerPage() {
 
   return (
     <div className="page-view block">
-      <section id="tracker" className="max-w-[1400px] mx-auto">
+      {/* Full-viewport page hero: nothing below it is visible until scroll */}
+      <section id="tracker-hero" className="page-hero-full">
         <div
-          className={`reveal text-center max-w-[850px] mx-auto mb-8 ${isMounted ? "active" : ""}`}
+          className={`reveal text-center max-w-[850px] mx-auto ${isMounted ? "active" : ""}`}
         >
-          <div className="section-eyebrow">
-            NOAA / NHC Real-Time Intelligence
-          </div>
           <h1 className="section-title">
             Hurricane Tracker &amp; Intelligence Dashboard
           </h1>
@@ -299,7 +298,7 @@ export default function TrackerPage() {
           </p>
 
           {/* Real-Time Live Sync Status Bar */}
-          <div className="mt-4 mb-6 inline-flex flex-wrap items-center gap-3 sm:gap-5 px-4 py-2.5 rounded-xl bg-white border border-[var(--border)] text-xs text-[var(--text-muted)] shadow-xs">
+          <div className="mt-7 inline-flex flex-wrap items-center justify-center gap-4 sm:gap-6 px-5 sm:px-7 py-4 rounded-2xl bg-white border border-[var(--border)] text-sm text-[var(--text-muted)] shadow-sm">
             <span className="inline-flex items-center gap-2 font-bold text-[var(--text-bright)]">
               <span
                 className={`w-2.5 h-2.5 rounded-full ${
@@ -308,10 +307,20 @@ export default function TrackerPage() {
                     : "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.7)]"
                 }`}
               />
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M5 12.55a11 11 0 0 1 14.08 0"></path>
+                <path d="M1.42 9a16 16 0 0 1 21.16 0"></path>
+                <path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path>
+                <line x1="12" y1="20" x2="12.01" y2="20"></line>
+              </svg>
               Live Sync (60s Cadence)
             </span>
             {lastSyncedAt && (
-              <span>
+              <span className="inline-flex items-center gap-2">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <circle cx="12" cy="12" r="9"></circle>
+                  <polyline points="12 7 12 12 15.5 14"></polyline>
+                </svg>
                 Last Updated:{" "}
                 <strong className="text-[var(--text-bright)]">
                   {new Date(lastSyncedAt).toLocaleString([], {
@@ -324,7 +333,11 @@ export default function TrackerPage() {
               </span>
             )}
             {nextSyncAt && (
-              <span>
+              <span className="inline-flex items-center gap-2">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M21.5 2v6h-6"></path>
+                  <path d="M21.34 15.57a10 10 0 1 1-.57-8.38"></path>
+                </svg>
                 Next Auto-Update:{" "}
                 <strong className="text-[var(--primary)] font-semibold">
                   {new Date(nextSyncAt).toLocaleString([], {
@@ -354,8 +367,26 @@ export default function TrackerPage() {
               <span>{loading ? "Syncing…" : "Sync Now"}</span>
             </button>
           </div>
-        </div>
 
+          <div className="hero-cta-row">
+            <a href="#tracker" className="btn btn-primary no-underline">
+              View Live Dashboard
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <polyline points="19 12 12 19 5 12"></polyline>
+              </svg>
+            </a>
+            <Link href="/services" className="btn btn-secondary no-underline">
+              Emergency Management Services
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+              </svg>
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      <section id="tracker" className="max-w-[1400px] mx-auto">
         {/* Top Metric Cards */}
         <StormOverviewCards metrics={metrics} />
 

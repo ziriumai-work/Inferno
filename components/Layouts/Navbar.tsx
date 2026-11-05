@@ -1,26 +1,175 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { dataStore, SiteSettings } from "@/utils/dataStore";
 
+/* ------------------------------------------------------------------
+   Rolling letters.
+
+   Each letter is its own span carrying the character twice: once as
+   text (to hold the width) and once in data-ch, which the ::before and
+   ::after faces read via content:attr(). The spans are aria-hidden, so
+   every link also carries the real label in an .sr-only span — that is
+   what a screen reader and Google read. Do not remove it.
+
+   The space span counts as an :nth-child, which is what gives the
+   natural pause between two words in the stagger.
+   ------------------------------------------------------------------ */
+function Roll({ label }: { label: string }) {
+  return (
+    <span className="inline-flex items-start leading-[1.3]" aria-hidden="true">
+      {[...label].map((c, i) =>
+        c === " " ? (
+          <span key={i} className="inline-block w-[.32em]" />
+        ) : (
+          <span key={i} className="ig-ch" data-ch={c}>
+            {c}
+          </span>
+        )
+      )}
+    </span>
+  );
+}
+
+/* Icons: 24x24 grid, 1.7 stroke, currentColor, no fill — one set. */
+const ICONS: Record<string, React.ReactNode> = {
+  home: (
+    <>
+      <path d="M3.6 10.4 12 3.8l8.4 6.6" />
+      <path d="M5.8 12v7.2a1 1 0 0 0 1 1h10.4a1 1 0 0 0 1-1V12" />
+      <path d="M9.8 20.2v-5.1h4.4v5.1" />
+    </>
+  ),
+  about: (
+    <>
+      <circle cx="9.2" cy="8.6" r="3.2" />
+      <path d="M3.6 19.6a5.6 5.6 0 0 1 11.2 0" />
+      <path d="M16.3 6.1a3.2 3.2 0 0 1 0 5.9" />
+      <path d="M17.7 14.3a5.6 5.6 0 0 1 2.7 5.3" />
+    </>
+  ),
+  services: (
+    <>
+      <rect x="3.6" y="3.6" width="7" height="7" rx="1.7" />
+      <rect x="13.4" y="3.6" width="7" height="7" rx="1.7" />
+      <rect x="3.6" y="13.4" width="7" height="7" rx="1.7" />
+      <rect x="13.4" y="13.4" width="7" height="7" rx="1.7" />
+    </>
+  ),
+  capabilities: (
+    <>
+      <path d="M12 2.9 4.9 5.6v5.5c0 4.3 2.9 8.2 7.1 9.9 4.2-1.7 7.1-5.6 7.1-9.9V5.6L12 2.9Z" />
+      <path d="m8.9 11.9 2.2 2.2 4-4.4" />
+    </>
+  ),
+  /* swirl inside a dial: a free-standing cyclone collapses at 16px and
+     reads as a chain link, almost identical to the partnership rings */
+  tracker: (
+    <>
+      <circle cx="12" cy="12" r="8.8" />
+      <circle cx="12" cy="12" r="1.5" />
+      <path d="M13.5 11.2c.4-2 1.6-3.3 3.4-3.6" />
+      <path d="M10.5 12.8c-.4 2-1.6 3.3-3.4 3.6" />
+    </>
+  ),
+  partnerships: (
+    <>
+      <circle cx="8.5" cy="12" r="5" />
+      <circle cx="15.5" cy="12" r="5" />
+    </>
+  ),
+  b2g: (
+    <>
+      <path d="M2.8 9.4 12 4.2l9.2 5.2" />
+      <path d="M5.3 10.4v8.2M9.5 10.4v8.2M14.5 10.4v8.2M18.7 10.4v8.2" />
+      <path d="M3.2 20.6h17.6" />
+    </>
+  ),
+  faq: (
+    <>
+      <path d="M20.4 12.3c0 4-3.8 7.2-8.4 7.2-1 0-2-.2-2.9-.5l-4.5 1.4 1.4-3.8a6.8 6.8 0 0 1-2.4-5.1c0-4 3.8-7.2 8.4-7.2s8.4 3.2 8.4 7.2Z" />
+      <path d="M10.1 10.3a2 2 0 0 1 3.8.7c0 1.3-1.9 1.7-1.9 2.8" />
+      <path d="M12 16.1h.01" />
+    </>
+  ),
+};
+
+function Icon({ name, className }: { name: string; className: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.7"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      className={className}
+    >
+      {ICONS[name]}
+    </svg>
+  );
+}
+
+const CHEVRON = (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2.2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+    className="h-3.5 w-3.5 shrink-0"
+  >
+    <path d="m6 9.5 6 6 6-6" />
+  </svg>
+);
+
+const NAV_LINKS = [
+  { name: "Home", href: "/", icon: "home" },
+  { name: "About Us", href: "/about", icon: "about" },
+  { name: "Services", href: "/services", icon: "services" },
+  { name: "Capabilities", href: "/capabilities", icon: "capabilities" },
+  { name: "Hurricane Tracker", href: "/tracker", icon: "tracker" },
+  { name: "Partnerships", href: "/partnerships", icon: "partnerships" },
+];
+
+/* The portal menu keeps this project's real destinations. */
+const B2G_ITEMS = [
+  { name: "Active Contracts", href: "/contracts" },
+  { name: "Eligibility Quiz", href: "/quiz" },
+  { name: "Careers", href: "/careers" },
+  { name: "News & Insights", href: "/news" },
+  { name: "Resources Center", href: "/resources" },
+];
+
+const LINK_CLS =
+  "ig-link relative inline-flex items-center gap-1.5 min-h-[44px] py-2.5 pl-[var(--ig-slot)] pr-[var(--ig-padx)] font-medium leading-none text-bright no-underline whitespace-nowrap text-[length:var(--ig-link-fs)] focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--primary)] focus-visible:rounded-lg";
+
+const SLOT_CLS =
+  "ig-ic pointer-events-none absolute top-1/2 -translate-y-1/2 overflow-hidden text-primary left-[var(--ig-icon-left)] w-[var(--ig-icon)] h-[var(--ig-icon)]";
+
+const DRAWER_LINK_CLS =
+  "flex min-h-[48px] items-center gap-[13px] border-b border-hairline px-1 py-[13px] text-[17px] font-medium no-underline";
+
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
+  const [isB2GOpen, setIsB2GOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [isCtaDropdownOpen, setIsCtaDropdownOpen] = useState(false);
+  const [isDrawerB2GOpen, setIsDrawerB2GOpen] = useState(false);
   const [settings, setSettings] = useState<SiteSettings | null>(null);
   const pathname = usePathname();
+  const b2gRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const refreshSettings = () => setSettings(dataStore.getSiteSettings());
     refreshSettings();
 
     const handleStorage = (e: StorageEvent) => {
-      if (!e.key || e.key === "inferno_site_settings_v1") {
-        refreshSettings();
-      }
+      if (!e.key || e.key === "inferno_site_settings_v1") refreshSettings();
     };
     const handleCMS = (e: Event) => {
       const detail = (e as CustomEvent).detail;
@@ -37,349 +186,316 @@ export default function Navbar() {
     };
   }, []);
 
+  /* Solid bar once past the fold; transparent over the hero at the top */
   useEffect(() => {
-    const handleScroll = () => {
+    const onScroll = () => {
       const scrolled = window.scrollY > 40;
       setIsScrolled((prev) => (prev !== scrolled ? scrolled : prev));
     };
-
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // Lock body scroll when mobile menu is open
+  /* Lock body scroll while the drawer is open */
   useEffect(() => {
-    const previousOverflowY = document.body.style.overflowY;
-    if (isOpen) {
-      document.body.style.overflowY = "hidden";
-    }
+    const previous = document.body.style.overflowY;
+    if (isOpen) document.body.style.overflowY = "hidden";
     return () => {
-      document.body.style.overflowY = previousOverflowY;
+      document.body.style.overflowY = previous;
     };
   }, [isOpen]);
 
-  // Close menu on route change
+  /* Close everything on navigation */
   useEffect(() => {
     setIsOpen(false);
-    setIsDropdownOpen(false);
-    setIsCtaDropdownOpen(false);
+    setIsB2GOpen(false);
+    setIsDrawerB2GOpen(false);
   }, [pathname]);
 
-  // Handle escape key to close menu
+  /* Escape closes, and a click outside closes the portal menu */
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
+    const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         setIsOpen(false);
-        setIsDropdownOpen(false);
-        setIsCtaDropdownOpen(false);
+        setIsB2GOpen(false);
       }
     };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    const onPointer = (e: PointerEvent) => {
+      if (b2gRef.current && !b2gRef.current.contains(e.target as Node)) {
+        setIsB2GOpen(false);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    document.addEventListener("pointerdown", onPointer);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.removeEventListener("pointerdown", onPointer);
+    };
   }, []);
 
-  if (pathname?.startsWith("/admin") || pathname?.startsWith("/infernollc/admin")) {
+  if (
+    pathname?.startsWith("/admin") ||
+    pathname?.startsWith("/infernollc/admin")
+  ) {
     return null;
   }
 
-  const toggleMenu = () => {
-    setIsOpen(!isOpen);
-    if (isOpen) {
-      setIsDropdownOpen(false);
-      setIsCtaDropdownOpen(false);
-    }
-  };
+  /* Only the homepage has a photo behind the bar to show through. */
+  const isOverlay = pathname === "/" && !isScrolled && !isOpen;
 
-  const closeMenu = () => {
-    setIsOpen(false);
-    setIsDropdownOpen(false);
-    setIsCtaDropdownOpen(false);
-  };
-
-  const handleDropdownMouseEnter = () => {
-    if (typeof window !== "undefined" && window.matchMedia("(hover: hover)").matches) {
-      setIsDropdownOpen(true);
-    }
-  };
-
-  const handleDropdownMouseLeave = () => {
-    if (typeof window !== "undefined" && window.matchMedia("(hover: hover)").matches) {
-      setIsDropdownOpen(false);
-    }
-  };
-
-  const handleCtaMouseEnter = () => {
-    if (typeof window !== "undefined" && window.matchMedia("(hover: hover)").matches) {
-      setIsCtaDropdownOpen(true);
-    }
-  };
-
-  const handleCtaMouseLeave = () => {
-    if (typeof window !== "undefined" && window.matchMedia("(hover: hover)").matches) {
-      setIsCtaDropdownOpen(false);
-    }
-  };
-
-  const handleNavClick = (href: string) => {
-    closeMenu();
-    if (pathname === href) {
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    }
-  };
-
-  const navLinks = [
-    { name: "Home", href: "/" },
-    { name: "About Us", href: "/about" },
-    { name: "Services", href: "/services" },
-    { name: "Capabilities", href: "/capabilities" },
-    { name: "Hurricane Tracker", href: "/tracker" },
-    { name: "Partnerships", href: "/partnerships" },
-  ];
+  const isCurrent = (href: string) =>
+    href === "/" ? pathname === "/" : pathname?.startsWith(href);
 
   return (
     <>
       {settings?.emergencyBannerActive && (
-        <div className="fixed top-0 left-0 right-0 z-[1002] bg-gradient-to-r from-red-700 via-amber-600 to-red-700 text-white text-xs font-bold py-2 px-4 text-center flex items-center justify-center gap-2 shadow-lg">
+        <div className="relative z-[60] flex items-center justify-center gap-2 bg-gradient-to-r from-red-700 via-amber-600 to-red-700 px-4 py-2 text-center text-xs font-bold text-white shadow-lg">
           <span className="flex h-2 w-2 rounded-full bg-white animate-ping" />
           <span>{settings.emergencyBannerMessage}</span>
           {settings.emergencyHotline && (
             <a
               href={`tel:${settings.emergencyHotline}`}
-              className="underline font-mono ml-2 text-amber-200 hover:text-white"
+              className="ml-2 font-mono text-amber-200 underline hover:text-white"
             >
               Hotline: {settings.emergencyHotline}
             </a>
           )}
         </div>
       )}
-      <nav
-        id="navbar"
-        style={{
-          top: settings?.emergencyBannerActive ? "36px" : "0px",
-        }}
-        className={`${isScrolled ? "scrolled" : "hero-nav-transparent"}`}
-      >
-      <Link
-        href="/"
-        className="nav-logo"
-        aria-label="The Inferno Group home"
-        onClick={() => handleNavClick("/")}
-      >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/logo.png" alt="The Inferno Group Logo" />
-        <span className="flex flex-col">
-          <span className="text-[1rem] sm:text-[1.2rem] font-bold tracking-tight text-[var(--text-bright)] leading-tight">
-            THE INFERNO GROUP
-          </span>
-          <span className="text-[0.56rem] sm:text-[0.62rem] uppercase tracking-wider text-[var(--text-muted)] font-mono font-semibold block">
-            Government &amp; Commercial Consulting
-          </span>
-        </span>
-      </Link>
 
-      <button
-        className={`hamburger ${isOpen ? "open" : ""}`}
-        id="menu-btn"
-        aria-label="Toggle menu"
-        onClick={toggleMenu}
+      <header
+        data-overlay={isOverlay ? "true" : "false"}
+        className={`ig-h sticky top-0 z-50 border-b transition-[background-color,border-color,box-shadow] duration-300 ${
+          isOverlay
+            ? "bg-transparent border-transparent"
+            : "bg-panel border-hairline"
+        } ${isScrolled ? "shadow-[0_4px_20px_rgba(0,0,0,0.06)]" : ""}`}
       >
-        <span></span>
-        <span></span>
-        <span></span>
-      </button>
+        <div className="ig-h__in mx-auto flex items-center max-w-[1560px] h-[68px] min-[1180px]:h-[76px] px-[var(--ig-shell-px)] gap-[var(--ig-gap)]">
+          {/* logo */}
+          <Link
+            href="/"
+            className="flex shrink-0 items-center gap-3 min-h-[44px] no-underline group"
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/logo.png"
+              alt="The Inferno Group"
+              className="shrink-0 object-contain w-[var(--ig-mark)] h-[var(--ig-mark)] transition-transform duration-500 group-hover:-translate-y-0.5"
+            />
+            <span className="flex min-w-0 flex-col gap-0.5">
+              <span className="ig-display font-extrabold leading-none text-bright whitespace-nowrap text-[length:var(--ig-logo-fs)]">
+                THE INFERNO GROUP
+              </span>
+              <span className="font-semibold leading-none text-muted whitespace-nowrap text-[length:var(--ig-logo-sub)] tracking-[var(--ig-logo-trk)]">
+                GOVERNMENT &amp; COMMERCIAL CONSULTING
+              </span>
+            </span>
+          </Link>
 
-      <ul className={`nav-links ${isOpen ? "open" : ""}`} id="nav-menu">
-        {navLinks.map((link) => {
-          const isActive = pathname === link.href;
-          return (
-            <li key={link.href}>
-              <Link
-                href={link.href}
-                className={`nav-item ${isActive ? "active" : ""}`}
-                onClick={() => handleNavClick(link.href)}
+          {/* desktop navigation */}
+          <nav
+            aria-label="Main"
+            className="ml-auto hidden items-center gap-0 min-[1180px]:flex"
+          >
+            {NAV_LINKS.map((link) => (
+              <div key={link.href} className="ig-item relative">
+                <Link
+                  href={link.href}
+                  aria-current={isCurrent(link.href) ? "page" : undefined}
+                  className={LINK_CLS}
+                >
+                  <span className={SLOT_CLS} aria-hidden="true">
+                    <Icon name={link.icon} className="block w-full h-full" />
+                  </span>
+                  <Roll label={link.name} />
+                  <span className="sr-only">{link.name}</span>
+                </Link>
+              </div>
+            ))}
+
+            {/* B2G Portal */}
+            <div className="ig-item relative" ref={b2gRef}>
+              <button
+                type="button"
+                aria-expanded={isB2GOpen}
+                aria-haspopup="true"
+                aria-controls="ig-b2g-menu"
+                onClick={() => setIsB2GOpen((v) => !v)}
+                className={`${LINK_CLS} cursor-pointer border-0 bg-transparent font-[inherit]`}
               >
-                {link.name}
-              </Link>
-            </li>
-          );
-        })}
+                <span className={SLOT_CLS} aria-hidden="true">
+                  <Icon name="b2g" className="block w-full h-full" />
+                </span>
+                <Roll label="B2G Portal" />
+                <span className="sr-only">B2G Portal</span>
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                  className="h-3.5 w-3.5 shrink-0 text-muted transition-colors duration-300"
+                >
+                  <path d="m6 9.5 6 6 6-6" />
+                </svg>
+              </button>
 
-        <li
-          className="nav-dropdown"
-          onMouseEnter={handleDropdownMouseEnter}
-          onMouseLeave={handleDropdownMouseLeave}
-        >
+              <div
+                id="ig-b2g-menu"
+                data-state={isB2GOpen ? "open" : "closed"}
+                className="ig-drop absolute left-1/2 top-[calc(100%+6px)] -ml-[119px] w-[238px] rounded-xl border border-hairline bg-panel p-2 shadow-[0_14px_34px_-18px_rgba(13,27,61,.38)]"
+              >
+                {B2G_ITEMS.map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => setIsB2GOpen(false)}
+                    className="block min-h-[44px] rounded-lg px-3 py-2.5 text-sm font-medium leading-snug text-bright no-underline transition-colors hover:bg-panel-hover hover:text-primary focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[color:var(--primary)]"
+                  >
+                    {item.name}
+                  </Link>
+                ))}
+              </div>
+            </div>
+
+            {/* FAQ */}
+            <div className="ig-item relative">
+              <Link
+                href="/faq"
+                aria-current={isCurrent("/faq") ? "page" : undefined}
+                className={LINK_CLS}
+              >
+                <span className={SLOT_CLS} aria-hidden="true">
+                  <Icon name="faq" className="block w-full h-full" />
+                </span>
+                <Roll label="FAQ" />
+                <span className="sr-only">FAQ</span>
+              </Link>
+            </div>
+          </nav>
+
+          {/* call to action, desktop */}
+          <Link
+            href="/contact"
+            className="ml-[var(--ig-cta-ml)] hidden h-10 min-w-[44px] items-center gap-[7px] rounded-full bg-primary px-[var(--ig-cta-px)] font-semibold leading-none text-white no-underline whitespace-nowrap transition-colors duration-300 text-[length:var(--ig-link-fs)] hover:bg-[var(--primary-hover)] focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-[color:var(--navy)] min-[1180px]:inline-flex"
+          >
+            Contact/Booking
+            {CHEVRON}
+          </Link>
+
+          {/* burger */}
           <button
             type="button"
-            className={`nav-dropdown-trigger nav-item ${isDropdownOpen ? "active" : ""}`}
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              setIsDropdownOpen((prev) => !prev);
-            }}
-            aria-expanded={isDropdownOpen}
-            aria-label="B2G Portal menu"
+            aria-expanded={isOpen}
+            aria-controls="ig-mobile-nav"
+            aria-label={isOpen ? "Close navigation menu" : "Open navigation menu"}
+            onClick={() => setIsOpen((v) => !v)}
+            className="ig-burger ml-auto flex h-[46px] w-[46px] cursor-pointer flex-col justify-center gap-[5px] rounded-[10px] border-0 bg-transparent px-2.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--primary)] min-[1180px]:hidden"
           >
-            <span>B2G Portal</span>
-            <svg
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className={`chevron-icon transition-transform duration-300 ${isDropdownOpen ? "rotate-180" : ""}`}
-              aria-hidden="true"
-            >
-              <polyline points="6 9 12 15 18 9"></polyline>
-            </svg>
+            <span className="block h-0.5 w-full rounded-sm bg-[var(--text-bright)]" />
+            <span className="block h-0.5 w-full rounded-sm bg-[var(--text-bright)]" />
+            <span className="block h-0.5 w-full rounded-sm bg-[var(--text-bright)]" />
           </button>
-          <div className={`nav-dropdown-menu ${isDropdownOpen ? "open" : ""}`}>
-            <Link
-              href="/contracts"
-              className="nav-dropdown-item"
-              onClick={closeMenu}
-            >
-              Active Contracts
-            </Link>
-            <Link
-              href="/quiz"
-              className="nav-dropdown-item"
-              onClick={closeMenu}
-            >
-              Eligibility Quiz
-            </Link>
-            <Link
-              href="/careers"
-              className="nav-dropdown-item"
-              onClick={closeMenu}
-            >
-              Careers
-            </Link>
-            <Link
-              href="/news"
-              className="nav-dropdown-item"
-              onClick={closeMenu}
-            >
-              News &amp; Insights
-            </Link>
-            <Link
-              href="/resources"
-              className="nav-dropdown-item"
-              onClick={closeMenu}
-            >
-              Resources Center
-            </Link>
-          </div>
-        </li>
-
-        <li>
-          <Link
-            href="/faq"
-            className={`nav-item ${pathname === "/faq" ? "active" : ""}`}
-            onClick={closeMenu}
-          >
-            FAQ
-          </Link>
-        </li>
-
-        {/* Mobile-only Direct CTAs & Credentials Badge */}
-        <li className="mobile-only-cta w-full flex flex-col items-stretch gap-2.5 mt-4 px-3">
-          <Link
-            href="/contact"
-            className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-gradient-to-r from-[var(--primary)] to-[#ff6b35] text-white font-semibold text-sm shadow-md active:scale-[0.98] transition-transform min-h-[46px]"
-            onClick={closeMenu}
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
-            </svg>
-            <span>Contact Operations Desk</span>
-          </Link>
-          <Link
-            href="/calendar"
-            className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-[var(--navy)] text-white font-semibold text-sm border border-[var(--border)] shadow-sm active:scale-[0.98] transition-transform min-h-[46px]"
-            onClick={closeMenu}
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-              <line x1="16" y1="2" x2="16" y2="6"/>
-              <line x1="8" y1="2" x2="8" y2="6"/>
-              <line x1="3" y1="10" x2="21" y2="10"/>
-            </svg>
-            <span>Book Consultation Slot</span>
-          </Link>
-
-          {/* Credentials footer note in mobile drawer */}
-          <div className="mt-4 pt-3 border-t border-[var(--border)] text-center">
-            <div className="text-[11px] font-mono font-semibold tracking-wider text-[var(--secondary)] uppercase">
-              HUBZone &amp; VOSB Certified
-            </div>
-            <div className="text-[10px] text-[var(--text-muted)] font-mono mt-0.5">
-              UEI: QW6RHJACHA56 • CAGE: 22VP2
-            </div>
-          </div>
-        </li>
-      </ul>
-
-      {/* Desktop-only CTA Dropdown */}
-      <div
-        className="desktop-only-cta nav-cta-dropdown"
-        onMouseEnter={handleCtaMouseEnter}
-        onMouseLeave={handleCtaMouseLeave}
-      >
-        <button
-          type="button"
-          className="nav-cta nav-cta-trigger"
-          onClick={() => setIsCtaDropdownOpen(!isCtaDropdownOpen)}
-          aria-expanded={isCtaDropdownOpen}
-        >
-          <span>Contact/Booking</span>
-          <svg
-            width="12"
-            height="12"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="chevron-icon"
-          >
-            <polyline points="6 9 12 15 18 9"></polyline>
-          </svg>
-        </button>
-        <div
-          className={`nav-cta-dropdown-menu ${isCtaDropdownOpen ? "open" : ""}`}
-        >
-          <Link
-            href="/contact"
-            className="nav-dropdown-item"
-            onClick={closeMenu}
-          >
-            <div className="font-semibold text-[var(--text-bright)]">
-              Contact Us
-            </div>
-            <div className="text-xs text-[var(--text-muted)] mt-[2px]">
-              Send inquiry or message
-            </div>
-          </Link>
-          <Link
-            href="/calendar"
-            className="nav-dropdown-item"
-            onClick={closeMenu}
-          >
-            <div className="font-semibold text-[var(--text-bright)]">
-              Live Booking
-            </div>
-            <div className="text-xs text-[var(--text-muted)] mt-[2px]">
-              Schedule a consultation slot
-            </div>
-          </Link>
         </div>
-      </div>
-    </nav>
+
+        {/* mobile drawer */}
+        <div
+          id="ig-mobile-nav"
+          data-state={isOpen ? "open" : "closed"}
+          className="ig-drawer block border-t border-hairline bg-panel min-[1180px]:hidden"
+        >
+          <nav aria-label="Mobile" className="px-5 pb-[22px] pt-2.5">
+            {NAV_LINKS.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                aria-current={isCurrent(link.href) ? "page" : undefined}
+                onClick={() => setIsOpen(false)}
+                className={`${DRAWER_LINK_CLS} ${
+                  isCurrent(link.href) ? "text-primary" : "text-bright"
+                }`}
+              >
+                <Icon
+                  name={link.icon}
+                  className="h-5 w-5 shrink-0 text-primary"
+                />
+                {link.name}
+              </Link>
+            ))}
+
+            {/* Portal links nest under one collapsible row so the
+                drawer is not a flat 13-row list. */}
+            <button
+              type="button"
+              aria-expanded={isDrawerB2GOpen}
+              aria-controls="ig-drawer-b2g"
+              onClick={() => setIsDrawerB2GOpen((v) => !v)}
+              className={`${DRAWER_LINK_CLS} w-full cursor-pointer border-0 border-b border-hairline bg-transparent text-left text-bright`}
+            >
+              <Icon name="b2g" className="h-5 w-5 shrink-0 text-primary" />
+              <span className="flex-1">B2G Portal</span>
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+                className={`h-4 w-4 shrink-0 text-muted transition-transform duration-300 ${
+                  isDrawerB2GOpen ? "rotate-180" : ""
+                }`}
+              >
+                <path d="m6 9.5 6 6 6-6" />
+              </svg>
+            </button>
+
+            <div
+              id="ig-drawer-b2g"
+              data-state={isDrawerB2GOpen ? "open" : "closed"}
+              className="ig-collapse"
+            >
+              {B2G_ITEMS.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  aria-current={isCurrent(item.href) ? "page" : undefined}
+                  onClick={() => setIsOpen(false)}
+                  className={`${DRAWER_LINK_CLS} pl-9 text-[15px] ${
+                    isCurrent(item.href) ? "text-primary" : "text-muted"
+                  }`}
+                >
+                  {item.name}
+                </Link>
+              ))}
+            </div>
+
+            <Link
+              href="/faq"
+              aria-current={isCurrent("/faq") ? "page" : undefined}
+              onClick={() => setIsOpen(false)}
+              className={`flex min-h-[48px] items-center gap-[13px] px-1 py-[13px] text-[17px] font-medium no-underline ${
+                isCurrent("/faq") ? "text-primary" : "text-bright"
+              }`}
+            >
+              <Icon name="faq" className="h-5 w-5 shrink-0 text-primary" />
+              FAQ
+            </Link>
+
+            <Link
+              href="/contact"
+              onClick={() => setIsOpen(false)}
+              className="mt-4 flex h-[52px] w-full items-center justify-center rounded-full bg-primary font-semibold text-white no-underline transition-colors duration-300 hover:bg-[var(--primary-hover)] focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-[color:var(--navy)]"
+            >
+              Contact/Booking
+            </Link>
+          </nav>
+        </div>
+      </header>
     </>
   );
 }

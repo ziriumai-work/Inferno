@@ -53,6 +53,32 @@
     --border: #e5e7eb;
     --border-hover: #d1d5db;
     --glass: rgba(255, 255, 255, 0.95);
+
+    /* hover orange, from the brand sheet */
+    --primary-hover: #c84113;
+
+    /* ── site header (ig-*) ──
+       Fluid, not stepped: logo + 8 links + button needs ~1460px at full
+       size, so everything shrinks smoothly. These clamps are measured —
+       at 1180px (the narrowest width that still shows the full bar)
+       there are 36 spare px. Do not raise --ig-slot or --ig-link-fs
+       without re-checking 1180. */
+    --ig-slot: clamp(21px, 1.78vw, 34px);
+    --ig-padx: clamp(4px, 0.51vw, 13px);
+    --ig-icon: clamp(16px, 1.15vw, 19px);
+    --ig-icon-left: clamp(2px, 0.25vw, 5px);
+    --ig-link-fs: clamp(12.5px, 0.92vw, 14px);
+    --ig-logo-fs: clamp(14px, 1.15vw, 18px);
+    --ig-logo-sub: clamp(7.2px, 0.6vw, 9.5px);
+    --ig-logo-trk: clamp(0.07em, 0.1vw, 0.16em);
+    --ig-mark: clamp(30px, 2.3vw, 40px);
+    --ig-gap: clamp(8px, 1.1vw, 22px);
+    --ig-shell-px: clamp(12px, 1.4vw, 32px);
+    --ig-cta-px: clamp(11px, 1.2vw, 22px);
+    --ig-cta-ml: clamp(6px, 0.9vw, 16px);
+    --ig-ease: cubic-bezier(0.22, 1, 0.36, 1);
+    /* header height — the bar is sticky, so it occupies layout space */
+    --ig-h: 68px;
     --transition-base: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
@@ -132,8 +158,13 @@
   }
 
   /* ── NAVIGATION ── */
-  nav#navbar,
-  nav:not(#admin-panel nav):not(#admin-panel *) {
+  /* Legacy header styles. Scoped to the old #navbar element only.
+     The previous selector matched EVERY <nav> on the page, and the
+     :not(#admin-panel ...) gave it ID-level specificity, so it forced
+     position:fixed and display:flex onto the new header's <nav>
+     elements and beat Tailwind's `hidden` — the desktop links stayed
+     visible at mobile widths and overlapped the logo. */
+  nav#navbar {
     position: fixed;
     top: 0;
     left: 0;
@@ -301,6 +332,7 @@
   .hero {
     position: relative;
     min-height: 100vh;
+    min-height: 100svh;
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -806,7 +838,8 @@
 
   /* ── CONSISTENT SUBPAGE VIEWPORT OFFSET & HERO ALIGNMENT ── */
   main > .page-view:not(.home-page-view) {
-    padding-top: clamp(4.5rem, 6vw, 6.5rem);
+    /* header is sticky and occupies layout space, so no offset needed */
+    padding-top: clamp(1.5rem, 2.5vw, 2.5rem);
     min-height: 80vh;
   }
   main > .page-view:not(.home-page-view) > section:first-of-type {
@@ -1819,7 +1852,7 @@
       gap: 2.5rem;
     }
     .page-view:not(.home-page-view) {
-      padding-top: 72px;
+      padding-top: 1.5rem;
     }
   }
 
@@ -2861,3 +2894,952 @@
     pointer-events: auto;
   }
 } /* ── end @layer base ── */
+
+/* ════════════════════════════════════════════════════════════════
+   MOBILE HERO — stacked layout
+   The hero is its own naturally-sized section: the photo sits on top
+   as a contained frame, the copy sits below it on white. Nothing
+   overlaps, so the logo-wall lettering never shows through the text.
+   Declared last so it wins over the 768/480/360 blocks above.
+   ════════════════════════════════════════════════════════════════ */
+@layer base {
+  @media (max-width: 768px) {
+    .hero {
+      display: block;
+      min-height: 0;
+      height: auto;
+      padding: 0 0 2.25rem;
+      margin-top: 0;
+      overflow: visible;
+    }
+
+    /* photo: contained frame at the top, not a background */
+    .hero-video-wrapper {
+      position: relative;
+      inset: auto;
+      width: 100%;
+      height: auto;
+      aspect-ratio: 4 / 3;
+      z-index: 0;
+    }
+    .hero-fallback-image {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      /* keep the emblem and wall lettering in frame */
+      object-position: 58% center;
+    }
+    .hero-video {
+      display: none;
+    }
+    /* nothing tints or covers the photo now that no text sits on it */
+    .hero-overlay {
+      display: none;
+    }
+
+    /* copy: below the photo, on white */
+    .hero-container {
+      position: relative;
+      z-index: 1;
+      max-width: none;
+      width: 100%;
+      margin: 0;
+      padding: 1.75rem 5vw 0;
+      background: transparent;
+    }
+
+    .hero-headline {
+      font-size: clamp(1.9rem, 7.5vw, 2.5rem);
+      margin-bottom: 0.85rem;
+    }
+    .hero-sub {
+      font-size: 1rem;
+      max-width: none;
+      margin-bottom: 1.5rem;
+    }
+
+    /* full-width stacked CTAs */
+    .hero-actions {
+      flex-direction: column;
+      flex-wrap: nowrap;
+      align-items: stretch;
+      width: 100%;
+      gap: 0.75rem;
+    }
+    .hero-actions .btn {
+      width: 100%;
+      flex: 0 0 auto;
+      min-height: 52px;
+      font-size: 0.95rem;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .hero {
+      padding: 0 0 2rem;
+      min-height: 0;
+      height: auto;
+    }
+    .hero-container {
+      padding: 1.5rem 5vw 0;
+    }
+  }
+
+  @media (max-width: 360px) {
+    .hero {
+      padding: 0 0 1.75rem;
+      min-height: 0;
+      height: auto;
+    }
+    .hero-container {
+      padding: 1.35rem 4vw 0;
+    }
+    .hero-headline {
+      font-size: 1.75rem;
+    }
+  }
+}
+
+/* ════════════════════════════════════════════════════════════════
+   FULL-VIEWPORT PAGE HERO
+   Interior-page hero that fills the screen so nothing below it shows
+   until the user scrolls. Styling is unchanged — still
+   .section-eyebrow / .section-title / .section-desc on white.
+
+   Cross-device rules this encodes:
+   1. `svh`, not `vh`/`dvh`. On mobile `vh` resolves to the LARGEST
+      viewport (chrome expanded), so a 100vh hero is clipped at load;
+      `dvh` resizes as chrome collapses, which makes the hero jump
+      mid-scroll. `svh` is the smallest viewport — stable and never
+      clipped. `vh` is kept first as the fallback for older engines.
+   2. `min-height`, never `height`, so a hero whose content is taller
+      than the screen grows instead of truncating.
+   3. `justify-content: safe center`. Plain centering pushes overflow
+      past the START edge of a flex container, where it cannot be
+      scrolled to — content becomes unreachable. `safe` falls back to
+      flex-start the moment content exceeds the box.
+   4. Full height is gated behind `min-height: 640px`. On short
+      windows and landscape phones a 100svh hero squeezes the copy to
+      nothing, so there the section is simply its natural height.
+   ════════════════════════════════════════════════════════════════ */
+@layer base {
+  main > .page-view:not(.home-page-view) > section.page-hero-full,
+  main
+    > .page-view:not(.home-page-view)
+    > section.page-hero-full:first-of-type {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    /* progressive enhancement: ignored where unsupported */
+    justify-content: safe center;
+    width: 100%;
+    text-align: center;
+    margin-top: 0;
+    /* default is natural height; full height is opted into below */
+    min-height: 0;
+    /* top pad clears the fixed navbar so copy centres in the space
+       below it rather than behind it */
+    padding: clamp(1.5rem, 3vw, 2.75rem)
+      max(5vw, calc((100vw - 1440px) / 2 + 5vw)) 3rem;
+  }
+
+  /* the page-view's own nav offset would stack on the hero and push
+     it past one screen, stranding a scroll stub */
+  main > .page-view:not(.home-page-view):has(> section.page-hero-full) {
+    padding-top: 0;
+  }
+
+  /* The section after the hero must not re-add its own top offset —
+     `section` carries up to 7.5rem padding plus 80px margin. */
+  main > .page-view > section.page-hero-full + section {
+    margin-top: 0;
+    padding-top: clamp(1.75rem, 3vw, 2.75rem);
+  }
+
+  /* ── Claim the viewport only when it is tall enough to be worth it ──
+     Threshold is 480px, not 640px: Windows display scaling at 125-150%
+     puts a 1080p desktop at only ~600 CSS px of viewport height, so a
+     640px gate silently disables the hero on ordinary laptops. Real
+     landscape phones sit at 320-430px, which is what this guards. */
+  @media (min-height: 480px) {
+    main > .page-view:not(.home-page-view) > section.page-hero-full,
+    main
+      > .page-view:not(.home-page-view)
+      > section.page-hero-full:first-of-type {
+      min-height: calc(100vh - var(--ig-h));
+      min-height: calc(100svh - var(--ig-h));
+    }
+  }
+
+  /* ── Laptop / small desktop ── */
+  @media (max-width: 1280px) {
+    main > .page-view:not(.home-page-view) > section.page-hero-full,
+    main
+      > .page-view:not(.home-page-view)
+      > section.page-hero-full:first-of-type {
+      padding: 2rem 5vw 2.5rem;
+    }
+  }
+
+  /* ── Tablet ── */
+  @media (max-width: 1024px) {
+    main > .page-view:not(.home-page-view) > section.page-hero-full,
+    main
+      > .page-view:not(.home-page-view)
+      > section.page-hero-full:first-of-type {
+      padding: 1.75rem 5vw 2.25rem;
+    }
+  }
+
+  /* ── Phone ── */
+  @media (max-width: 640px) {
+    main > .page-view:not(.home-page-view) > section.page-hero-full,
+    main
+      > .page-view:not(.home-page-view)
+      > section.page-hero-full:first-of-type {
+      padding: 1.5rem 5vw 2rem;
+    }
+  }
+
+  @media (max-width: 360px) {
+    main > .page-view:not(.home-page-view) > section.page-hero-full,
+    main
+      > .page-view:not(.home-page-view)
+      > section.page-hero-full:first-of-type {
+      padding: 1.25rem 4vw 1.75rem;
+    }
+  }
+
+  /* ── Short windows & landscape phones ──
+     Below 480px tall, or a landscape phone, a full-screen hero
+     crushes the copy. Fall back to natural height. Declared last so
+     it overrides the min-height:480px opt-in above. */
+  @media (max-height: 479px),
+    (orientation: landscape) and (max-height: 450px) {
+    main > .page-view:not(.home-page-view) > section.page-hero-full,
+    main
+      > .page-view:not(.home-page-view)
+      > section.page-hero-full:first-of-type {
+      min-height: 0;
+      padding-top: 1.75rem;
+      padding-bottom: 2rem;
+    }
+  }
+
+  /* ── Content guards, every size ── */
+  main > .page-view > section.page-hero-full > * {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+  main > .page-view > section.page-hero-full .section-title {
+    text-wrap: balance;
+    overflow-wrap: break-word;
+  }
+}
+
+/* ── Hero CTA row: four equal buttons on one line ──
+   The container grid comes from Tailwind utilities (later layer); the
+   button sizing lives here because the buttons carry no conflicting
+   utility classes, so `.page-hero-full .caps-actions .btn` wins over
+   the base `.btn` on specificity alone. */
+@layer base {
+  .page-hero-full .caps-actions {
+    max-width: 1180px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .page-hero-full .caps-actions .btn {
+    width: 100%;
+    min-height: 52px;
+    justify-content: center;
+    text-align: center;
+    white-space: nowrap;
+  }
+  .page-hero-full .caps-actions .btn svg {
+    flex-shrink: 0;
+    margin-left: 0.45rem;
+  }
+
+  /* shrink the type just enough that the four longest labels sit on
+     one line without wrapping between 1024px and 1400px */
+  @media (min-width: 1024px) {
+    .page-hero-full .caps-actions .btn {
+      font-size: 0.78rem;
+      padding: 0 0.8rem;
+      letter-spacing: -0.01em;
+    }
+  }
+  @media (min-width: 1400px) {
+    .page-hero-full .caps-actions .btn {
+      font-size: 0.84rem;
+      padding: 0 1rem;
+    }
+  }
+}
+
+/* ── Page-hero enrichments ──
+   Larger hero headline, plus the credential row and CTA row used where
+   a page has no natural controls of its own (e.g. /about). */
+@layer base {
+  /* heroes carry the page's primary headline, so scale it above the
+     mid-page .section-title size */
+  main > .page-view > section.page-hero-full .section-title {
+    font-size: clamp(1.95rem, 2.1vw + 0.95rem, 3rem);
+    line-height: 1.12;
+    letter-spacing: -0.02em;
+  }
+  main > .page-view > section.page-hero-full .section-desc {
+    font-size: clamp(0.98rem, 0.3vw + 0.88rem, 1.08rem);
+    max-width: 640px;
+  }
+  /* CTAs sit at normal button scale, not hero scale */
+  .hero-cta-row .btn {
+    font-size: 0.875rem;
+    padding: 0 1.25rem;
+  }
+
+  /* credential chips */
+  .hero-credentials {
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.625rem;
+    margin: 1.9rem auto 0;
+    padding: 0;
+  }
+  .hero-credentials li {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.55rem 1rem;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--panel-dark);
+    font-family: var(--font-space-grotesk), sans-serif;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--text-bright);
+    white-space: nowrap;
+  }
+  .hero-credentials li svg {
+    color: var(--primary);
+    flex-shrink: 0;
+  }
+
+  /* hero CTA row */
+  .hero-cta-row {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.75rem;
+    margin-top: 1.9rem;
+  }
+  .hero-cta-row .btn {
+    min-height: 50px;
+    justify-content: center;
+    white-space: nowrap;
+  }
+
+  @media (max-width: 640px) {
+    .hero-credentials {
+      gap: 0.5rem;
+      margin-top: 1.5rem;
+    }
+    .hero-credentials li {
+      font-size: 0.76rem;
+      padding: 0.5rem 0.8rem;
+      white-space: normal;
+    }
+    .hero-cta-row {
+      flex-direction: column;
+      align-items: stretch;
+      width: 100%;
+      margin-top: 1.5rem;
+    }
+    .hero-cta-row .btn {
+      width: 100%;
+    }
+  }
+}
+
+/* ════════════════════════════════════════════════════════════════
+   GLOBAL BUTTON SYSTEM
+   One hover behaviour everywhere: the brand colour sweeps in from the
+   left. Implemented with an animated background-size rather than a
+   ::before overlay, because button labels are bare text nodes — an
+   overlay would need z-index juggling to avoid covering them, while a
+   background sits behind content for free.
+
+   Every :hover re-declares background-image. The earlier variant
+   rules set `background:` (shorthand), which resets background-image;
+   without re-declaring it the sweep fills white-on-white.
+
+   Declared last so it supersedes the gradient/glow variants above.
+   ════════════════════════════════════════════════════════════════ */
+@layer base {
+  .btn {
+    background-repeat: no-repeat;
+    background-position: left center;
+    background-size: 0% 100%;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    transition:
+      background-size 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+      color 0.3s ease,
+      border-color 0.3s ease,
+      box-shadow 0.3s ease;
+  }
+  .btn svg {
+    flex-shrink: 0;
+    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  /* ── Solid: brand orange → deeper orange ── */
+  .btn-primary,
+  .btn-glass-primary {
+    background-color: var(--primary);
+    background-image: linear-gradient(#c84113, #c84113);
+    background-repeat: no-repeat;
+    background-position: left center;
+    background-size: 0% 100%;
+    color: #ffffff;
+    border: 1px solid var(--primary);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+  }
+  .btn-primary:hover,
+  .btn-glass-primary:hover {
+    background-color: var(--primary);
+    background-image: linear-gradient(#c84113, #c84113);
+    background-repeat: no-repeat;
+    background-position: left center;
+    background-size: 100% 100%;
+    color: #ffffff;
+    border-color: #c84113;
+    filter: none;
+    transform: none;
+    box-shadow: 0 4px 14px -3px rgba(var(--primary-rgb), 0.4);
+  }
+
+  /* ── Outline: white → brand orange ── */
+  .btn-secondary,
+  .btn-glass-secondary {
+    background-color: #ffffff;
+    background-image: linear-gradient(var(--primary), var(--primary));
+    background-repeat: no-repeat;
+    background-position: left center;
+    background-size: 0% 100%;
+    color: var(--text-bright);
+    border: 1px solid var(--border-hover);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  }
+  .btn-secondary:hover,
+  .btn-glass-secondary:hover {
+    background-color: #ffffff;
+    background-image: linear-gradient(var(--primary), var(--primary));
+    background-repeat: no-repeat;
+    background-position: left center;
+    background-size: 100% 100%;
+    color: #ffffff;
+    border-color: var(--primary);
+    transform: none;
+    box-shadow: 0 4px 14px -3px rgba(var(--primary-rgb), 0.35);
+  }
+
+  /* ── Icon motion: directional icons advance, symbols scale ── */
+  .btn-primary:hover svg,
+  .btn-glass-primary:hover svg {
+    transform: translateX(3px);
+  }
+  .btn-secondary:hover svg,
+  .btn-glass-secondary:hover svg {
+    transform: scale(1.1);
+  }
+
+  .btn:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .btn,
+    .btn svg {
+      transition: none;
+    }
+    .btn:hover svg {
+      transform: none;
+    }
+  }
+}
+
+/* ════════════════════════════════════════════════════════════════
+   FILTER PILLS
+   Category/topic filters across /services, /faq, /careers,
+   /resources. Same sweep-on-hover as .btn so the whole site reads as
+   one system, with a real focus ring instead of the UA default.
+   ════════════════════════════════════════════════════════════════ */
+@layer base {
+  .filter-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: 44px;
+    padding: 0 1.15rem;
+    border-radius: 999px;
+    font-family: var(--font-space-grotesk), sans-serif;
+    font-size: 0.85rem;
+    font-weight: 600;
+    line-height: 1;
+    white-space: nowrap;
+    cursor: pointer;
+    color: var(--text-muted);
+    background-color: #ffffff;
+    background-image: linear-gradient(var(--primary), var(--primary));
+    background-repeat: no-repeat;
+    background-position: left center;
+    background-size: 0% 100%;
+    border: 1px solid var(--border);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+    transition:
+      background-size 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+      color 0.25s ease,
+      border-color 0.25s ease;
+  }
+  .filter-pill svg {
+    flex-shrink: 0;
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .filter-pill:hover {
+    background-size: 100% 100%;
+    color: #ffffff;
+    border-color: var(--primary);
+  }
+  .filter-pill:hover svg {
+    transform: scale(1.12);
+  }
+  .filter-pill.active {
+    background-color: var(--primary);
+    background-size: 100% 100%;
+    color: #ffffff;
+    border-color: var(--primary);
+  }
+  /* replace the UA focus ring that was drawing a dark outline */
+  .filter-pill:focus {
+    outline: none;
+  }
+  .filter-pill:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+  }
+
+  .filter-pill-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: stretch;
+    justify-content: center;
+    gap: 0.625rem;
+  }
+
+  @media (max-width: 640px) {
+    .filter-pill {
+      font-size: 0.78rem;
+      padding: 0 0.9rem;
+      min-height: 42px;
+      white-space: normal;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .filter-pill,
+    .filter-pill svg {
+      transition: none;
+    }
+    .filter-pill:hover svg {
+      transform: none;
+    }
+  }
+}
+
+/* ════════════════════════════════════════════════════════════════
+   SITE HEADER (ig-*)
+   Four things live here because no utility can express them:
+     1. the letter roll — needs content:attr() and a per-letter delay
+     2. the icon slide and the underline — pseudo elements
+     3. the open/closed states — driven by data-state
+     4. reduce-motion, which turns the roll off
+   Everything else in the header is Tailwind utilities.
+   ════════════════════════════════════════════════════════════════ */
+@layer base {
+  @media (min-width: 1180px) {
+    :root {
+      --ig-h: 76px;
+    }
+  }
+
+  .ig-display {
+    font-family: var(--font-outfit), system-ui, sans-serif;
+  }
+
+  /* ---------- the letter roll ----------
+     Each letter is its own window. The navy face sits in it and the
+     orange face waits one full height below. On hover both slide up by
+     one height, so navy leaves through the top and orange lands on
+     exactly the same baseline. */
+  .ig-ch {
+    display: inline-block;
+    position: relative;
+    height: 1.3em;
+    overflow: hidden;
+    color: transparent;
+  }
+  .ig-ch::before,
+  .ig-ch::after {
+    content: attr(data-ch);
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    line-height: 1.3em;
+    transition: transform 0.46s var(--ig-ease);
+  }
+  .ig-ch::before {
+    color: var(--text-bright);
+    transform: translateY(0);
+  }
+  .ig-ch::after {
+    color: var(--primary);
+    transform: translateY(100%);
+  }
+  .ig-link:hover .ig-ch::before,
+  .ig-link:focus-visible .ig-ch::before {
+    transform: translateY(-100%);
+  }
+  .ig-link:hover .ig-ch::after,
+  .ig-link:focus-visible .ig-ch::after {
+    transform: translateY(0);
+  }
+
+  /* the stagger — one step per letter. The space span counts as a
+     child too, which gives the pause between two words. 18 covers
+     "Hurricane Tracker", the longest label. */
+  .ig-ch:nth-child(1)::before,  .ig-ch:nth-child(1)::after  { transition-delay: 0ms; }
+  .ig-ch:nth-child(2)::before,  .ig-ch:nth-child(2)::after  { transition-delay: 22ms; }
+  .ig-ch:nth-child(3)::before,  .ig-ch:nth-child(3)::after  { transition-delay: 44ms; }
+  .ig-ch:nth-child(4)::before,  .ig-ch:nth-child(4)::after  { transition-delay: 66ms; }
+  .ig-ch:nth-child(5)::before,  .ig-ch:nth-child(5)::after  { transition-delay: 88ms; }
+  .ig-ch:nth-child(6)::before,  .ig-ch:nth-child(6)::after  { transition-delay: 110ms; }
+  .ig-ch:nth-child(7)::before,  .ig-ch:nth-child(7)::after  { transition-delay: 132ms; }
+  .ig-ch:nth-child(8)::before,  .ig-ch:nth-child(8)::after  { transition-delay: 154ms; }
+  .ig-ch:nth-child(9)::before,  .ig-ch:nth-child(9)::after  { transition-delay: 176ms; }
+  .ig-ch:nth-child(10)::before, .ig-ch:nth-child(10)::after { transition-delay: 198ms; }
+  .ig-ch:nth-child(11)::before, .ig-ch:nth-child(11)::after { transition-delay: 220ms; }
+  .ig-ch:nth-child(12)::before, .ig-ch:nth-child(12)::after { transition-delay: 242ms; }
+  .ig-ch:nth-child(13)::before, .ig-ch:nth-child(13)::after { transition-delay: 264ms; }
+  .ig-ch:nth-child(14)::before, .ig-ch:nth-child(14)::after { transition-delay: 286ms; }
+  .ig-ch:nth-child(15)::before, .ig-ch:nth-child(15)::after { transition-delay: 308ms; }
+  .ig-ch:nth-child(16)::before, .ig-ch:nth-child(16)::after { transition-delay: 330ms; }
+  .ig-ch:nth-child(17)::before, .ig-ch:nth-child(17)::after { transition-delay: 352ms; }
+  .ig-ch:nth-child(18)::before, .ig-ch:nth-child(18)::after { transition-delay: 374ms; }
+
+  /* ---------- icon sliding in from the left ----------
+     The slot is the link's left padding and is ALWAYS reserved, so the
+     row never shifts when an icon arrives; it also doubles as the gap
+     between one link and the next. */
+  .ig-ic svg {
+    transform: translateX(-125%);
+    opacity: 0;
+    transition:
+      transform 0.44s var(--ig-ease),
+      opacity 0.24s linear;
+  }
+  .ig-link:hover .ig-ic svg,
+  .ig-link:focus-visible .ig-ic svg,
+  .ig-link[aria-current="page"] .ig-ic svg {
+    transform: translateX(0);
+    opacity: 1;
+  }
+
+  /* ---------- the underline, under the words only ---------- */
+  .ig-link::after {
+    content: "";
+    position: absolute;
+    left: var(--ig-slot);
+    right: var(--ig-padx);
+    bottom: 6px;
+    height: 2px;
+    background: var(--primary);
+    transform: scaleX(0);
+    transform-origin: left center;
+    transition: transform 0.42s var(--ig-ease);
+  }
+  .ig-link:hover::after,
+  .ig-link:focus-visible::after,
+  .ig-link[aria-current="page"]::after {
+    transform: scaleX(1);
+  }
+
+  /* ---------- open / closed, driven by data-state ----------
+     The :hover and :focus-within rules are the no-script fallback for
+     the dropdown. Keep them: they make it usable for a mouse even if
+     the React state never fires. */
+  .ig-drop {
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-6px);
+    transition:
+      opacity 0.26s var(--ig-ease),
+      transform 0.26s var(--ig-ease),
+      visibility 0.26s;
+  }
+  .ig-item:hover .ig-drop,
+  .ig-item:focus-within .ig-drop,
+  .ig-drop[data-state="open"] {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+  }
+
+  /* The drawer overlays the page instead of expanding in flow. In flow
+     it pushed the whole document down, so the hero stayed visible
+     beneath the open menu. */
+  .ig-drawer {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 100%;
+    z-index: 60;
+    background: var(--panel-dark);
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.5s var(--ig-ease);
+  }
+  .ig-drawer[data-state="open"] {
+    /* never taller than the space under the header; scrolls if it is */
+    max-height: calc(100vh - var(--ig-h));
+    max-height: calc(100svh - var(--ig-h));
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    box-shadow: 0 18px 40px -20px rgba(13, 27, 61, 0.35);
+  }
+
+  /* Nested collapsible group inside the drawer: height animation only,
+     no positioning — it must stay in flow within the panel. */
+  .ig-collapse {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.45s var(--ig-ease);
+  }
+  .ig-collapse[data-state="open"] {
+    max-height: 420px;
+  }
+
+  /* the three burger bars become an X */
+  .ig-burger span {
+    transition:
+      transform 0.4s var(--ig-ease),
+      opacity 0.3s linear;
+  }
+  .ig-burger[aria-expanded="true"] span:nth-child(1) {
+    transform: translateY(7px) rotate(45deg);
+  }
+  .ig-burger[aria-expanded="true"] span:nth-child(2) {
+    opacity: 0;
+  }
+  .ig-burger[aria-expanded="true"] span:nth-child(3) {
+    transform: translateY(-7px) rotate(-45deg);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .ig-ch::before,
+    .ig-ch::after,
+    .ig-ic svg,
+    .ig-link::after,
+    .ig-drop,
+    .ig-drawer,
+    .ig-burger span {
+      transition: none !important;
+    }
+    .ig-ch {
+      color: var(--text-bright);
+      overflow: visible;
+    }
+    .ig-ch::before,
+    .ig-ch::after {
+      content: none;
+    }
+    .ig-link:hover .ig-ch,
+    .ig-link:focus-visible .ig-ch {
+      color: var(--primary);
+    }
+    .ig-ic svg {
+      opacity: 1;
+      transform: none;
+    }
+  }
+}
+
+/* ── Hero credentials on phones ──
+   Stacked full-width rows in one bordered card, rather than wrapped
+   chips. At 390px the chips were breaking onto ragged lines. */
+@layer base {
+  @media (max-width: 640px) {
+    .hero-credentials {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 0;
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+      background: var(--panel-dark);
+      margin-top: 1.6rem;
+    }
+    .hero-credentials li {
+      justify-content: flex-start;
+      width: 100%;
+      border: 0;
+      border-bottom: 1px solid var(--border);
+      border-radius: 0;
+      padding: 0.85rem 1rem;
+      font-size: 0.82rem;
+      white-space: normal;
+    }
+    .hero-credentials li:last-child {
+      border-bottom: 0;
+    }
+  }
+}
+
+/* ── Phone heroes start at the top, not the middle ──
+   Vertical centring is right on a wide screen, but on a 393x852 phone
+   it strands the copy in the lower half with a dead band under the
+   header. Top-align and let the section breathe below instead. */
+@layer base {
+  @media (max-width: 640px) {
+    main > .page-view:not(.home-page-view) > section.page-hero-full,
+    main
+      > .page-view:not(.home-page-view)
+      > section.page-hero-full:first-of-type {
+      /* The hero owns the first screen: nothing below it is visible
+         until the user scrolls. Content is centred so the unavoidable
+         leftover height on a short hero splits above and below rather
+         than pooling under the last button. `safe` stops a tall hero
+         overflowing past the top edge, where it could not be reached. */
+      min-height: calc(100vh - var(--ig-h));
+      min-height: calc(100svh - var(--ig-h));
+      /* Headline sits just under the header. Any leftover height falls
+         below the last element rather than opening a band above the
+         title. */
+      justify-content: flex-start;
+      padding-top: 1.25rem;
+      padding-bottom: 2.25rem;
+    }
+  }
+}
+
+/* ── Homepage hero sits under the transparent bar ──
+   The header is sticky, so it normally occupies layout space. On the
+   homepage the bar starts transparent over the photo, so the hero is
+   pulled up by exactly the header height to meet the viewport top.
+   Everywhere else the bar is solid and keeps its space. */
+@layer base {
+  .home-page-view .hero {
+    margin-top: calc(-1 * var(--ig-h));
+  }
+
+
+}
+
+/* ── Phone hero typography ──
+   Larger, with real spacing between the three blocks. The clamp floors
+   were set for a 320px screen and left 390-440px phones reading at
+   near-desktop body size against a very large empty area. */
+@layer base {
+  @media (max-width: 640px) {
+    main > .page-view > section.page-hero-full .section-title {
+      /* Larger on phones so the headline fills the upper half instead
+         of leaving a band of white above it. The 2.1rem floor is for
+         320px, where a long title like "Corporate Capabilities &
+         Contracting Readiness" must still wrap without overflowing. */
+      font-size: clamp(2.3rem, 9.3vw, 3.35rem);
+      line-height: 1.11;
+      letter-spacing: -0.022em;
+      margin-bottom: 1.1rem;
+    }
+    main > .page-view > section.page-hero-full .section-desc {
+      font-size: 1.28rem;
+      line-height: 1.78;
+      max-width: 100%;
+      margin-bottom: 0;
+    }
+    /* Push the buttons down: the gap between copy and CTA is what takes
+       up the leftover height, instead of a void under the last button. */
+    .hero-cta-row {
+      margin-top: 4.75rem;
+      gap: 0.9rem;
+    }
+    .hero-cta-row .btn {
+      font-size: 1.02rem;
+      min-height: 58px;
+    }
+  }
+}
+
+/* ── Overlay header legibility ──
+   Over the hero photo the links are dark (#111827) and the right half
+   of that photo is near-black navy, so "Hurricane Tracker" through
+   "FAQ" disappeared. A white scrim that fades out downward keeps every
+   link readable over any image while leaving the photo visible.
+
+   Declared as background-image, not the `background` shorthand: the
+   header carries Tailwind's `bg-transparent`, which is a utility in a
+   later cascade layer and would win on background-color. It sets no
+   background-image, so this applies cleanly. */
+@layer base {
+  .ig-h[data-overlay="true"] {
+    /* Kill the border box entirely rather than making it transparent.
+       `border-b` still reserves 1px, and with Windows display scaling
+       the header's height lands on a fractional device pixel, so that
+       row can expose the white page background as a hairline. */
+    border-bottom-width: 0;
+    border-bottom-color: transparent;
+    /* Lighter wash, and no backdrop-filter: a blur only applies inside
+       the element, so it terminated at the header's bottom edge and
+       drew a hard horizontal line across the photo. The gradient alone
+       fades to nothing, leaving no seam. */
+    background-image: linear-gradient(
+      to bottom,
+      rgba(255, 255, 255, 0.8) 0%,
+      rgba(255, 255, 255, 0.64) 55%,
+      rgba(255, 255, 255, 0.34) 100%
+    );
+  }
+
+  /* The scrim used to reach 0 exactly at the header's bottom edge,
+     where the hero's own left-to-right overlay starts at a different
+     brightness. That step read as a drawn line. This continues the
+     fade past the header, from the same 0.34 it ends on, so the two
+     meet with no boundary. */
+  .ig-h[data-overlay="true"]::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    /* overlap by 1px: at fractional device-pixel positions a seam can
+       open between an element and a pseudo-element flush against it */
+    top: calc(100% - 1px);
+    height: 65px;
+    background-image: linear-gradient(
+      to bottom,
+      rgba(255, 255, 255, 0.34) 0%,
+      rgba(255, 255, 255, 0.12) 55%,
+      rgba(255, 255, 255, 0) 100%
+    );
+    pointer-events: none;
+  }
+}

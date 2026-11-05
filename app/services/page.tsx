@@ -171,11 +171,11 @@ export default function ServicesPage() {
 
   return (
     <div className="page-view block">
-      <section id="services">
+      {/* Full-viewport page hero: nothing below it is visible until scroll */}
+      <section id="services-hero" className="page-hero-full">
         <RevealOnMount
-          className={`reveal text-center max-w-[850px] mx-auto mb-12 ${isMounted ? "active" : ""}`}
+          className={`reveal text-center max-w-[850px] mx-auto ${isMounted ? "active" : ""}`}
         >
-          <div className="section-eyebrow">Services Directory</div>
           <h1 className="section-title">
             Government &amp; Commercial Solutions
           </h1>
@@ -184,45 +184,72 @@ export default function ServicesPage() {
             paired with strategic growth and revenue advisory for independent
             and small businesses.
           </p>
+
+          <ul className="hero-credentials">
+            <li>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
+              {servicesData.length} Service Lines
+            </li>
+            <li>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+              Emergency Management &amp; Recovery
+            </li>
+            <li>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+              Small Business &amp; Commercial Advisory
+            </li>
+          </ul>
+
+          <div className="hero-cta-row">
+            <a href="#services" className="btn btn-primary no-underline">
+              Browse All Services
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <polyline points="19 12 12 19 5 12"></polyline>
+              </svg>
+            </a>
+            <Link href="/contact" className="btn btn-secondary no-underline">
+              Talk to an Advisor
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <rect x="2" y="4" width="20" height="16" rx="2"></rect>
+                <polyline points="22 6 12 13 2 6"></polyline>
+              </svg>
+            </Link>
+          </div>
         </RevealOnMount>
 
-        {/* Solutions Category Filter Bar */}
-        <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 mt-4 mb-10">
-          <button
-            type="button"
-            onClick={() => handleFilterChange("all")}
-            className={`px-3.5 sm:px-4 py-2 rounded-full text-[0.72rem] sm:text-xs font-bold transition-all min-h-[38px] ${
-              filterCategory === "all"
-                ? "bg-[var(--primary)] text-white shadow-sm"
-                : "bg-[var(--glass)] border border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text-bright)]"
-            }`}
-          >
-            All Capabilities ({servicesData.length})
-          </button>
-          <button
-            type="button"
-            onClick={() => handleFilterChange("small-business")}
-            className={`px-3.5 sm:px-4 py-2 rounded-full text-[0.72rem] sm:text-xs font-bold transition-all min-h-[38px] ${
-              filterCategory === "small-business"
-                ? "bg-[var(--secondary)] text-white shadow-sm"
-                : "bg-[var(--glass)] border border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text-bright)]"
-            }`}
-          >
-            Small Business &amp; Commercial Advisory
-          </button>
-          <button
-            type="button"
-            onClick={() => handleFilterChange("emergency")}
-            className={`px-3.5 sm:px-4 py-2 rounded-full text-[0.72rem] sm:text-xs font-bold transition-all min-h-[38px] ${
-              filterCategory === "emergency"
-                ? "bg-[var(--primary)] text-white shadow-sm"
-                : "bg-[var(--glass)] border border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text-bright)]"
-            }`}
-          >
-            Emergency Management &amp; Recovery
-          </button>
-        </div>
+      {/* Solutions Category Filter Bar */}
+      </section>
 
+      <section id="services">
+
+
+      <div className="filter-pill-row mb-10">
+        <button
+          type="button"
+          onClick={() => handleFilterChange("all")}
+            className={`filter-pill ${filterCategory === "all" ? "active" : ""}`}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"></rect><rect x="14" y="3" width="7" height="7" rx="1"></rect><rect x="3" y="14" width="7" height="7" rx="1"></rect><rect x="14" y="14" width="7" height="7" rx="1"></rect></svg>
+          All Capabilities ({servicesData.length})
+        </button>
+        <button
+          type="button"
+          onClick={() => handleFilterChange("small-business")}
+            className={`filter-pill ${filterCategory === "small-business" ? "active" : ""}`}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="2" y="7" width="20" height="14" rx="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
+          Small Business &amp; Commercial Advisory
+        </button>
+        <button
+          type="button"
+          onClick={() => handleFilterChange("emergency")}
+            className={`filter-pill ${filterCategory === "emergency" ? "active" : ""}`}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+          Emergency Management &amp; Recovery
+        </button>
+      </div>
         {displayedServices.length > 0 ? (
           <div className="services-container">
             {/* Sticky Sidebar / Mobile Horizontal Pill Bar */}
@@ -328,7 +355,7 @@ export default function ServicesPage() {
                         className="btn btn-primary py-2.5 px-5 text-xs sm:text-[0.85rem] no-underline text-center justify-center min-h-[44px]"
                       >
                         Initiate Handshake
-                      </Link>
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg></Link>
                     </div>
                   </div>
                 </div>

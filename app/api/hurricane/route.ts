@@ -12,7 +12,10 @@ export async function GET(req: NextRequest) {
     const json = await res.json();
     return NextResponse.json(json, {
       headers: {
-        "Cache-Control": "no-store",
+        // Public NOAA data, no auth, no personal data. 60s matches the
+        // tracker's own refresh cadence; SWR serves slightly stale data
+        // instantly while it revalidates behind the request.
+        "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300",
         "Access-Control-Allow-Origin": origin,
       },
     });
