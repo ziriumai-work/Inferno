@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import RevealOnMount from "@/components/RevealOnMount";
 import {
@@ -21,7 +21,8 @@ export default function ContractsPage() {
   const [showClosed, setShowClosed] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [lastRefreshedDate, setLastRefreshedDate] = useState<Date>(new Date());
+  const [lastRefreshedDate, setLastRefreshedDate] = useState<Date>(() => new Date());
+  const lastRefreshedRef = useRef<Date>(new Date());
   const [relativeTime, setRelativeTime] = useState("just now");
 
   // Teaming / Review Modal State
@@ -63,6 +64,7 @@ export default function ContractsPage() {
         setContracts(process.env.NODE_ENV === "production" ? [] : rawMockContracts);
       }
       const now = new Date();
+      lastRefreshedRef.current = now;
       setLastRefreshedDate(now);
       updateRelativeTime(now);
     };
@@ -73,7 +75,7 @@ export default function ContractsPage() {
     }, 50);
 
     const interval = setInterval(() => {
-      updateRelativeTime(lastRefreshedDate);
+      updateRelativeTime(lastRefreshedRef.current);
     }, 15000);
 
     window.addEventListener("storage", refreshContracts);
@@ -85,7 +87,7 @@ export default function ContractsPage() {
       clearTimeout(timer);
       clearInterval(interval);
     };
-  }, [lastRefreshedDate]);
+  }, []);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -104,6 +106,7 @@ export default function ContractsPage() {
       setTimeout(() => {
         setIsRefreshing(false);
         const now = new Date();
+        lastRefreshedRef.current = now;
         setLastRefreshedDate(now);
         updateRelativeTime(now);
       }, 600);
@@ -306,8 +309,13 @@ export default function ContractsPage() {
                 setCurrentPage(1);
               }}
             />
-            <label htmlFor="contract-search" className="form-label">
-              Search by Solicitation ID, Title, Agency, Set-Aside, or Location...
+            <label htmlFor="contract-search" className="form-label max-w-[calc(100%-2rem)] truncate">
+              <span className="hidden sm:inline">
+                Search by Solicitation ID, Title, Agency, Set-Aside, or Location...
+              </span>
+              <span className="sm:hidden">
+                Search solicitations or agency...
+              </span>
             </label>
           </div>
 

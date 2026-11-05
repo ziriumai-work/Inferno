@@ -96,6 +96,30 @@ export default function Navbar() {
     setIsCtaDropdownOpen(false);
   };
 
+  const handleDropdownMouseEnter = () => {
+    if (typeof window !== "undefined" && window.matchMedia("(hover: hover)").matches) {
+      setIsDropdownOpen(true);
+    }
+  };
+
+  const handleDropdownMouseLeave = () => {
+    if (typeof window !== "undefined" && window.matchMedia("(hover: hover)").matches) {
+      setIsDropdownOpen(false);
+    }
+  };
+
+  const handleCtaMouseEnter = () => {
+    if (typeof window !== "undefined" && window.matchMedia("(hover: hover)").matches) {
+      setIsCtaDropdownOpen(true);
+    }
+  };
+
+  const handleCtaMouseLeave = () => {
+    if (typeof window !== "undefined" && window.matchMedia("(hover: hover)").matches) {
+      setIsCtaDropdownOpen(false);
+    }
+  };
+
   const handleNavClick = (href: string) => {
     closeMenu();
     if (pathname === href) {
@@ -182,19 +206,24 @@ export default function Navbar() {
 
         <li
           className="nav-dropdown"
-          onMouseEnter={() => setIsDropdownOpen(true)}
-          onMouseLeave={() => setIsDropdownOpen(false)}
+          onMouseEnter={handleDropdownMouseEnter}
+          onMouseLeave={handleDropdownMouseLeave}
         >
           <button
-            className="nav-dropdown-trigger"
-            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+            type="button"
+            className={`nav-dropdown-trigger nav-item ${isDropdownOpen ? "active" : ""}`}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setIsDropdownOpen((prev) => !prev);
+            }}
             aria-expanded={isDropdownOpen}
             aria-label="B2G Portal menu"
           >
             <span>B2G Portal</span>
             <svg
-              width="12"
-              height="12"
+              width="14"
+              height="14"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
@@ -202,6 +231,7 @@ export default function Navbar() {
               strokeLinecap="round"
               strokeLinejoin="round"
               className={`chevron-icon transition-transform duration-300 ${isDropdownOpen ? "rotate-180" : ""}`}
+              aria-hidden="true"
             >
               <polyline points="6 9 12 15 18 9"></polyline>
             </svg>
@@ -296,10 +326,11 @@ export default function Navbar() {
       {/* Desktop-only CTA Dropdown */}
       <div
         className="desktop-only-cta nav-cta-dropdown"
-        onMouseEnter={() => setIsCtaDropdownOpen(true)}
-        onMouseLeave={() => setIsCtaDropdownOpen(false)}
+        onMouseEnter={handleCtaMouseEnter}
+        onMouseLeave={handleCtaMouseLeave}
       >
         <button
+          type="button"
           className="nav-cta nav-cta-trigger"
           onClick={() => setIsCtaDropdownOpen(!isCtaDropdownOpen)}
           aria-expanded={isCtaDropdownOpen}

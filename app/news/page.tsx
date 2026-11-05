@@ -73,8 +73,13 @@ export default function NewsPage() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
-                <label htmlFor="news-search" className="form-label">
-                  Search bulletins (e.g. FEMA, HUBZone, DCAA, Debris)...
+                <label htmlFor="news-search" className="form-label max-w-[calc(100%-2rem)] truncate">
+                  <span className="hidden sm:inline">
+                    Search bulletins (e.g. FEMA, HUBZone, DCAA, Debris)...
+                  </span>
+                  <span className="sm:hidden">
+                    Search bulletins or insights...
+                  </span>
                 </label>
               </div>
               <div className="faq-tabs flex flex-wrap gap-2 justify-start">

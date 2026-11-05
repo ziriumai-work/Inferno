@@ -166,9 +166,13 @@ export default function ResourcesPage() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
-            <label htmlFor="resource-search" className="form-label">
-              Search playbooks, templates, checklists (e.g. FEMA, DCAA,
-              HUBZone)...
+            <label htmlFor="resource-search" className="form-label max-w-[calc(100%-2rem)] truncate">
+              <span className="hidden sm:inline">
+                Search playbooks, templates, checklists (e.g. FEMA, DCAA, HUBZone)...
+              </span>
+              <span className="sm:hidden">
+                Search playbooks or templates...
+              </span>
             </label>
           </div>
           <div className="faq-tabs flex flex-wrap gap-2 justify-center">

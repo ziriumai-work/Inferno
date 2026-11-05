@@ -8,7 +8,9 @@ import { dataStore, ServiceItem } from "@/utils/dataStore";
 export default function ServicesPage() {
   const [servicesData, setServicesData] = useState<ServiceItem[]>([]);
   const [activeServiceId, setActiveServiceId] = useState("");
-  const [filterCategory, setFilterCategory] = useState<"all" | "emergency" | "small-business">("all");
+  const [filterCategory, setFilterCategory] = useState<
+    "all" | "emergency" | "small-business"
+  >("all");
   const [isMounted, setIsMounted] = useState(false);
 
   const displayedServices = useMemo(() => {
@@ -34,7 +36,9 @@ export default function ServicesPage() {
 
   useEffect(() => {
     const refreshServices = () => {
-      const list = dataStore.getServices().filter((s) => s.status === "published");
+      const list = dataStore
+        .getServices()
+        .filter((s) => s.status === "published");
       setServicesData(list);
       if (list.length > 0) {
         setActiveServiceId((prev) => prev || list[0].id);
@@ -42,17 +46,20 @@ export default function ServicesPage() {
     };
 
     refreshServices();
-    
+
     const timer = setTimeout(() => {
       setIsMounted(true);
     }, 50);
 
     const handleScroll = () => {
-      const list = dataStore.getServices().filter((s) => s.status === "published");
+      const list = dataStore
+        .getServices()
+        .filter((s) => s.status === "published");
       if (list.length === 0) return;
       let currentId = list[0].id;
       let minDistance = Infinity;
-      const isMobile = typeof window !== "undefined" && window.innerWidth <= 1024;
+      const isMobile =
+        typeof window !== "undefined" && window.innerWidth <= 1024;
       const targetOffset = isMobile ? 160 : 200;
 
       list.forEach((service) => {
@@ -89,9 +96,11 @@ export default function ServicesPage() {
     if (!activeServiceId || typeof window === "undefined") return;
     if (window.innerWidth <= 1024) {
       const activeBtn = document.querySelector(
-        `.services-menu-item[data-id="${activeServiceId}"]`
+        `.services-menu-item[data-id="${activeServiceId}"]`,
       ) as HTMLElement;
-      const menuContainer = document.querySelector(".services-menu") as HTMLElement;
+      const menuContainer = document.querySelector(
+        ".services-menu",
+      ) as HTMLElement;
       if (activeBtn && menuContainer) {
         const btnLeft = activeBtn.offsetLeft;
         const btnWidth = activeBtn.offsetWidth;
@@ -104,7 +113,9 @@ export default function ServicesPage() {
     }
   }, [activeServiceId]);
 
-  const handleFilterChange = (category: "all" | "emergency" | "small-business") => {
+  const handleFilterChange = (
+    category: "all" | "emergency" | "small-business",
+  ) => {
     setFilterCategory(category);
     const filtered = servicesData.filter((service) => {
       if (category === "small-business") {
@@ -133,7 +144,8 @@ export default function ServicesPage() {
     e.preventDefault();
     const el = document.getElementById(id);
     if (el) {
-      const isMobile = typeof window !== "undefined" && window.innerWidth <= 1024;
+      const isMobile =
+        typeof window !== "undefined" && window.innerWidth <= 1024;
       const offset = isMobile ? 135 : 110;
       const bodyRect = document.body.getBoundingClientRect().top;
       const elementRect = el.getBoundingClientRect().top;
@@ -164,9 +176,13 @@ export default function ServicesPage() {
           className={`reveal text-center max-w-[850px] mx-auto mb-12 ${isMounted ? "active" : ""}`}
         >
           <div className="section-eyebrow">Services Directory</div>
-          <h1 className="section-title">Government &amp; Commercial Solutions</h1>
+          <h1 className="section-title">
+            Government &amp; Commercial Solutions
+          </h1>
           <p className="section-desc max-w-[760px] mx-auto text-center">
-            Full-lifecycle emergency management and federal grant compliance, paired with strategic growth and revenue advisory for independent and small businesses.
+            Full-lifecycle emergency management and federal grant compliance,
+            paired with strategic growth and revenue advisory for independent
+            and small businesses.
           </p>
         </RevealOnMount>
 
@@ -239,21 +255,26 @@ export default function ServicesPage() {
                   <div className="card-content">
                     <div className="flex flex-wrap items-center gap-2 mb-3">
                       <span className="service-badge">{service.badge}</span>
-                      {service.id === "strategic-consulting-and-operational-excellence" && (
+                      {service.id ===
+                        "strategic-consulting-and-operational-excellence" && (
                         <span className="text-[0.68rem] font-bold uppercase tracking-wider px-3 py-1 rounded-full bg-[rgba(26,86,196,0.1)] text-[var(--secondary)] border border-[rgba(26,86,196,0.25)]">
                           High Demand &middot; Small Business Advisory
                         </span>
                       )}
                     </div>
-                    <h3 className="service-card-title break-words">{service.title}</h3>
+                    <h3 className="service-card-title break-words">
+                      {service.title}
+                    </h3>
                     {service.headline && (
                       <p className="text-[var(--primary)] text-[0.92rem] sm:text-[0.95rem] font-semibold mb-3 leading-snug">
                         {service.headline}
                       </p>
                     )}
                     <p className="service-card-desc">{service.desc}</p>
-                    
-                    <div className="service-sublist-title mt-6">What We Include</div>
+
+                    <div className="service-sublist-title mt-6">
+                      What We Include
+                    </div>
                     <ul className="service-sublist mb-6">
                       {service.caps.map((cap, index) => (
                         <li key={index} className="break-words">
@@ -266,12 +287,14 @@ export default function ServicesPage() {
                     </ul>
 
                     {service.idealFor && service.idealFor.length > 0 && (
-                      <div className="mt-6 border-t border-dashed border-[var(--border)] pt-5">
-                        <div className="service-sublist-title mb-3">Ideal For</div>
+                      <div className="mt-6 border-t  border-[var(--border)] pt-5">
+                        <div className="service-sublist-title mb-3">
+                          Ideal For
+                        </div>
                         <div className="flex flex-wrap gap-2">
                           {service.idealFor.map((item, idx) => (
-                            <span 
-                              key={idx} 
+                            <span
+                              key={idx}
                               className="bg-[rgba(225,77,24,0.06)] border border-[rgba(225,77,24,0.15)] text-[var(--text-main)] px-2.5 sm:px-3 py-[0.3rem] rounded-full text-[0.72rem] sm:text-[0.78rem] font-semibold"
                             >
                               {item}
@@ -283,18 +306,25 @@ export default function ServicesPage() {
 
                     {/* Action Links */}
                     <div className="mt-8 border-t border-[var(--border)] pt-5 sm:pt-6 flex flex-col sm:flex-row gap-3 sm:gap-4 items-stretch sm:items-center">
-                      <Link 
-                        href={`/services/${service.id}`} 
+                      <Link
+                        href={`/services/${service.id}`}
                         className="btn btn-secondary py-2.5 px-5 text-xs sm:text-[0.85rem] no-underline inline-flex items-center justify-center gap-2 min-h-[44px]"
                       >
                         View Full Profile
-                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5">
+                        <svg
+                          viewBox="0 0 24 24"
+                          width="14"
+                          height="14"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2.5"
+                        >
                           <line x1="5" y1="12" x2="19" y2="12"></line>
                           <polyline points="12 5 19 12 12 19"></polyline>
                         </svg>
                       </Link>
-                      <Link 
-                        href={`/contact?service=${service.id}`} 
+                      <Link
+                        href={`/contact?service=${service.id}`}
                         className="btn btn-primary py-2.5 px-5 text-xs sm:text-[0.85rem] no-underline text-center justify-center min-h-[44px]"
                       >
                         Initiate Handshake
