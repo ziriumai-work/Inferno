@@ -85,21 +85,59 @@ export default function FAQPage() {
         <RevealOnMount
           className={`faq-controls reveal flex flex-col gap-6 mb-12 max-w-[760px] mx-auto ${isMounted ? "active" : ""}`}
         >
-          <div className="form-group m-0">
+          <div className="form-group m-0 relative">
+            <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)] pointer-events-none flex items-center justify-center">
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+              </svg>
+            </span>
             <input
               type="text"
               id="faq-search"
-              className="form-input"
+              className="form-input pl-10 pr-10"
               placeholder=" "
               value={searchQuery}
               onChange={(e) => {
                 setSearchQuery(e.target.value);
                 setOpenIndex(null);
               }}
+              aria-label="Search frequently asked questions"
             />
-            <label htmlFor="faq-search" className="form-label">
-              Search questions, credentials, services, or teaming criteria...
+            <label
+              htmlFor="faq-search"
+              className="form-label !left-10 max-w-[calc(100%-4rem)] truncate"
+            >
+              <span className="hidden sm:inline">
+                Search questions, credentials, services, or teaming criteria...
+              </span>
+              <span className="sm:hidden">
+                Search questions or topics...
+              </span>
             </label>
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSearchQuery("");
+                  setOpenIndex(null);
+                }}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text-bright)] p-1 text-xs rounded-full bg-[var(--panel-hover)] transition-colors"
+                aria-label="Clear search query"
+              >
+                ✕
+              </button>
+            )}
           </div>
           <div className="faq-tabs flex flex-wrap gap-2.5 justify-center">
             {categories.map((cat) => (

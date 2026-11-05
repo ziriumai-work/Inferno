@@ -774,16 +774,19 @@ export default function HomeClient() {
           className="py-12 sm:py-20 md:py-24 px-4 sm:px-[5vw] border-b border-[var(--border)]"
         >
           <div className="grid grid-cols-1 lg:grid-cols-[1.2fr_1fr] gap-8 sm:gap-12 lg:gap-16 items-center">
-            <RevealOnMount direction="left">
-              <div className="section-eyebrow">
+            <RevealOnMount
+              direction="left"
+              className="flex flex-col items-center text-center lg:items-start lg:text-left"
+            >
+              <div className="section-eyebrow text-center lg:text-left">
                 <TypewriterText
                   text="Operational Readiness"
                   speed={40}
                   delay={200}
                 />
               </div>
-              <h2 className="section-title">The Inferno Command</h2>
-              <p className="text-[var(--text-muted)] text-base leading-[1.7] mb-8 line-clamp-4">
+              <h2 className="section-title text-center lg:text-left">The Inferno Command</h2>
+              <p className="text-[var(--text-muted)] text-base leading-[1.7] mb-8 line-clamp-4 text-center lg:text-left max-w-2xl lg:max-w-none">
                 {about.story.split("\n\n").find((p) => p.trim().length > 0) || about.story}
               </p>
               <Link href="/about" className="btn btn-secondary no-underline">

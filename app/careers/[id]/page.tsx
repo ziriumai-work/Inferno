@@ -101,6 +101,20 @@ export default function JobDetailsPage() {
               <h1 className="font-[family-name:var(--font-space-grotesk)] text-2xl sm:text-3xl font-extrabold text-[var(--text-bright)]">
                 {job.title}
               </h1>
+
+              {/* Mobile Quick Action — Jump Directly to Application Form */}
+              <div className="lg:hidden mt-4">
+                <a
+                  href="#job-application-form-top"
+                  className="btn btn-primary py-3 px-5 text-xs font-bold w-full justify-center gap-2 shadow-sm inline-flex"
+                >
+                  <span>Apply Now &mdash; Jump to Form</span>
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <polyline points="19 12 12 19 5 12"></polyline>
+                  </svg>
+                </a>
+              </div>
             </div>
 
             <div>

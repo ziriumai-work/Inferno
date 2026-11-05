@@ -387,12 +387,12 @@ export default function JobApplicationForm({
   ];
 
   return (
-    <div id="job-application-form-top" className="relative bg-white border border-[var(--border)] rounded-2xl p-5 sm:p-8 shadow-sm">
+    <div id="job-application-form-top" className="relative bg-white border border-[var(--border)] rounded-2xl p-4 sm:p-8 shadow-sm scroll-mt-24 sm:scroll-mt-28">
       {/* Success Modal / Overlay */}
       {isSuccess && (
-        <div className="absolute inset-0 bg-white/98 z-30 rounded-2xl p-6 sm:p-10 flex flex-col items-center justify-center text-center animate-fadeIn">
-          <div className="w-16 h-16 rounded-full bg-emerald-50 border-2 border-emerald-500 text-emerald-600 flex items-center justify-center mb-5 shadow-sm">
-            <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <div className="absolute inset-0 bg-white/98 z-30 rounded-2xl p-4 sm:p-10 flex flex-col items-center justify-center text-center animate-fadeIn">
+          <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-emerald-50 border-2 border-emerald-500 text-emerald-600 flex items-center justify-center mb-4 sm:mb-5 shadow-sm">
+            <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="20 6 9 17 4 12"></polyline>
             </svg>
           </div>
@@ -400,19 +400,19 @@ export default function JobApplicationForm({
           <span className="text-xs font-bold uppercase tracking-wider text-[var(--primary)] mb-1">
             Application Transmitted
           </span>
-          <h3 className="text-2xl font-bold font-[family-name:var(--font-space-grotesk)] text-[var(--text-bright)] mb-2">
+          <h3 className="text-xl sm:text-2xl font-bold font-[family-name:var(--font-space-grotesk)] text-[var(--text-bright)] mb-2">
             Formal Application Received
           </h3>
-          <p className="text-sm text-[var(--text-muted)] max-w-[480px] mb-4 leading-relaxed">
+          <p className="text-xs sm:text-sm text-[var(--text-muted)] max-w-[480px] mb-4 leading-relaxed">
             Thank you, <strong className="text-[var(--text-bright)]">{legalName}</strong>. Your employment application package for{" "}
             <strong className="text-[var(--text-bright)]">{job.title}</strong> has been encrypted, logged into our talent review queue, and assigned reference:
           </p>
 
-          <div className="bg-[var(--panel-dark)] border border-[var(--border)] rounded-xl px-5 py-2.5 mb-6 font-mono text-sm font-bold text-[var(--primary)] tracking-wide">
+          <div className="bg-[var(--panel-dark)] border border-[var(--border)] rounded-xl px-4 py-2 sm:px-5 sm:py-2.5 mb-5 font-mono text-xs sm:text-sm font-bold text-[var(--primary)] tracking-wide">
             {applicationRefId}
           </div>
 
-          <div className="text-xs text-[var(--text-muted)] max-w-[440px] mb-6 text-left bg-[rgba(225,77,24,0.03)] border border-[var(--border)] rounded-xl p-4">
+          <div className="text-xs text-[var(--text-muted)] max-w-[440px] mb-6 text-left bg-[rgba(225,77,24,0.03)] border border-[var(--border)] rounded-xl p-3.5 sm:p-4">
             <div className="font-semibold text-[var(--text-bright)] mb-1">What happens next?</div>
             <ul className="list-disc pl-4 space-y-1">
               <li>Our Emergency Relief &amp; Federal Contracting Recruitment Cadre reviews your qualifications.</li>
@@ -427,7 +427,7 @@ export default function JobApplicationForm({
               setIsSuccess(false);
               setCurrentStep(1);
             }}
-            className="btn btn-secondary py-2.5 px-6 text-xs font-semibold"
+            className="btn btn-secondary py-2.5 px-6 text-xs font-semibold w-full sm:w-auto"
           >
             Submit Another Application
           </button>
@@ -435,20 +435,20 @@ export default function JobApplicationForm({
       )}
 
       {/* Form Header */}
-      <div className="mb-6 border-b border-[var(--border)] pb-5">
+      <div className="mb-5 sm:mb-6 border-b border-[var(--border)] pb-4 sm:pb-5 pr-8 sm:pr-0">
         <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
-          <span className="text-xs font-bold uppercase tracking-wider text-[var(--primary)] font-[family-name:var(--font-space-grotesk)]">
+          <span className="text-[0.7rem] sm:text-xs font-bold uppercase tracking-wider text-[var(--primary)] font-[family-name:var(--font-space-grotesk)]">
             {isGeneralApplication ? "Disaster Response Cadre Roster" : "Official Employment Application"}
           </span>
-          <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-[rgba(225,77,24,0.08)] text-[var(--primary)] border border-[var(--border)]">
+          <span className="text-[0.7rem] sm:text-xs font-semibold px-2 sm:px-2.5 py-0.5 rounded-full bg-[rgba(225,77,24,0.08)] text-[var(--primary)] border border-[var(--border)]">
             Step {currentStep} of {totalSteps}
           </span>
         </div>
-        <h3 className="text-xl sm:text-2xl font-bold font-[family-name:var(--font-space-grotesk)] text-[var(--text-bright)]">
+        <h3 className="text-lg sm:text-2xl font-bold font-[family-name:var(--font-space-grotesk)] text-[var(--text-bright)]">
           {job.title}
         </h3>
-        <div className="flex flex-wrap items-center gap-2 mt-2">
-          <span className="text-xs text-[var(--primary)] bg-orange-50 border border-orange-200 px-2.5 py-0.5 rounded-md font-semibold inline-flex items-center gap-1.5">
+        <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mt-2">
+          <span className="text-[0.7rem] sm:text-xs text-[var(--primary)] bg-orange-50 border border-orange-200 px-2 sm:px-2.5 py-0.5 rounded-md font-semibold inline-flex items-center gap-1 sm:gap-1.5">
             <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.2">
               <circle cx="12" cy="12" r="10"></circle>
               <polyline points="12 6 12 12 16 14"></polyline>
@@ -456,7 +456,7 @@ export default function JobApplicationForm({
             Last Date: {job.lastDate || "Open Until Filled"}
           </span>
           {job.location && (
-            <span className="text-xs text-[var(--text-muted)] bg-gray-50 border border-[var(--border)] px-2.5 py-0.5 rounded-md font-medium inline-flex items-center gap-1">
+            <span className="text-[0.7rem] sm:text-xs text-[var(--text-muted)] bg-gray-50 border border-[var(--border)] px-2 sm:px-2.5 py-0.5 rounded-md font-medium inline-flex items-center gap-1">
               <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
                 <circle cx="12" cy="10" r="3"></circle>
@@ -465,14 +465,14 @@ export default function JobApplicationForm({
             </span>
           )}
         </div>
-        <p className="text-xs text-[var(--text-muted)] mt-2">
+        <p className="text-[0.72rem] sm:text-xs text-[var(--text-muted)] mt-2">
           Complete each section below to transmit your candidate credentials to our HR &amp; Operations review team.
         </p>
       </div>
 
       {/* Stepper Progress Bar */}
-      <div className="mb-8">
-        <div className="grid grid-cols-4 gap-2 mb-3">
+      <div className="mb-6 sm:mb-8">
+        <div className="grid grid-cols-4 gap-1.5 sm:gap-2 mb-2 sm:mb-3">
           {stepTitles.map((st) => {
             const isActive = currentStep === st.num;
             const isCompleted = currentStep > st.num;
@@ -487,7 +487,7 @@ export default function JobApplicationForm({
                 }`}
               >
                 <div
-                  className={`h-1.5 rounded-full mb-2 transition-all ${
+                  className={`h-1.5 rounded-full mb-1.5 sm:mb-2 transition-all ${
                     isCompleted
                       ? "bg-emerald-500"
                       : isActive
@@ -515,8 +515,8 @@ export default function JobApplicationForm({
             );
           })}
         </div>
-        <div className="sm:hidden flex items-center justify-between text-xs font-semibold text-[var(--text-bright)]">
-          <span>{stepTitles[currentStep - 1].title}</span>
+        <div className="sm:hidden flex items-center justify-between text-xs font-semibold text-[var(--text-bright)] pt-1">
+          <span className="text-[var(--primary)] font-bold">Step {currentStep}: {stepTitles[currentStep - 1].title}</span>
           <span className="text-[var(--text-muted)] text-[0.7rem]">{stepTitles[currentStep - 1].subtitle}</span>
         </div>
       </div>
@@ -1020,13 +1020,13 @@ export default function JobApplicationForm({
         )}
 
         {/* ================= STEP CONTROLS ================= */}
-        <div className="flex items-center justify-between gap-3 pt-4 border-t border-[var(--border)] mt-2">
+        <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-4 border-t border-[var(--border)] mt-2">
           {currentStep > 1 ? (
             <button
               type="button"
               onClick={handleBack}
               disabled={isSubmitting}
-              className="btn btn-secondary py-2.5 px-5 text-xs font-semibold flex items-center gap-1.5 cursor-pointer"
+              className="btn btn-secondary py-3 sm:py-2.5 px-5 text-xs font-semibold flex items-center justify-center gap-1.5 cursor-pointer w-full sm:w-auto"
             >
               <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5">
                 <polyline points="15 18 9 12 15 6"></polyline>
@@ -1034,7 +1034,7 @@ export default function JobApplicationForm({
               Previous Step
             </button>
           ) : (
-            <div className="text-[0.7rem] text-[var(--text-muted)] italic">
+            <div className="text-[0.7rem] text-[var(--text-muted)] italic text-center sm:text-left">
               * Required employment screening fields
             </div>
           )}
@@ -1043,7 +1043,7 @@ export default function JobApplicationForm({
             <button
               type="button"
               onClick={handleNext}
-              className="btn btn-primary py-2.5 px-6 text-xs font-semibold flex items-center gap-1.5 ml-auto cursor-pointer"
+              className="btn btn-primary py-3 sm:py-2.5 px-6 text-xs font-semibold flex items-center justify-center gap-1.5 w-full sm:w-auto sm:ml-auto cursor-pointer shadow-sm"
             >
               Continue to Step {currentStep + 1}
               <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -1054,7 +1054,7 @@ export default function JobApplicationForm({
             <button
               type="submit"
               disabled={isSubmitting}
-              className="btn-submit py-3 px-7 text-xs font-bold uppercase tracking-wider flex items-center gap-2 ml-auto shadow-md hover:shadow-lg transition-all cursor-pointer"
+              className="btn-submit py-3.5 sm:py-3 px-7 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 w-full sm:w-auto sm:ml-auto shadow-md hover:shadow-lg transition-all cursor-pointer"
             >
               {isSubmitting ? (
                 <>
