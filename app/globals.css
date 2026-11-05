@@ -346,10 +346,10 @@
     inset: 0;
     background: linear-gradient(
       90deg,
-      rgba(255, 255, 255, 0.88) 0%,
-      rgba(255, 255, 255, 0.72) 42%,
-      rgba(255, 255, 255, 0.30) 75%,
-      rgba(255, 255, 255, 0.08) 100%
+      rgba(255, 255, 255, 0.92) 0%,
+      rgba(255, 255, 255, 0.82) 26%,
+      rgba(255, 255, 255, 0.28) 48%,
+      rgba(255, 255, 255, 0) 62%
     );
     z-index: 3;
     pointer-events: none;
@@ -420,7 +420,7 @@
   .hero-container {
     position: relative;
     z-index: 10;
-    max-width: 900px;
+    max-width: 560px;
     width: 100%;
   }
 
@@ -446,13 +446,14 @@
   }
 
   .hero-headline {
-    font-size: clamp(2.15rem, 5.2vw + 0.3rem, 5.4rem);
-    line-height: 1.02;
-    font-weight: 800;
-    letter-spacing: -0.03em;
+    font-size: clamp(2rem, 2.4vw + 1rem, 3.35rem);
+    line-height: 1.12;
+    font-weight: 700;
+    letter-spacing: -0.02em;
     color: var(--text-bright);
     margin-bottom: 1.15rem;
-    word-break: break-word;
+    word-break: normal;
+    text-wrap: balance;
   }
 
   .gradient-text {
@@ -461,19 +462,106 @@
   }
 
   .hero-sub {
-    font-size: clamp(0.92rem, 1.2vw + 0.1rem, 1.15rem);
+    font-size: clamp(0.95rem, 0.5vw + 0.8rem, 1.08rem);
     font-weight: 400;
     color: var(--text-muted);
-    max-width: 650px;
-    margin-bottom: 1.35rem;
+    max-width: 480px;
+    margin-bottom: 1.6rem;
     line-height: 1.65;
   }
 
   .hero-actions {
     display: flex;
-    gap: 1rem;
-    flex-wrap: wrap;
-    align-items: center;
+    gap: 0.625rem;
+    flex-wrap: nowrap;
+    align-items: stretch;
+    width: 100%;
+  }
+  .hero-actions .btn {
+    flex: 1 1 auto;
+    min-width: 0;
+    min-height: 48px;
+    padding: 0 0.9rem;
+    font-size: 0.82rem;
+    justify-content: center;
+    white-space: nowrap;
+  }
+  .hero-actions .btn svg {
+    flex-shrink: 0;
+    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  /* ── Hero CTA hover: brand colour sweeps in from the left ──
+     Uses an animated background-size rather than a pseudo-element so the
+     label and icon stay above the fill with no stacking-context tricks. */
+  .hero-actions .btn {
+    background-repeat: no-repeat;
+    background-position: left center;
+    background-size: 0% 100%;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    transition:
+      background-size 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+      color 0.3s ease,
+      border-color 0.3s ease,
+      box-shadow 0.3s ease;
+  }
+
+  /* Outline buttons: white -> brand orange */
+  .hero-actions .btn-glass-secondary,
+  .hero-actions .btn-secondary {
+    background-color: rgba(255, 255, 255, 0.9);
+    background-image: linear-gradient(var(--primary), var(--primary));
+    border: 1px solid var(--border-hover);
+    color: var(--text-bright);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  }
+  .hero-actions .btn-glass-secondary:hover,
+  .hero-actions .btn-secondary:hover {
+    background-color: rgba(255, 255, 255, 0.9);
+    background-image: linear-gradient(var(--primary), var(--primary));
+    background-repeat: no-repeat;
+    background-position: left center;
+    background-size: 100% 100%;
+    color: #ffffff;
+    border-color: var(--primary);
+    transform: none;
+    box-shadow: 0 4px 14px -3px rgba(var(--primary-rgb), 0.35);
+  }
+
+  /* Primary button: orange -> deeper orange */
+  .hero-actions .btn-glass-primary {
+    background-color: var(--primary);
+    background-image: linear-gradient(#c84113, #c84113);
+  }
+  .hero-actions .btn-glass-primary:hover {
+    background-color: var(--primary);
+    background-image: linear-gradient(#c84113, #c84113);
+    background-repeat: no-repeat;
+    background-position: left center;
+    background-size: 100% 100%;
+    border-color: #c84113;
+    transform: none;
+    box-shadow: 0 4px 14px -3px rgba(var(--primary-rgb), 0.4);
+  }
+
+  /* Icon motion */
+  .hero-actions .btn-glass-primary:hover svg {
+    transform: translateX(4px);
+  }
+  .hero-actions .btn-glass-secondary:hover svg,
+  .hero-actions .btn-secondary:hover svg {
+    transform: scale(1.12);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .hero-actions .btn,
+    .hero-actions .btn svg {
+      transition: none;
+    }
+    .hero-actions .btn:hover svg {
+      transform: none;
+    }
   }
 
   .btn {
@@ -547,32 +635,21 @@
 
   /* Glassmorphism Buttons */
   .btn-glass-primary {
-    background: linear-gradient(
-      135deg,
-      var(--primary) 0%,
-      var(--secondary) 100%
-    );
+    background: var(--primary);
     color: #ffffff;
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border: 1px solid rgba(255, 255, 255, 0.35);
-    box-shadow:
-      0 8px 24px -4px rgba(var(--primary-rgb), 0.3),
-      inset 0 1px 1px 0 rgba(255, 255, 255, 0.5);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    border: 1px solid var(--primary);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
     position: relative;
     overflow: hidden;
   }
   .btn-glass-primary:hover {
-    background: linear-gradient(
-      135deg,
-      var(--primary) 0%,
-      var(--secondary) 100%
-    );
-    filter: brightness(1.08);
-    transform: translateY(-2px);
-    box-shadow:
-      0 14px 30px -4px rgba(var(--primary-rgb), 0.42),
-      inset 0 1px 2px 0 rgba(255, 255, 255, 0.7);
+    background: #c84113;
+    border-color: #c84113;
+    filter: none;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px -2px rgba(var(--primary-rgb), 0.3);
     border-color: rgba(255, 255, 255, 0.6);
     color: #ffffff;
   }
