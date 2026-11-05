@@ -144,10 +144,10 @@ export default function Navbar() {
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/logo.png" alt="The Inferno Group Logo" />
         <span className="flex flex-col">
-          <span className="text-[1.05rem] sm:text-[1.2rem] font-bold tracking-tight text-[var(--text-bright)] leading-tight">
+          <span className="text-[1rem] sm:text-[1.2rem] font-bold tracking-tight text-[var(--text-bright)] leading-tight">
             THE INFERNO GROUP
           </span>
-          <span className="text-[0.62rem] uppercase tracking-wider text-[var(--text-muted)] font-mono font-medium hidden sm:inline">
+          <span className="text-[0.56rem] sm:text-[0.62rem] uppercase tracking-wider text-[var(--text-muted)] font-mono font-semibold block">
             Government &amp; Commercial Consulting
           </span>
         </span>
@@ -255,55 +255,40 @@ export default function Navbar() {
           </Link>
         </li>
 
-        {/* Mobile-only CTA Dropdown */}
-        <li
-          className="mobile-only-cta nav-cta-dropdown w-full flex flex-col items-center mt-6"
-          onMouseEnter={() => setIsCtaDropdownOpen(true)}
-          onMouseLeave={() => setIsCtaDropdownOpen(false)}
-        >
-          <button
-            className="nav-cta nav-cta-trigger w-[80%] justify-center"
-            onClick={() => setIsCtaDropdownOpen(!isCtaDropdownOpen)}
-            aria-expanded={isCtaDropdownOpen}
+        {/* Mobile-only Direct CTAs & Credentials Badge */}
+        <li className="mobile-only-cta w-full flex flex-col items-stretch gap-2.5 mt-4 px-3">
+          <Link
+            href="/contact"
+            className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-gradient-to-r from-[var(--primary)] to-[#ff6b35] text-white font-semibold text-sm shadow-md active:scale-[0.98] transition-transform min-h-[46px]"
+            onClick={closeMenu}
           >
-            <span>Contact/Book</span>
-            <svg
-              width="12"
-              height="12"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="chevron-icon"
-            >
-              <polyline points="6 9 12 15 18 9"></polyline>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
             </svg>
-          </button>
-          <div
-            className={`nav-cta-dropdown-menu mobile-cta-menu ${isCtaDropdownOpen ? "open" : ""}`}
+            <span>Contact Operations Desk</span>
+          </Link>
+          <Link
+            href="/calendar"
+            className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-[var(--navy)] text-white font-semibold text-sm border border-[var(--border)] shadow-sm active:scale-[0.98] transition-transform min-h-[46px]"
+            onClick={closeMenu}
           >
-            <Link
-              href="/contact"
-              className="nav-dropdown-item"
-              onClick={closeMenu}
-            >
-              <div className="font-semibold">Contact Us</div>
-              <div className="text-xs text-[var(--text-muted)] mt-[2px]">
-                Send inquiry or message
-              </div>
-            </Link>
-            <Link
-              href="/calendar"
-              className="nav-dropdown-item"
-              onClick={closeMenu}
-            >
-              <div className="font-semibold">Live Booking</div>
-              <div className="text-xs text-[var(--text-muted)] mt-[2px]">
-                Schedule a consultation slot
-              </div>
-            </Link>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+              <line x1="16" y1="2" x2="16" y2="6"/>
+              <line x1="8" y1="2" x2="8" y2="6"/>
+              <line x1="3" y1="10" x2="21" y2="10"/>
+            </svg>
+            <span>Book Consultation Slot</span>
+          </Link>
+
+          {/* Credentials footer note in mobile drawer */}
+          <div className="mt-4 pt-3 border-t border-[var(--border)] text-center">
+            <div className="text-[11px] font-mono font-semibold tracking-wider text-[var(--secondary)] uppercase">
+              HUBZone &amp; VOSB Certified
+            </div>
+            <div className="text-[10px] text-[var(--text-muted)] font-mono mt-0.5">
+              UEI: QW6RHJACHA56 • CAGE: 22VP2
+            </div>
           </div>
         </li>
       </ul>

@@ -63,12 +63,37 @@ export default function TestimonialsCarousel() {
     return null;
   }
 
+  const touchStartX = useRef<number | null>(null);
+  const touchEndX = useRef<number | null>(null);
+  const minSwipeDistance = 45;
+
   const handlePrev = () => {
     setActiveIndex((prev) => (prev === 0 ? testimonials.length - 1 : prev - 1));
   };
 
   const handleNext = () => {
     setActiveIndex((prev) => (prev === testimonials.length - 1 ? 0 : prev + 1));
+  };
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    touchEndX.current = null;
+    touchStartX.current = e.targetTouches[0].clientX;
+  };
+
+  const onTouchMove = (e: React.TouchEvent) => {
+    touchEndX.current = e.targetTouches[0].clientX;
+  };
+
+  const onTouchEnd = () => {
+    if (!touchStartX.current || !touchEndX.current) return;
+    const distance = touchStartX.current - touchEndX.current;
+    const isLeftSwipe = distance > minSwipeDistance;
+    const isRightSwipe = distance < -minSwipeDistance;
+    if (isLeftSwipe) {
+      handleNext();
+    } else if (isRightSwipe) {
+      handlePrev();
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -95,8 +120,11 @@ export default function TestimonialsCarousel() {
     >
       {/* Testimonial Card */}
       <div
-        className="glow-card testimonial-card bg-[var(--glass)] border border-[var(--border)] rounded-[20px] pt-8 px-6 pb-6 sm:pt-12 sm:px-10 sm:pb-10 min-h-[240px] sm:min-h-[260px] flex flex-col justify-between shadow-[0_10px_30px_rgba(0,0,0,0.02)] relative overflow-hidden"
+        className="glow-card testimonial-card bg-[var(--glass)] border border-[var(--border)] rounded-[20px] pt-8 px-6 pb-6 sm:pt-12 sm:px-10 sm:pb-10 min-h-[240px] sm:min-h-[260px] flex flex-col justify-between shadow-[0_10px_30px_rgba(0,0,0,0.02)] relative overflow-hidden select-none touch-pan-y"
         aria-live="polite"
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
       >
         {/* Quote Icon Overlay */}
         <span

@@ -73,8 +73,7 @@ function HeroInteractiveBackground({
           transition: "transform 0.6s cubic-bezier(0.16, 1, 0.3, 1)",
         }}
       >
-        <picture className="w-full h-full absolute inset-0 block">
-          <source media="(max-width: 768px)" srcSet="/mobile-hero-image.jpg" />
+        <div className="w-full h-full absolute inset-0 block">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={fallbackImage}
@@ -84,7 +83,7 @@ function HeroInteractiveBackground({
             decoding="async"
             className="hero-fallback-image object-cover object-center lg:object-[65%_center] w-full h-full"
           />
-        </picture>
+        </div>
       </div>
       <div className="hero-overlay"></div>
     </div>
@@ -229,6 +228,8 @@ export default function HomeClient() {
   const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     if (e.button !== 0 && e.pointerType === "mouse") return;
     if ((e.target as HTMLElement).closest("[data-no-drag]")) return;
+    // On small screens, keep docked and prevent dragging to preserve native scroll
+    if (typeof window !== "undefined" && window.innerWidth <= 640) return;
 
     const rect = quizRef.current?.getBoundingClientRect();
     const currentX = rect ? rect.left : 32;
@@ -389,13 +390,13 @@ export default function HomeClient() {
 
         <RevealOnMount direction="up" className="hero-container">
           {/* Prominent Business Name & Credential Banner */}
-          <div className="hero-brand-badge mb-3 sm:mb-4 inline-flex items-center gap-2.5 px-4 py-1.5 sm:py-2 rounded-full border border-[rgba(225,77,24,0.3)]">
-            <span className="w-2.5 h-2.5 rounded-full bg-[var(--primary)] animate-pulse shrink-0"></span>
+          <div className="hero-brand-badge mb-3 sm:mb-4 inline-flex flex-wrap items-center justify-center gap-1.5 sm:gap-2.5 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full border border-[rgba(225,77,24,0.3)] max-w-full">
+            <span className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-[var(--primary)] animate-pulse shrink-0"></span>
             <span className="text-xs sm:text-sm font-bold tracking-wider uppercase font-[family-name:var(--font-space-grotesk)] text-[var(--primary)]">
               THE INFERNO GROUP LLC
             </span>
-            <span className="hidden sm:inline-block text-[0.72rem] text-[var(--text-muted)] font-mono pl-2 border-l border-[var(--border)]">
-              UEI: QW6RHJACHA56 • HUBZone &amp; VOSB Certified
+            <span className="text-[0.68rem] sm:text-[0.72rem] text-[var(--text-muted)] font-mono pl-1.5 sm:pl-2 border-l border-[var(--border)] whitespace-nowrap">
+              HUBZone &amp; VOSB Certified • UEI: QW6RHJACHA56
             </span>
           </div>
 
@@ -464,10 +465,10 @@ export default function HomeClient() {
       {/* FEDERAL CREDENTIALS & SOCIOECONOMIC HIGHLIGHTS STRIP */}
       <section
         id="home-credentials"
-        className="py-16 px-[5vw] bg-[var(--glass)] border-b border-[var(--border)]"
+        className="py-10 sm:py-16 px-4 sm:px-[5vw] bg-[var(--glass)] border-b border-[var(--border)]"
       >
         <RevealOnMount direction="up">
-          <div className="flex flex-col lg:flex-row justify-between items-center gap-8 bg-[var(--panel-dark)] border border-[var(--border)] rounded-[24px] p-8 lg:p-10 shadow-lg">
+          <div className="flex flex-col lg:flex-row justify-between items-center gap-8 bg-[var(--panel-dark)] border border-[var(--border)] rounded-[24px] p-5 sm:p-8 lg:p-10 shadow-lg">
             <div className="flex flex-col gap-3 max-w-[500px]">
               <div className="section-eyebrow text-xs uppercase tracking-wider text-[var(--primary)] font-bold">
                 Federal Credentials
@@ -544,10 +545,10 @@ export default function HomeClient() {
       {/* CORE CAPABILITIES & DUAL PILLAR SOLUTIONS SHOWCASE */}
       <section
         id="home-services"
-        className="py-24 px-[5vw] border-b border-[var(--border)] bg-[var(--background)]"
+        className="py-12 sm:py-20 md:py-24 px-4 sm:px-[5vw] border-b border-[var(--border)] bg-[var(--background)]"
       >
         <RevealOnMount direction="up">
-          <div className="text-center max-w-[850px] mx-auto mb-16">
+          <div className="text-center max-w-[850px] mx-auto mb-10 sm:mb-16">
             <div className="section-eyebrow">
               <TypewriterText
                 text="Solutions & Capabilities"
@@ -567,10 +568,10 @@ export default function HomeClient() {
         </RevealOnMount>
 
         {/* Dual Pillar Highlight Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 mb-8 sm:mb-12">
           {/* Pillar 1: Emergency Management & Disaster Recovery */}
           <RevealOnMount direction="left" delay={100}>
-            <div className="glow-card h-full p-8 md:p-10 rounded-[24px] bg-[var(--glass)] border border-[var(--border)] flex flex-col justify-between relative overflow-hidden group hover:border-[rgba(225,77,24,0.4)] transition-all">
+            <div className="glow-card h-full p-5 sm:p-8 md:p-10 rounded-[24px] bg-[var(--glass)] border border-[var(--border)] flex flex-col justify-between relative overflow-hidden group hover:border-[rgba(225,77,24,0.4)] transition-all">
               <div className="absolute top-0 right-0 w-36 h-36 bg-[rgba(225,77,24,0.06)] rounded-full blur-2xl pointer-events-none"></div>
               <div>
                 <div className="flex items-center justify-between mb-4">
@@ -649,7 +650,7 @@ export default function HomeClient() {
 
           {/* Pillar 2: Strategic Planning for Independent & Small Businesses */}
           <RevealOnMount direction="right" delay={200}>
-            <div className="glow-card h-full p-8 md:p-10 rounded-[24px] bg-[var(--glass)] border border-[rgba(26,86,196,0.3)] flex flex-col justify-between relative overflow-hidden group hover:border-[var(--secondary)] transition-all">
+            <div className="glow-card h-full p-5 sm:p-8 md:p-10 rounded-[24px] bg-[var(--glass)] border border-[rgba(26,86,196,0.3)] flex flex-col justify-between relative overflow-hidden group hover:border-[var(--secondary)] transition-all">
               <div className="absolute top-0 right-0 w-36 h-36 bg-[rgba(26,86,196,0.08)] rounded-full blur-2xl pointer-events-none"></div>
               <div>
                 <div className="flex items-center justify-between mb-4">
@@ -729,21 +730,21 @@ export default function HomeClient() {
 
         {/* Quick Service Categories Bar */}
         <RevealOnMount direction="up" delay={250}>
-          <div className="p-6 rounded-2xl bg-[var(--panel-dark)] border border-[var(--border)] flex flex-col md:flex-row items-center justify-between gap-6">
-            <div className="flex flex-wrap items-center gap-3">
-              <span className="text-xs font-bold text-[var(--text-bright)] uppercase tracking-wider font-[family-name:var(--font-space-grotesk)]">
+          <div className="p-4 sm:p-6 rounded-2xl bg-[var(--panel-dark)] border border-[var(--border)] flex flex-col md:flex-row items-center justify-between gap-4 sm:gap-6">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3 justify-center md:justify-start">
+              <span className="text-xs font-bold text-[var(--text-bright)] uppercase tracking-wider font-[family-name:var(--font-space-grotesk)] w-full sm:w-auto text-center sm:text-left">
                 Full Service Spectrum:
               </span>
-              <span className="text-xs px-3 py-1 rounded-md bg-[var(--glass)] border border-[var(--border)] text-[var(--text-muted)]">
+              <span className="text-xs px-2.5 sm:px-3 py-1 rounded-md bg-[var(--glass)] border border-[var(--border)] text-[var(--text-muted)]">
                 Incident Management (ICS/NIMS)
               </span>
-              <span className="text-xs px-3 py-1 rounded-md bg-[var(--glass)] border border-[var(--border)] text-[var(--text-muted)]">
+              <span className="text-xs px-2.5 sm:px-3 py-1 rounded-md bg-[var(--glass)] border border-[var(--border)] text-[var(--text-muted)]">
                 Contact Center &amp; Survivor Helpline
               </span>
-              <span className="text-xs px-3 py-1 rounded-md bg-[var(--glass)] border border-[var(--border)] text-[var(--text-muted)]">
+              <span className="text-xs px-2.5 sm:px-3 py-1 rounded-md bg-[var(--glass)] border border-[var(--border)] text-[var(--text-muted)]">
                 DCAA &amp; Financial Controls
               </span>
-              <span className="text-xs px-3 py-1 rounded-md bg-[var(--glass)] border border-[var(--border)] text-[var(--text-muted)]">
+              <span className="text-xs px-2.5 sm:px-3 py-1 rounded-md bg-[var(--glass)] border border-[var(--border)] text-[var(--text-muted)]">
                 Cadre Workforce Development
               </span>
             </div>
@@ -761,9 +762,9 @@ export default function HomeClient() {
       {about && (
         <section
           id="story-teaser"
-          className="py-24 px-[5vw] border-b border-[var(--border)]"
+          className="py-12 sm:py-20 md:py-24 px-4 sm:px-[5vw] border-b border-[var(--border)]"
         >
-          <div className="grid grid-cols-1 lg:grid-cols-[1.2fr_1fr] gap-16 items-center">
+          <div className="grid grid-cols-1 lg:grid-cols-[1.2fr_1fr] gap-8 sm:gap-12 lg:gap-16 items-center">
             <RevealOnMount direction="left">
               <div className="section-eyebrow">
                 <TypewriterText
@@ -782,7 +783,7 @@ export default function HomeClient() {
             </RevealOnMount>
 
             <RevealOnMount direction="right">
-              <div className="glow-card rounded-[20px] bg-[rgba(225,77,24,0.015)] border border-[var(--border)] p-10 flex flex-col gap-5">
+              <div className="glow-card rounded-[20px] bg-[rgba(225,77,24,0.015)] border border-[var(--border)] p-5 sm:p-8 md:p-10 flex flex-col gap-5">
                 <div className="text-[0.85rem] font-bold text-[var(--primary)] uppercase">
                   Core Mandate
                 </div>
@@ -803,10 +804,10 @@ export default function HomeClient() {
       {/* PARTNERS & SUBCONTRACTORS TEASER */}
       <section
         id="home-partnerships"
-        className="py-20 px-[5vw] bg-[var(--panel-dark)] border-b border-[var(--border)]"
+        className="py-12 sm:py-20 px-4 sm:px-[5vw] bg-[var(--panel-dark)] border-b border-[var(--border)]"
       >
         <RevealOnMount direction="left">
-          <div className="text-center max-w-[800px] mx-auto mb-14">
+          <div className="text-center max-w-[800px] mx-auto mb-10 sm:mb-14">
             <div className="section-eyebrow">
               <TypewriterText
                 text="Teaming & Procurement"
@@ -825,9 +826,9 @@ export default function HomeClient() {
           </div>
         </RevealOnMount>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 mb-8 sm:mb-12">
           <RevealOnMount direction="left" delay={100}>
-            <div className="glow-card bg-[var(--glass)] border border-[var(--border)] rounded-2xl p-8 h-full flex flex-col justify-between">
+            <div className="glow-card bg-[var(--glass)] border border-[var(--border)] rounded-2xl p-5 sm:p-8 h-full flex flex-col justify-between">
               <div>
                 <span className="text-xs font-bold text-[var(--primary)] uppercase tracking-wider block mb-2">
                   Teaming Approach
@@ -847,7 +848,7 @@ export default function HomeClient() {
           </RevealOnMount>
 
           <RevealOnMount direction="up" delay={200}>
-            <div className="glow-card bg-[var(--glass)] border border-[var(--border)] rounded-2xl p-8 h-full flex flex-col justify-between">
+            <div className="glow-card bg-[var(--glass)] border border-[var(--border)] rounded-2xl p-5 sm:p-8 h-full flex flex-col justify-between">
               <div>
                 <span className="text-xs font-bold text-[var(--secondary)] uppercase tracking-wider block mb-2">
                   Operational Readiness
@@ -867,7 +868,7 @@ export default function HomeClient() {
           </RevealOnMount>
 
           <RevealOnMount direction="right" delay={300}>
-            <div className="glow-card bg-[var(--glass)] border border-[var(--border)] rounded-2xl p-8 h-full flex flex-col justify-between">
+            <div className="glow-card bg-[var(--glass)] border border-[var(--border)] rounded-2xl p-5 sm:p-8 h-full flex flex-col justify-between">
               <div>
                 <span className="text-xs font-bold text-[var(--primary)] uppercase tracking-wider block mb-2">
                   Network Expansion
@@ -900,10 +901,10 @@ export default function HomeClient() {
       {/* INFERNO CARES / COMMUNITY IMPACT HIGHLIGHT */}
       <section
         id="home-community"
-        className="py-20 px-[5vw] border-b border-[var(--border)]"
+        className="py-12 sm:py-20 px-4 sm:px-[5vw] border-b border-[var(--border)]"
       >
         <RevealOnMount direction="up">
-          <div className="grid grid-cols-1 lg:grid-cols-[1.1fr_1fr] gap-12 items-center">
+          <div className="grid grid-cols-1 lg:grid-cols-[1.1fr_1fr] gap-8 sm:gap-12 items-center">
             <div>
               <div className="section-eyebrow">
                 <TypewriterText text="Inferno Cares" speed={40} delay={200} />
@@ -992,7 +993,7 @@ export default function HomeClient() {
             </div>
 
             {/* INTERACTIVE MEDIA SPOTLIGHT (PHOTOS & VIDEO) */}
-            <div className="glow-card bg-[var(--glass)] border border-[var(--border)] rounded-[24px] p-6 md:p-8 flex flex-col gap-5">
+            <div className="glow-card bg-[var(--glass)] border border-[var(--border)] rounded-[24px] p-4 sm:p-6 md:p-8 flex flex-col gap-4 sm:gap-5">
               <div className="flex items-center justify-between pb-3 border-b border-[var(--border)]">
                 <span className="text-xs font-bold uppercase tracking-wider text-[var(--text-bright)] font-[family-name:var(--font-space-grotesk)]">
                   {activeStoryMedia === "scholarship"
@@ -1369,10 +1370,10 @@ export default function HomeClient() {
       {/* AI & INNOVATION SECTION */}
       <section
         id="ai-innovation"
-        className="py-24 px-[5vw] border-b border-[var(--border)]"
+        className="py-12 sm:py-20 md:py-24 px-4 sm:px-[5vw] border-b border-[var(--border)]"
       >
         <RevealOnMount direction="up">
-          <div className="text-center mb-16">
+          <div className="text-center mb-10 sm:mb-16">
             <div className="section-eyebrow">
               <TypewriterText text="Next-Gen Delivery" speed={40} delay={200} />
             </div>
@@ -1384,7 +1385,7 @@ export default function HomeClient() {
           </div>
         </RevealOnMount>
 
-        <div className="partner-grid grid grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-10">
+        <div className="partner-grid grid grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-6 sm:gap-10">
           {aiFeatures.map((feat, idx) => (
             <RevealOnMount
               key={feat.id}
@@ -1393,7 +1394,7 @@ export default function HomeClient() {
               }
               delay={idx * 120}
             >
-              <div className="partner-card py-10 px-8 bg-[var(--glass)] border border-[var(--border)] rounded-2xl h-full flex flex-col gap-5">
+              <div className="partner-card py-6 sm:py-10 px-5 sm:px-8 bg-[var(--glass)] border border-[var(--border)] rounded-2xl h-full flex flex-col gap-4 sm:gap-5">
                 <div className="partner-card-icon w-12 h-12 rounded-[10px] bg-[var(--primary-glow)] text-[var(--primary)] flex items-center justify-center">
                   {getIconSvg(feat.icon)}
                 </div>
@@ -1414,10 +1415,10 @@ export default function HomeClient() {
       {/* TESTIMONIALS SECTION */}
       <section
         id="testimonials-section"
-        className="py-24 px-[5vw] bg-[var(--panel-dark)]"
+        className="py-12 sm:py-20 md:py-24 px-4 sm:px-[5vw] bg-[var(--panel-dark)]"
       >
         <RevealOnMount direction="right">
-          <div className="text-center mb-14">
+          <div className="text-center mb-8 sm:mb-14">
             <div className="section-eyebrow">
               <TypewriterText text="Verified Reviews" speed={40} delay={200} />
             </div>
@@ -1438,7 +1439,7 @@ export default function HomeClient() {
         onPointerUp={handlePointerUp}
         onPointerCancel={handlePointerUp}
         style={
-          quizPos.x !== null && quizPos.y !== null
+          quizPos.x !== null && quizPos.y !== null && (typeof window === "undefined" || window.innerWidth > 640)
             ? {
                 left: `${quizPos.x}px`,
                 top: `${quizPos.y}px`,
@@ -1447,7 +1448,7 @@ export default function HomeClient() {
               }
             : undefined
         }
-        className={`fixed bottom-6 left-4 sm:bottom-8 sm:left-8 z-[1999] flex items-center select-none touch-none ${
+        className={`fixed bottom-6 left-4 sm:bottom-8 sm:left-8 z-[1999] flex items-center select-none sm:touch-none touch-manipulation ${
           isDraggingQuiz
             ? "cursor-grabbing scale-105 transition-none"
             : "cursor-grab transition-all duration-400 ease-[cubic-bezier(0.4,0,0.2,1)]"
