@@ -60,6 +60,17 @@ export default function CareersPage() {
     };
   }, []);
 
+  // Lock body scroll when general application modal is open
+  useEffect(() => {
+    if (isGeneralModalOpen) {
+      const prevOverflow = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.body.style.overflow = prevOverflow;
+      };
+    }
+  }, [isGeneralModalOpen]);
+
   const filteredJobs = jobs.filter((job) => {
     const matchesDept =
       selectedDept === "all" || job.department === selectedDept;
@@ -225,7 +236,7 @@ export default function CareersPage() {
                   </div>
                   <div className="flex flex-col sm:items-end gap-1.5 shrink-0 w-full sm:w-auto">
                     <Link
-                      href={`/careers/${job.id}`}
+                      href={`/careers/${job.id}#job-application-form-top`}
                       className="btn btn-primary no-underline w-full sm:w-auto text-center justify-center"
                     >
                       Apply for Position
@@ -336,18 +347,23 @@ export default function CareersPage() {
 
         {/* General Application Modal */}
         {isGeneralModalOpen && (
-          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
-            <div className="bg-white rounded-2xl max-w-3xl w-full max-h-[92vh] overflow-y-auto p-5 sm:p-8 shadow-2xl relative border border-[var(--border)] animate-fadeIn">
+          <div
+            className="fixed inset-0 z-[2100] bg-black/70 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 md:p-6 overflow-y-auto"
+            onClick={(e) => {
+              if (e.target === e.currentTarget) setIsGeneralModalOpen(false);
+            }}
+          >
+            <div className="bg-white rounded-t-3xl sm:rounded-2xl max-w-3xl w-full max-h-[92dvh] sm:max-h-[90vh] overflow-y-auto p-3 sm:p-6 md:p-8 shadow-2xl relative border border-[var(--border)] animate-fadeIn">
               <button
                 type="button"
                 onClick={() => setIsGeneralModalOpen(false)}
-                className="absolute top-5 right-5 p-2 rounded-full hover:bg-gray-100 text-gray-500 hover:text-gray-800 transition-all z-20 cursor-pointer"
+                className="absolute top-3.5 right-3.5 sm:top-5 sm:right-5 p-2 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-700 hover:text-black transition-all z-30 cursor-pointer shadow-xs"
                 aria-label="Close application modal"
               >
                 <svg
                   viewBox="0 0 24 24"
-                  width="20"
-                  height="20"
+                  width="18"
+                  height="18"
                   fill="none"
                   stroke="currentColor"
                   strokeWidth="2.5"

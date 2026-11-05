@@ -59,21 +59,38 @@ export default function NewsPage() {
           </p>
         </RevealOnMount>
 
-        <div className="grid grid-cols-1 lg:grid-cols-[1.5fr_1fr] gap-12 mt-10 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-[1.5fr_1fr] gap-8 sm:gap-12 mt-6 sm:mt-10 items-start">
           {/* Left Column: News Articles List */}
-          <div className="flex flex-col gap-8">
+          <div className="flex flex-col gap-6 sm:gap-8">
             {/* Filters & Search */}
             <div className={`faq-controls reveal flex flex-col gap-4 w-full m-0 ${isMounted ? "active" : ""}`}>
-              <div className="form-group m-0">
+              <div className="form-group m-0 relative">
+                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)] pointer-events-none flex items-center justify-center">
+                  <svg
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                  >
+                    <circle cx="11" cy="11" r="8" />
+                    <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                  </svg>
+                </span>
                 <input
                   type="text"
                   id="news-search"
-                  className="form-input"
+                  className="form-input pl-10 pr-10"
                   placeholder=" "
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
+                  aria-label="Search bulletins and intelligence"
                 />
-                <label htmlFor="news-search" className="form-label max-w-[calc(100%-2rem)] truncate">
+                <label htmlFor="news-search" className="form-label !left-10 max-w-[calc(100%-4rem)] truncate">
                   <span className="hidden sm:inline">
                     Search bulletins (e.g. FEMA, HUBZone, DCAA, Debris)...
                   </span>
@@ -81,14 +98,29 @@ export default function NewsPage() {
                     Search bulletins or insights...
                   </span>
                 </label>
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchQuery("")}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text-bright)] p-1 text-xs rounded-full bg-[var(--panel-hover)] transition-colors"
+                    aria-label="Clear search query"
+                  >
+                    ✕
+                  </button>
+                )}
               </div>
-              <div className="faq-tabs flex flex-wrap gap-2 justify-start">
+
+              {/* Category Pills: Wrapped within screen on mobile and desktop (no horizontal scroll) */}
+              <div className="faq-tabs flex flex-wrap gap-1.5 sm:gap-2 w-full pt-0.5">
                 {categories.map((cat) => (
                   <button
                     key={cat}
+                    type="button"
                     onClick={() => setSelectedCat(cat)}
-                    className={`btn py-1.5 px-4 text-xs font-semibold rounded-full transition-all ${
-                      selectedCat === cat ? "btn-primary" : "btn-secondary"
+                    className={`btn py-1.5 px-3 sm:py-2 sm:px-4 text-[0.72rem] sm:text-xs font-semibold rounded-full transition-all min-h-[36px] sm:min-h-[38px] flex items-center justify-center cursor-pointer ${
+                      selectedCat === cat
+                        ? "btn-primary shadow-xs ring-2 ring-[var(--primary)]/20"
+                        : "btn-secondary bg-[var(--glass)] hover:bg-[var(--panel-hover)]"
                     }`}
                   >
                     {cat === "all" ? "All Insights" : cat}
@@ -103,7 +135,7 @@ export default function NewsPage() {
                 filteredArticles.map((art) => (
                   <div
                     key={art.slug}
-                    className="glow-card flex flex-col justify-between p-8 bg-[var(--glass)] border border-[var(--border)] rounded-[22px] hover:border-[var(--primary)] transition-all shadow-sm"
+                    className="glow-card flex flex-col justify-between p-5 sm:p-8 bg-[var(--glass)] border border-[var(--border)] rounded-[20px] sm:rounded-[22px] hover:border-[var(--primary)] transition-all shadow-sm"
                   >
                     <div>
                       <div className="flex justify-between items-start gap-3 mb-2">
@@ -146,7 +178,7 @@ export default function NewsPage() {
           {/* Right Column: Live Feed & Credentials Strip */}
           <div className="flex flex-col gap-6 w-full">
             {/* Live Operational Status Card */}
-            <div className="glow-card bg-[var(--panel-dark)] border border-[var(--border)] rounded-[22px] p-6">
+            <div className="glow-card bg-[var(--panel-dark)] border border-[var(--border)] rounded-[22px] p-5 sm:p-6">
               <div className="flex justify-between items-center border-b border-[var(--border)] pb-3 mb-4">
                 <h4 className="font-[family-name:var(--font-space-grotesk)] text-sm font-bold text-[var(--text-bright)] flex items-center gap-2">
                   <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
@@ -167,7 +199,7 @@ export default function NewsPage() {
             </div>
 
             {/* Social Feed Embed */}
-            <div className="glow-card bg-[var(--glass)] border border-[var(--border)] rounded-[22px] p-7">
+            <div className="glow-card bg-[var(--glass)] border border-[var(--border)] rounded-[22px] p-5 sm:p-7">
               <div className="flex justify-between items-center border-b border-[var(--border)] pb-4 mb-5">
                 <h3 className="font-[family-name:var(--font-space-grotesk)] text-[1.1rem] font-bold flex items-center gap-2 text-[var(--text-bright)]">
                   <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" className="text-[var(--primary)]">

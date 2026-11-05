@@ -77,6 +77,15 @@
     background: var(--primary);
   }
 
+  /* Utility to hide scrollbars on horizontal mobile tracks */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
   body {
     background-color: var(--bg-dark);
     color: var(--text-bright);
