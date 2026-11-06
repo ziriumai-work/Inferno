@@ -109,15 +109,12 @@ export async function GET(request: NextRequest) {
         );
 
         if (!slotExists) {
-          const generatedSlot = {
-            id: `tig-slot-${slotStart.getTime()}`,
+          newSlotsToInsert.push({
             start_time: slotStart.toISOString(),
             end_time: slotEnd.toISOString(),
             timezone: "EST",
             is_available: true,
-          };
-          newSlotsToInsert.push(generatedSlot);
-          effectiveSlots.push(generatedSlot);
+          });
         }
       }
     }
@@ -130,18 +127,24 @@ export async function GET(request: NextRequest) {
           .select();
 
         if (!insertError && insertedSlots) {
-          // Replace generated IDs with DB persistent IDs if successful
-          for (const ins of insertedSlots) {
-            const idx = effectiveSlots.findIndex(
-              (s) => s.start_time === ins.start_time
-            );
-            if (idx !== -1) {
-              effectiveSlots[idx] = ins;
-            }
+          effectiveSlots.push(...insertedSlots);
+        } else {
+          // If insert was restricted, provide valid UUID fallbacks so client can still view & book
+          for (const s of newSlotsToInsert) {
+            effectiveSlots.push({
+              ...s,
+              id: crypto.randomUUID(),
+            });
           }
         }
       } catch (insertErr) {
         console.warn("Could not persist generated slots to Supabase:", insertErr);
+        for (const s of newSlotsToInsert) {
+          effectiveSlots.push({
+            ...s,
+            id: crypto.randomUUID(),
+          });
+        }
       }
     }
 

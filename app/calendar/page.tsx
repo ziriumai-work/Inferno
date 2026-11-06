@@ -147,12 +147,15 @@ export default function CalendarPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           slot_id: selectedSlotObj.id,
+          start_time: selectedSlotObj.start_time,
+          end_time: selectedSlotObj.end_time,
+          timezone: selectedSlotObj.timezone || "EST",
           full_name: name,
           email,
           company,
           notes,
-          meeting_type: consultType
-        })
+          meeting_type: consultType,
+        }),
       });
 
       const data = await res.json();

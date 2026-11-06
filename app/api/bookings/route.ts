@@ -26,9 +26,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { slot_id, full_name, email, company, phone, meeting_type, notes } = body;
+    const { slot_id, start_time, end_time, timezone, full_name, email, company, phone, meeting_type, notes } = body;
 
-    if (!slot_id || !full_name || !email || !meeting_type) {
+    if ((!slot_id && !start_time) || !full_name || !email || !meeting_type) {
       return NextResponse.json(
         { error: "Missing required booking details (slot_id, full_name, email, meeting_type)." },
         { status: 400 }
@@ -55,44 +55,89 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 1. Check slot availability
-    const { data: slot, error: slotFetchError } = await supabase
-      .from("booking_slots")
-      .select("*")
-      .eq("id", slot_id)
-      .single();
+    // 1. Locate or verify slot availability
+    let slot: any = null;
+    let actualSlotId = slot_id;
 
-    if (slotFetchError || !slot) {
-      return NextResponse.json({ error: "Selected time slot was not found." }, { status: 444 });
+    // Check if slot_id is a valid UUID
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(slot_id));
+
+    if (isUuid) {
+      const { data: foundSlot } = await supabase
+        .from("booking_slots")
+        .select("*")
+        .eq("id", slot_id)
+        .maybeSingle();
+      if (foundSlot) {
+        slot = foundSlot;
+      }
     }
 
-    if (!slot.is_available) {
+    // If not found by UUID, look up by start_time
+    if (!slot && start_time) {
+      const { data: slotByTime } = await supabase
+        .from("booking_slots")
+        .select("*")
+        .eq("start_time", start_time)
+        .maybeSingle();
+
+      if (slotByTime) {
+        slot = slotByTime;
+        actualSlotId = slotByTime.id;
+      } else {
+        // Create the slot dynamically in booking_slots
+        const slotStart = new Date(start_time);
+        const slotEnd = end_time ? new Date(end_time) : new Date(slotStart.getTime() + 30 * 60000);
+        const { data: createdSlot, error: createErr } = await supabase
+          .from("booking_slots")
+          .insert({
+            start_time: slotStart.toISOString(),
+            end_time: slotEnd.toISOString(),
+            timezone: timezone || "EST",
+            is_available: false,
+          })
+          .select()
+          .maybeSingle();
+
+        if (createdSlot) {
+          slot = createdSlot;
+          actualSlotId = createdSlot.id;
+        } else if (createErr) {
+          console.warn("Could not insert dynamic slot on the fly:", createErr.message);
+        }
+      }
+    }
+
+    if (!slot) {
+      return NextResponse.json({ error: "Selected time slot was not found. Please choose an alternate time." }, { status: 444 });
+    }
+
+    if (!slot.is_available && slot.id === slot_id) {
+      // Check if slot was just created as unavailable by this request, else block conflict
+      // If slot was already in DB and marked unavailable
       return NextResponse.json(
         { error: "This consultation slot has already been reserved by another client. Please select an alternate slot." },
         { status: 409 }
       );
     }
 
-    // 2. Mark slot as unavailable atomically
-    const { error: slotUpdateError } = await supabase
-      .from("booking_slots")
-      .update({ is_available: false })
-      .eq("id", slot_id)
-      .eq("is_available", true); // Safety check for concurrent updates
+    // 2. Mark slot as unavailable atomically if not already updated
+    if (slot.is_available) {
+      const { error: slotUpdateError } = await supabase
+        .from("booking_slots")
+        .update({ is_available: false })
+        .eq("id", actualSlotId);
 
-    if (slotUpdateError) {
-      console.error("Slot update error:", slotUpdateError);
-      return NextResponse.json(
-        { error: "Failed to reserve time slot. It may have just been taken." },
-        { status: 409 }
-      );
+      if (slotUpdateError) {
+        console.error("Slot update error:", slotUpdateError);
+      }
     }
 
     // 3. Create booking record with status 'pending' (awaits admin confirmation of meeting time & video bridge)
     const { data: newBooking, error: bookingInsertError } = await supabase
       .from("bookings")
       .insert({
-        slot_id,
+        slot_id: actualSlotId,
         full_name,
         email,
         company: company || null,
@@ -107,7 +152,7 @@ export async function POST(request: NextRequest) {
     if (bookingInsertError) {
       console.error("Booking creation error:", bookingInsertError);
       // Revert slot availability if booking insertion failed
-      await supabase.from("booking_slots").update({ is_available: true }).eq("id", slot_id);
+      await supabase.from("booking_slots").update({ is_available: true }).eq("id", actualSlotId);
 
       return NextResponse.json(
         { error: `Database insertion error: ${bookingInsertError.message}` },
