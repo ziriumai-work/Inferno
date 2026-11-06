@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, Suspense } from "react";
+import NaicsGrid from "@/components/NaicsGrid";
 import Link from "next/link";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
@@ -59,21 +60,6 @@ function CapabilitiesContent() {
 
   const activeCap = caps.find((cap) => cap.id === activeTab) || caps[0] || capabilitiesData[0];
 
-  const naicsList = [
-    { code: "541611", title: "Admin & General Management Consulting (Primary)" },
-    { code: "541618", title: "Other Management Consulting" },
-    { code: "541690", title: "Other Scientific & Technical Consulting" },
-    { code: "624230", title: "Emergency & Other Relief Services" },
-    { code: "561210", title: "Facilities Support Services" },
-    { code: "562910", title: "Remediation Services" },
-    { code: "238320", title: "Painting & Wall Covering Contractors" },
-    { code: "561720", title: "Janitorial Services" },
-    { code: "561790", title: "Other Services to Buildings & Dwellings" },
-    { code: "238990", title: "All Other Specialty Trade Contractors" },
-    { code: "423990", title: "Other Miscellaneous Durable Goods" },
-    { code: "488510", title: "Freight Transportation Arrangement" },
-    { code: "561422", title: "Telemarketing & Other Contact Centers" },
-  ];
 
   const triggerPDFDownload = () => {
     const element = document.createElement("a");
@@ -276,21 +262,7 @@ function CapabilitiesContent() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
-              {naicsList.map((item) => (
-                <div 
-                  key={item.code}
-                  className="flex items-center gap-3 p-3.5 rounded-xl bg-[var(--glass)] border border-[var(--border)] hover:border-[var(--primary)] transition-colors"
-                >
-                  <span className="font-[family-name:var(--font-jetbrains-mono)] font-bold text-xs px-2 py-1 rounded bg-[rgba(225,77,24,0.08)] text-[var(--primary)]">
-                    {item.code}
-                  </span>
-                  <span className="text-xs font-medium text-[var(--text-bright)]">
-                    {item.title}
-                  </span>
-                </div>
-              ))}
-            </div>
+            <NaicsGrid />
           </div>
         </RevealOnMount>
 
