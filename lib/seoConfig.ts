@@ -1,8 +1,34 @@
 import type { Metadata } from "next";
 
-export const SITE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ||
-  "https://www.theinfernogroup.com";
+export function getSanitizedSiteUrl(rawUrl?: string): string {
+  const fallback = "https://www.theinfernogroup.com";
+  const input = rawUrl || process.env.NEXT_PUBLIC_SITE_URL;
+  if (!input) return fallback;
+
+  let cleaned = input.trim().replace(/^["']|["']$/g, "").replace(/\/$/, "");
+  if (!cleaned) return fallback;
+
+  if (!cleaned.startsWith("http://") && !cleaned.startsWith("https://")) {
+    cleaned = `https://${cleaned}`;
+  }
+
+  try {
+    const parsed = new URL(cleaned);
+    return parsed.origin;
+  } catch {
+    return fallback;
+  }
+}
+
+export function getValidMetadataBase(): URL {
+  try {
+    return new URL(getSanitizedSiteUrl());
+  } catch {
+    return new URL("https://www.theinfernogroup.com");
+  }
+}
+
+export const SITE_URL = getSanitizedSiteUrl();
 
 export const SITE_NAME = "The Inferno Group LLC";
 export const DEFAULT_OG_IMAGE = `${SITE_URL}/og-image.png`;

@@ -7,12 +7,12 @@ import TrackerAlert from "@/components/TrackerAlert";
 import CMSRealtimeProvider from "@/components/CMSRealtimeProvider";
 import "./globals.css";
 
-import { SITE_URL, corporateJsonLd } from "@/lib/seoConfig";
+import { SITE_URL, corporateJsonLd, getValidMetadataBase } from "@/lib/seoConfig";
 
 const Chatbot = dynamic(() => import("@/components/Chatbot"));
 
 export const metadata: Metadata = {
-  metadataBase: new URL(SITE_URL),
+  metadataBase: getValidMetadataBase(),
   title: {
     default: "The Inferno Group LLC | Government Consulting & Emergency Management Services",
     template: "%s | The Inferno Group LLC",
