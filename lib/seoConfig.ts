@@ -44,12 +44,15 @@ export function constructMetadata({
       type: ogType,
       url: canonicalUrl,
       siteName: SITE_NAME,
+      locale: "en_US",
       images: [
         {
           url: absoluteImageUrl,
+          secureUrl: absoluteImageUrl,
           width: 1200,
           height: 630,
           alt: imageAlt,
+          type: "image/png",
         },
       ],
     },
@@ -57,7 +60,17 @@ export function constructMetadata({
       card: "summary_large_image",
       title,
       description,
-      images: [absoluteImageUrl],
+      site: "@theinfernogroup",
+      creator: "@theinfernogroup",
+      images: [
+        {
+          url: absoluteImageUrl,
+          alt: imageAlt,
+        },
+      ],
+    },
+    verification: {
+      google: "google6e2e92a7a0d58085",
     },
     robots: noindex
       ? { index: false, follow: false }

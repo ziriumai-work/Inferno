@@ -52,6 +52,9 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  typescript: {
+    ignoreBuildErrors: false,
+  },
   poweredByHeader: false,
   compress: true,
   images: {

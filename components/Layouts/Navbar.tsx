@@ -27,7 +27,7 @@ function Roll({ label }: { label: string }) {
           <span key={i} className="ig-ch" data-ch={c}>
             {c}
           </span>
-        )
+        ),
       )}
     </span>
   );
@@ -392,7 +392,9 @@ export default function Navbar() {
             type="button"
             aria-expanded={isOpen}
             aria-controls="ig-mobile-nav"
-            aria-label={isOpen ? "Close navigation menu" : "Open navigation menu"}
+            aria-label={
+              isOpen ? "Close navigation menu" : "Open navigation menu"
+            }
             onClick={() => setIsOpen((v) => !v)}
             className="ig-burger ml-auto flex h-[46px] w-[46px] cursor-pointer flex-col justify-center gap-[5px] rounded-[10px] border-0 bg-transparent px-2.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--primary)] min-[1180px]:hidden"
           >

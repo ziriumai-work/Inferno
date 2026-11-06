@@ -43,3 +43,8 @@ next-env.d.ts
 # docs
 /Docs/
 .serena/
+
+# database backups and exports
+/supabase-backups/
+/backups/
+*.db.dump

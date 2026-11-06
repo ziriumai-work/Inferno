@@ -30,6 +30,7 @@ import {
   QuizQuestionItem,
 } from "@/utils/dataStore";
 import type { KnowledgeBaseItem } from "@/lib/chatbotData";
+import { formatGoogleMeetUrl, generateGoogleMeetCode, isInvalidOrFakeMeetUrl } from "@/lib/meetUtils";
 
 // Active Tab navigation items
 type AdminTab =
@@ -1136,7 +1137,61 @@ export default function AdminPage() {
   const [delayMinutes, setDelayMinutes] = useState(10);
   const [delayReason, setDelayReason] = useState("");
   const [customMeetingUrl, setCustomMeetingUrl] = useState("");
+  const [adminCustomNote, setAdminCustomNote] = useState("");
   const [isUpdatingBooking, setIsUpdatingBooking] = useState(false);
+  const [isSendingMeetInvite, setIsSendingMeetInvite] = useState(false);
+  const [isGoogleConnected, setIsGoogleConnected] = useState(false);
+
+  const showToast = useCallback(
+    (
+      msg: string,
+      type: "success" | "error" | "info" | "warning" = "success",
+    ) => {
+      setToastState({ message: msg, type });
+      setTimeout(() => {
+        setToastState((prev) => (prev?.message === msg ? null : prev));
+      }, 4000);
+    },
+    [],
+  );
+
+  const checkGoogleAuth = useCallback(async () => {
+    try {
+      const res = await fetch("/api/auth/google");
+      const data = await res.json();
+      setIsGoogleConnected(Boolean(data.connected));
+    } catch {
+      // Non-blocking
+    }
+  }, []);
+
+  useEffect(() => {
+    checkGoogleAuth();
+  }, [checkGoogleAuth]);
+
+  useEffect(() => {
+    if (searchParams?.get("google_calendar") === "connected") {
+      showToast("Google Calendar & Meet successfully connected!");
+      setIsGoogleConnected(true);
+    } else if (searchParams?.get("google_error")) {
+      showToast("Google Calendar error: " + searchParams.get("google_error"));
+    }
+  }, [searchParams]);
+
+  const handleDisconnectGoogle = async () => {
+    if (!confirm("Are you sure you want to disconnect Google Calendar integration?")) return;
+    try {
+      await fetch("/api/auth/google", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "disconnect" }),
+      });
+      setIsGoogleConnected(false);
+      showToast("Google Calendar disconnected.");
+    } catch {
+      showToast("Failed to disconnect Google Calendar.");
+    }
+  };
 
   // ── PAGINATION STATE ──
   const [leadCurrentPage, setLeadCurrentPage] = useState(1);
@@ -1163,19 +1218,6 @@ export default function AdminPage() {
   } | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const showToast = useCallback(
-    (
-      msg: string,
-      type: "success" | "error" | "info" | "warning" = "success",
-    ) => {
-      setToastState({ message: msg, type });
-      setTimeout(() => {
-        setToastState((prev) => (prev?.message === msg ? null : prev));
-      }, 4000);
-    },
-    [],
-  );
 
   const fetchSupabaseBookings = useCallback(async () => {
     try {
@@ -1842,7 +1884,13 @@ export default function AdminPage() {
   // ── BOOKING MANAGEMENT & ACTION HANDLERS ──
   const handleSelectBooking = (b: any) => {
     setSelectedBooking(b);
-    setCustomMeetingUrl(b.meeting_url || "");
+    setAdminCustomNote("");
+    const existing = b.meeting_url || b.raw?.meeting_url;
+    const defaultMeet = siteSettings?.defaultMeetingUrl || process.env.NEXT_PUBLIC_DEFAULT_GOOGLE_MEET_URL;
+    const autoMeet = existing && !isInvalidOrFakeMeetUrl(existing)
+      ? formatGoogleMeetUrl(existing)
+      : (defaultMeet || "");
+    setCustomMeetingUrl(autoMeet);
   };
 
   const handleSelectSlot = (slot: any) => {
@@ -1876,7 +1924,7 @@ export default function AdminPage() {
         }),
         timezone: slot.timezone || "EST",
         status: slot.is_available ? "available" : "reserved",
-        meeting_url: `https://meet.google.com/lookup/tig-${slot.id ? slot.id.slice(0, 8) : "consultation"}`,
+        meeting_url: formatGoogleMeetUrl(slot.meeting_url, slot.id),
         delay_minutes: 0,
         delay_message: "",
         notes: `Live calendar slot (${new Date(slot.start_time).toLocaleString()} – ${new Date(slot.end_time).toLocaleTimeString()}). Click 'Join Video Room' to test audio/video environment.`,
@@ -1888,43 +1936,76 @@ export default function AdminPage() {
   };
 
   const handleJoinMeeting = (b: any) => {
-    const targetUrl =
-      b.meeting_url ||
-      b.raw?.meeting_url ||
-      `https://meet.google.com/lookup/tig-${b.id ? b.id.slice(0, 8) : "consultation"}`;
+    const existing = b.meeting_url || b.raw?.meeting_url;
+    const defaultMeet = siteSettings?.defaultMeetingUrl || process.env.NEXT_PUBLIC_DEFAULT_GOOGLE_MEET_URL;
+    const targetUrl = existing && !isInvalidOrFakeMeetUrl(existing)
+      ? formatGoogleMeetUrl(existing)
+      : (defaultMeet || "https://meet.google.com/new");
     window.open(targetUrl, "_blank", "noopener,noreferrer");
     showToast(`Opening meeting room for ${b.full_name}...`);
   };
 
   const handleConfirmBooking = async (b: any) => {
     setIsUpdatingBooking(true);
+    setIsSendingMeetInvite(true);
+    const defaultMeet = siteSettings?.defaultMeetingUrl || process.env.NEXT_PUBLIC_DEFAULT_GOOGLE_MEET_URL;
+    const customUrl = customMeetingUrl && !isInvalidOrFakeMeetUrl(customMeetingUrl) ? customMeetingUrl.trim() : undefined;
+
     try {
-      const res = await fetch("/api/bookings", {
+      // 1. Dispatch the invitation email with Google Meet / bridge link (handles calendar event creation and database update)
+      const emailRes = await fetch("/api/bookings/send-invite", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          bookingId: b.id,
+          meetingUrl: customUrl,
+          customMessage:
+            adminCustomNote ||
+            "Your operations consultation has been reviewed and officially confirmed. Please use the meeting link below to join directly at the scheduled time.",
+        }),
+      });
+      const emailData = await emailRes.json().catch(() => ({}));
+      const confirmedMeetingUrl = emailData?.meetingUrl || formatGoogleMeetUrl(customUrl, b.id, defaultMeet);
+
+      // 2. Ensure notes and status are also saved in database
+      await fetch("/api/bookings", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: b.id, status: "confirmed" }),
+        body: JSON.stringify({
+          id: b.id,
+          status: "confirmed",
+          meeting_url: confirmedMeetingUrl,
+          notes: adminCustomNote
+            ? `${b.notes || ""}\n[Admin Confirmation Note]: ${adminCustomNote}`.trim()
+            : b.notes,
+        }),
       });
-      const data = await res.json();
-      if (res.ok && data.success) {
-        setDbBookings((prev) =>
-          prev.map((item) =>
-            item.id === b.id ? { ...item, status: "confirmed" } : item,
-          ),
-        );
-        setSelectedBooking((prev: any) =>
-          prev ? { ...prev, status: "confirmed" } : null,
-        );
-        showToast(`Consultation with ${b.full_name} confirmed.`);
+
+      // Update local state
+      setDbBookings((prev) =>
+        prev.map((item) =>
+          item.id === b.id
+            ? { ...item, status: "confirmed", meeting_url: confirmedMeetingUrl }
+            : item,
+        ),
+      );
+      setSelectedBooking((prev: any) =>
+        prev
+          ? { ...prev, status: "confirmed", meeting_url: confirmedMeetingUrl }
+          : null,
+      );
+      setCustomMeetingUrl(confirmedMeetingUrl);
+
+      if (emailRes.ok && emailData.success) {
+        showToast(`Consultation confirmed & meeting link emailed to ${b.email}!`);
       } else {
-        setSelectedBooking((prev: any) =>
-          prev ? { ...prev, status: "confirmed" } : null,
-        );
-        showToast("Consultation marked as confirmed.");
+        showToast(`Consultation confirmed! Meeting URL: ${confirmedMeetingUrl}`);
       }
-    } catch {
-      showToast("Consultation marked as confirmed.");
+    } catch (err: any) {
+      showToast(`Consultation confirmed. (Email notice: ${err.message || "logged"})`);
     } finally {
       setIsUpdatingBooking(false);
+      setIsSendingMeetInvite(false);
     }
   };
 
@@ -1957,6 +2038,42 @@ export default function AdminPage() {
       showToast("Meeting URL updated.");
     } finally {
       setIsUpdatingBooking(false);
+    }
+  };
+
+  const handleEmailMeetingLink = async (b: any, urlToEmail?: string) => {
+    if (!b || !b.id) return;
+    const finalUrl = urlToEmail || (customMeetingUrl && !isInvalidOrFakeMeetUrl(customMeetingUrl) ? customMeetingUrl.trim() : undefined);
+    setIsSendingMeetInvite(true);
+    try {
+      const res = await fetch("/api/bookings/send-invite", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          bookingId: b.id,
+          meetingUrl: finalUrl,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        const returnedUrl = data.meetingUrl || finalUrl || formatGoogleMeetUrl(undefined, b.id);
+        showToast(`Meeting link emailed to ${b.email}!`);
+        setDbBookings((prev) =>
+          prev.map((item) =>
+            item.id === b.id ? { ...item, meeting_url: returnedUrl } : item,
+          ),
+        );
+        setSelectedBooking((prev: any) =>
+          prev ? { ...prev, meeting_url: returnedUrl } : null,
+        );
+        setCustomMeetingUrl(returnedUrl);
+      } else {
+        alert(data.error || "Failed to send meeting link email.");
+      }
+    } catch (err: any) {
+      alert("Error dispatching meeting email: " + err.message);
+    } finally {
+      setIsSendingMeetInvite(false);
     }
   };
 
@@ -2011,8 +2128,9 @@ export default function AdminPage() {
     const subject = encodeURIComponent(
       `Update regarding our upcoming consultation: The Inferno Group (+${minutes}m)`,
     );
+    const meetUrl = formatGoogleMeetUrl(b.meeting_url, b.id);
     const body = encodeURIComponent(
-      `Hi ${b.full_name},\n\nPlease note our consultation scheduled for ${b.slot_date} at ${b.slot_time} (${b.timezone}) will begin approximately ${minutes} minutes late.\n\n${reason ? `Reason / Note: ${reason}\n\n` : ""}Meeting Link: ${b.meeting_url || `https://meet.google.com/lookup/tig-${b.id ? b.id.slice(0, 8) : "consultation"}`}\n\nThank you for your understanding.\n\nBest regards,\nExecutive Operations Team\nThe Inferno Group\nhttps://theinfernogroup.com`,
+      `Hi ${b.full_name},\n\nPlease note our consultation scheduled for ${b.slot_date} at ${b.slot_time} (${b.timezone}) will begin approximately ${minutes} minutes late.\n\n${reason ? `Reason / Note: ${reason}\n\n` : ""}Meeting Link: ${meetUrl}\n\nThank you for your understanding.\n\nBest regards,\nExecutive Operations Team\nThe Inferno Group\nhttps://theinfernogroup.com`,
     );
     window.open(`mailto:${b.email}?subject=${subject}&body=${body}`, "_blank");
     handleApplyDelay(b, minutes, reason);
@@ -4660,12 +4778,10 @@ export default function AdminPage() {
               <div className="bg-[var(--adm-card)] border border-[var(--adm-card-border)] rounded-2xl p-6 shadow-xs flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
                   <h3 className="text-sm font-bold text-[var(--adm-text-primary)] font-[family-name:var(--font-space-grotesk)]">
-                    External Calendar Synchronization
+                    Live Video Consultation &amp; Calendar Desk
                   </h3>
                   <p className="text-xs text-[var(--adm-text-muted)] mt-1 max-w-xl">
-                    Sync consultation availability with Google Calendar and
-                    Microsoft Graph Outlook APIs. Busy windows are subtracted
-                    from available slots in real time.
+                    Manage client bookings, dispatch direct Google Meet video room bridges, and review scheduled consultation windows in real time.
                   </p>
                 </div>
                 <div className="flex items-center gap-2 font-[family-name:var(--font-space-grotesk)]">
@@ -4899,16 +5015,27 @@ export default function AdminPage() {
                                 <span>Join</span>
                               </button>
 
-                              {b.status !== "confirmed" && (
+                              {b.status !== "confirmed" ? (
                                 <button
                                   type="button"
                                   onClick={() => handleConfirmBooking(b)}
-                                  disabled={isUpdatingBooking}
+                                  disabled={isUpdatingBooking || isSendingMeetInvite}
                                   className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold cursor-pointer transition-all shadow-xs active:scale-95 disabled:opacity-50"
-                                  title="Confirm Consultation"
+                                  title="Confirm Consultation & Send Google Meet Link to Client"
                                 >
                                   <span>✓</span>
-                                  <span>Confirm</span>
+                                  <span>Confirm &amp; Send Meet</span>
+                                </button>
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={() => handleEmailMeetingLink(b)}
+                                  disabled={isSendingMeetInvite}
+                                  className="inline-flex items-center gap-1 px-2 py-1.5 bg-[var(--adm-card-subtle)] hover:bg-[var(--adm-card)] hover:border-[var(--primary)] text-[var(--adm-text-primary)] border border-[var(--adm-card-border)] rounded-lg text-xs font-semibold cursor-pointer transition-all shadow-2xs disabled:opacity-50"
+                                  title="Resend Google Meet Link to Client"
+                                >
+                                  <span>📧</span>
+                                  <span>Resend Link</span>
                                 </button>
                               )}
 
@@ -5092,6 +5219,33 @@ export default function AdminPage() {
                       </button>
                     </div>
 
+                    {/* Status Alert Banner */}
+                    {selectedBooking.status !== "confirmed" ? (
+                      <div className="p-3.5 bg-amber-500/10 border border-amber-500/25 rounded-xl flex flex-wrap items-center justify-between gap-3 text-xs">
+                        <div className="flex items-center gap-2">
+                          <span className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse"></span>
+                          <span className="font-bold text-amber-600 dark:text-amber-400 font-[family-name:var(--font-space-grotesk)]">
+                            Pending Operations Desk Confirmation
+                          </span>
+                        </div>
+                        <span className="text-[0.72rem] text-amber-700 dark:text-amber-300">
+                          Verify meeting time and click &ldquo;Confirm &amp; Send Meet Link&rdquo; to officially confirm and email the client.
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="p-3 bg-emerald-500/10 border border-emerald-500/25 rounded-xl flex flex-wrap items-center justify-between gap-3 text-xs">
+                        <div className="flex items-center gap-2">
+                          <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                          <span className="font-bold text-emerald-600 dark:text-emerald-400 font-[family-name:var(--font-space-grotesk)]">
+                            ✓ Confirmed by Operations Desk
+                          </span>
+                        </div>
+                        <span className="text-[0.72rem] text-emerald-700 dark:text-emerald-300">
+                          Google Meet room bridge active &amp; sent to {selectedBooking.email}.
+                        </span>
+                      </div>
+                    )}
+
                     {/* Details Grid */}
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs bg-[var(--adm-card-subtle)] p-4 rounded-xl border border-[var(--adm-card-border)]">
                       <div>
@@ -5139,27 +5293,95 @@ export default function AdminPage() {
                     </div>
 
                     {/* Meeting Link Configurator */}
-                    <div className="space-y-2">
-                      <label className="block text-xs font-bold text-[var(--adm-text-primary)] uppercase tracking-wider font-[family-name:var(--font-space-grotesk)]">
-                        Meeting URL / Video Room Bridge
-                      </label>
-                      <div className="flex gap-2">
+                    <div className="space-y-2.5 p-4 bg-[var(--adm-card-subtle)] border border-[var(--adm-card-border)] rounded-xl">
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-bold text-[var(--adm-text-primary)] uppercase tracking-wider font-[family-name:var(--font-space-grotesk)] flex items-center gap-1.5">
+                          <span className="text-base">🎥</span>
+                          <span>Google Meet Video Room Bridge</span>
+                        </label>
+                        <span className="text-[0.68rem] text-[var(--primary)] font-semibold font-mono">
+                          Google Client / Meet Ready
+                        </span>
+                      </div>
+                      <div className="flex flex-col sm:flex-row gap-2">
                         <input
                           type="url"
                           value={customMeetingUrl}
                           onChange={(e) => setCustomMeetingUrl(e.target.value)}
-                          placeholder={`https://meet.google.com/lookup/tig-${selectedBooking.id ? selectedBooking.id.slice(0, 8) : "consultation"}`}
-                          className="flex-1 bg-[var(--adm-card-subtle)] border border-[var(--adm-card-border)] rounded-xl px-3.5 py-2 text-xs font-mono text-[var(--adm-text-primary)] outline-none focus:bg-[var(--adm-card)] focus:border-[var(--primary)]"
+                          placeholder="e.g. https://meet.google.com/xxx-yyyy-zzz (or leave blank to auto-create via Google Calendar)"
+                          className="flex-1 bg-[var(--adm-card)] border border-[var(--adm-card-border)] rounded-xl px-3.5 py-2.5 text-xs font-mono text-[var(--adm-text-primary)] outline-none focus:border-[var(--primary)] shadow-xs"
                         />
-                        <button
-                          type="button"
-                          onClick={() => handleSaveMeetingUrl(selectedBooking.id, customMeetingUrl)}
-                          disabled={isUpdatingBooking}
-                          className="px-4 py-2 bg-[var(--adm-card-subtle)] hover:bg-[var(--adm-card)] border border-[var(--adm-card-border)] hover:border-[var(--primary)] text-[var(--adm-text-primary)] rounded-xl text-xs font-semibold transition-all cursor-pointer font-[family-name:var(--font-space-grotesk)] shrink-0 disabled:opacity-50"
-                        >
-                          Save Link
-                        </button>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => handleSaveMeetingUrl(selectedBooking.id, customMeetingUrl)}
+                            disabled={isUpdatingBooking}
+                            className="px-3 py-2 bg-[var(--adm-card)] hover:bg-[var(--adm-card-subtle)] border border-[var(--adm-card-border)] hover:border-[var(--primary)] text-[var(--adm-text-primary)] rounded-xl text-xs font-semibold transition-all cursor-pointer font-[family-name:var(--font-space-grotesk)] disabled:opacity-50"
+                          >
+                            Save
+                          </button>
+                          {customMeetingUrl && (
+                            <button
+                              type="button"
+                              onClick={() => window.open(customMeetingUrl, "_blank")}
+                              className="px-3 py-2 bg-emerald-600/10 hover:bg-emerald-600 hover:text-white border border-emerald-600/25 text-emerald-600 dark:text-emerald-400 rounded-xl text-xs font-semibold transition-all cursor-pointer inline-flex items-center gap-1"
+                              title="Test this room link"
+                            >
+                              <span>🎥</span>
+                              <span>Test Room</span>
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => handleEmailMeetingLink(selectedBooking, customMeetingUrl)}
+                            disabled={isSendingMeetInvite || isUpdatingBooking}
+                            className="px-4 py-2 bg-gradient-to-r from-[var(--primary)] to-[var(--secondary)] hover:opacity-95 text-white rounded-xl text-xs font-bold transition-all cursor-pointer font-[family-name:var(--font-space-grotesk)] shadow-sm disabled:opacity-50 inline-flex items-center gap-1.5"
+                          >
+                            {isSendingMeetInvite ? (
+                              <>
+                                <span className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                                <span>Sending...</span>
+                              </>
+                            ) : (
+                              <>
+                                <span>📧</span>
+                                <span>Email Meet Link to Client</span>
+                              </>
+                            )}
+                          </button>
+                        </div>
                       </div>
+                      <div className="text-[0.7rem] text-[var(--adm-text-muted)] flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-[var(--adm-card-border)]/50">
+                        <span>Clicking &ldquo;Email Meet Link to Client&rdquo; delivers the direct Google Meet video bridge directly into the client&rsquo;s inbox.</span>
+                        <div className="flex items-center gap-2">
+                          <a
+                            href="https://meet.google.com/new"
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-[var(--primary)] hover:underline font-semibold"
+                          >
+                            + Open Google Meet
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Admin Confirmation Custom Note */}
+                    <div className="space-y-1.5 p-3.5 bg-[var(--adm-card-subtle)] border border-[var(--adm-card-border)] rounded-xl">
+                      <label className="text-xs font-bold text-[var(--adm-text-primary)] uppercase tracking-wider font-[family-name:var(--font-space-grotesk)] flex items-center justify-between">
+                        <span className="flex items-center gap-1.5">
+                          <span>💬</span>
+                          <span>Admin Message / Note for Client (Optional)</span>
+                        </span>
+                        <span className="text-[0.68rem] text-[var(--adm-text-muted)] lowercase font-mono">included in confirmation email</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={adminCustomNote}
+                        onChange={(e) => setAdminCustomNote(e.target.value)}
+                        placeholder="e.g. Please bring your draft teaming agreement or capability statement to the session."
+                        className="w-full bg-[var(--adm-card)] border border-[var(--adm-card-border)] focus:border-[var(--primary)] rounded-lg p-2.5 text-xs text-[var(--adm-text-primary)] outline-none"
+                      />
                     </div>
 
                     {/* Preliminary Notes */}
@@ -5191,15 +5413,43 @@ export default function AdminPage() {
                     {/* Dialog Actions */}
                     <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-[var(--adm-card-border)] font-[family-name:var(--font-space-grotesk)]">
                       <div className="flex items-center gap-2">
-                        {selectedBooking.status !== "confirmed" && (
+                        {selectedBooking.status !== "confirmed" ? (
                           <button
                             type="button"
                             onClick={() => handleConfirmBooking(selectedBooking)}
-                            disabled={isUpdatingBooking}
-                            className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all cursor-pointer shadow-xs active:scale-95 disabled:opacity-50 inline-flex items-center gap-1.5"
+                            disabled={isUpdatingBooking || isSendingMeetInvite}
+                            className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all cursor-pointer shadow-xs active:scale-95 disabled:opacity-50 inline-flex items-center gap-1.5"
                           >
-                            <span>✓</span>
-                            <span>Confirm Consultation</span>
+                            {isSendingMeetInvite ? (
+                              <>
+                                <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                                <span>Confirming &amp; Sending...</span>
+                              </>
+                            ) : (
+                              <>
+                                <span>✓</span>
+                                <span>Confirm &amp; Send Meet Link</span>
+                              </>
+                            )}
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => handleEmailMeetingLink(selectedBooking, customMeetingUrl)}
+                            disabled={isSendingMeetInvite || isUpdatingBooking}
+                            className="px-4 py-2 bg-gradient-to-r from-[var(--primary)] to-[var(--secondary)] hover:opacity-95 text-white rounded-xl text-xs font-bold transition-all cursor-pointer shadow-xs active:scale-95 disabled:opacity-50 inline-flex items-center gap-1.5"
+                          >
+                            {isSendingMeetInvite ? (
+                              <>
+                                <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                                <span>Sending...</span>
+                              </>
+                            ) : (
+                              <>
+                                <span>📧</span>
+                                <span>Resend Meet Link</span>
+                              </>
+                            )}
                           </button>
                         )}
                         <button
@@ -7072,6 +7322,126 @@ export default function AdminPage() {
                       className="w-full bg-[var(--adm-card-subtle)] border border-[var(--adm-card-border)] focus:bg-[var(--adm-card)] focus:border-[var(--primary)] rounded-xl p-2.5 text-xs outline-none font-mono"
                     />
                   </div>
+                </div>
+              </div>
+
+              {/* Google Calendar & Meet OAuth 2.0 Integration */}
+              <div className="bg-[var(--adm-card)] border border-[var(--adm-card-border)] rounded-2xl p-6 shadow-xs space-y-4">
+                <div className="flex flex-wrap justify-between items-center gap-4 border-b border-[var(--adm-card-border)] pb-4">
+                  <div>
+                    <h3 className="text-sm font-bold text-[var(--adm-text-primary)] font-[family-name:var(--font-space-grotesk)] flex items-center gap-2">
+                      <span className="text-base">📅</span>
+                      <span>Google Calendar &amp; Meet OAuth 2.0 Integration</span>
+                    </h3>
+                    <p className="text-xs text-[var(--adm-text-muted)] font-medium">
+                      Connect your corporate Google account to automatically generate real Google Meet rooms for every confirmed consultation.
+                    </p>
+                  </div>
+                  <div>
+                    {isGoogleConnected ? (
+                      <span className="px-3 py-1 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25 rounded-lg text-xs font-bold inline-flex items-center gap-1.5 font-[family-name:var(--font-space-grotesk)]">
+                        <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                        <span>Google Calendar Connected</span>
+                      </span>
+                    ) : (
+                      <span className="px-3 py-1 bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/25 rounded-lg text-xs font-bold inline-flex items-center gap-1.5 font-[family-name:var(--font-space-grotesk)]">
+                        <span className="w-2 h-2 rounded-full bg-amber-500"></span>
+                        <span>Not Connected</span>
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                <div className="space-y-3 text-xs">
+                  <div className="flex flex-wrap items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        window.location.href = "/api/auth/google?action=connect";
+                      }}
+                      className="px-4 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:opacity-95 text-white font-bold rounded-xl text-xs shadow-md transition-all cursor-pointer inline-flex items-center gap-2 font-[family-name:var(--font-space-grotesk)]"
+                    >
+                      <svg className="w-4 h-4 fill-white" viewBox="0 0 24 24">
+                        <path d="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.053 0 12.48 0 5.867 0 .307 5.387.307 12s5.56 12 12.173 12c3.573 0 6.267-1.173 8.373-3.36 2.16-2.16 2.84-5.213 2.84-7.667 0-.76-.053-1.467-.173-2.053H12.48z"/>
+                      </svg>
+                      <span>{isGoogleConnected ? "Reconnect Google Account" : "Connect Google Account (1-Click)"}</span>
+                    </button>
+                    {isGoogleConnected && (
+                      <button
+                        type="button"
+                        onClick={handleDisconnectGoogle}
+                        className="px-3.5 py-2.5 bg-red-500/10 hover:bg-red-500 hover:text-white border border-red-500/20 text-red-600 dark:text-red-400 font-semibold rounded-xl text-xs transition-all cursor-pointer font-[family-name:var(--font-space-grotesk)]"
+                      >
+                        Disconnect
+                      </button>
+                    )}
+                  </div>
+                  <div className="p-3 bg-[var(--adm-card-subtle)] border border-[var(--adm-card-border)] rounded-xl space-y-1">
+                    <div className="font-semibold text-[var(--adm-text-primary)]">Google Cloud OAuth Configuration:</div>
+                    <div className="text-[0.7rem] text-[var(--adm-text-muted)] font-mono break-all">
+                      Client ID: 695449473982-eikl3rvjp061di54deoum3t65n3tcnr0.apps.googleusercontent.com
+                    </div>
+                    <div className="text-[0.7rem] text-[var(--adm-text-muted)] font-mono">
+                      Authorized Redirect URI: https://www.theinfernogroup.com/
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Google Meet Consultation Video Bridge Configuration */}
+              <div className="bg-[var(--adm-card)] border border-[var(--adm-card-border)] rounded-2xl p-6 shadow-xs space-y-4">
+                <div className="flex flex-wrap justify-between items-center gap-4 border-b border-[var(--adm-card-border)] pb-4">
+                  <div>
+                    <h3 className="text-sm font-bold text-[var(--adm-text-primary)] font-[family-name:var(--font-space-grotesk)] flex items-center gap-2">
+                      <span className="text-base">🎥</span>
+                      <span>Google Meet Permanent Consultation Room Bridge</span>
+                    </h3>
+                    <p className="text-xs text-[var(--adm-text-muted)] font-medium">
+                      Configure your verified Google Meet room link. This link will be automatically assigned to client consultations and dispatched in confirmation emails.
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <a
+                      href="https://meet.google.com/new"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="px-3 py-1.5 bg-[var(--adm-card-subtle)] hover:bg-[var(--primary)] hover:text-white border border-[var(--adm-card-border)] text-xs font-semibold rounded-lg transition-all"
+                    >
+                      + Create New Meet in Google
+                    </a>
+                  </div>
+                </div>
+
+                <div className="space-y-2 text-xs">
+                  <label className="block font-semibold text-[var(--adm-text-primary)] font-[family-name:var(--font-space-grotesk)]">
+                    Default Google Meet Consultation Link
+                  </label>
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <input
+                      type="url"
+                      placeholder="https://meet.google.com/xxx-yyyy-zzz"
+                      value={siteSettings.defaultMeetingUrl || ""}
+                      onChange={(e) =>
+                        setSiteSettings({
+                          ...siteSettings,
+                          defaultMeetingUrl: e.target.value,
+                        })
+                      }
+                      className="flex-1 bg-[var(--adm-card-subtle)] border border-[var(--adm-card-border)] focus:bg-[var(--adm-card)] focus:border-[var(--primary)] rounded-xl p-2.5 text-xs outline-none font-mono"
+                    />
+                    {siteSettings.defaultMeetingUrl && (
+                      <button
+                        type="button"
+                        onClick={() => window.open(siteSettings.defaultMeetingUrl, "_blank")}
+                        className="px-4 py-2 bg-[var(--primary)] text-white text-xs font-bold rounded-xl hover:opacity-90 transition-all shrink-0"
+                      >
+                        Test Link
+                      </button>
+                    )}
+                  </div>
+                  <p className="text-[0.7rem] text-[var(--adm-text-muted)]">
+                    Tip: Open <strong className="text-[var(--primary)]">meet.google.com</strong> &rarr; click <strong>&ldquo;New meeting&rdquo;</strong> &rarr; <strong>&ldquo;Create a meeting for later&rdquo;</strong>, copy your permanent room link and paste it here.
+                  </p>
                 </div>
               </div>
 
