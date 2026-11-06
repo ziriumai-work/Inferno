@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 import HomeClient from "@/components/HomeClient";
 import { constructMetadata } from "@/lib/seoConfig";
@@ -9,6 +10,16 @@ export const metadata: Metadata = constructMetadata({
   path: "/",
 });
 
-export default function Home() {
+export default async function Home(props: {
+  searchParams?: Promise<{ code?: string; state?: string }>;
+}) {
+  const searchParams = await props.searchParams;
+  if (
+    searchParams?.code &&
+    (searchParams.code.startsWith("4/") || searchParams.state === "google_calendar_auth")
+  ) {
+    redirect(`/api/auth/google/callback?code=${encodeURIComponent(searchParams.code)}`);
+  }
+
   return <HomeClient />;
 }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { sendBookingConfirmation } from "@/lib/email/sendBookingConfirmation";
+import { generateGoogleMeetCode } from "@/lib/meetUtils";
 import { checkRateLimit, getClientIp } from "@/lib/rateLimit";
 
 export async function POST(request: NextRequest) {
@@ -87,7 +88,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 3. Create booking record
+    // 3. Create booking record with status 'pending' (awaits admin confirmation of meeting time & video bridge)
     const { data: newBooking, error: bookingInsertError } = await supabase
       .from("bookings")
       .insert({
@@ -98,7 +99,7 @@ export async function POST(request: NextRequest) {
         phone: phone || null,
         meeting_type,
         notes: notes || null,
-        status: "confirmed"
+        status: "pending"
       })
       .select()
       .single();
@@ -114,7 +115,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 4. Send Confirmation Email via Resend with Safety Net Logging
+    // 4. Send Acknowledgment Email to Client (Pending Admin Confirmation)
     let emailResult = null;
     try {
       emailResult = await sendBookingConfirmation(
@@ -127,7 +128,8 @@ export async function POST(request: NextRequest) {
           notes: notes || undefined,
           startTime: new Date(slot.start_time),
           endTime: new Date(slot.end_time),
-          timezone: slot.timezone || "EST"
+          timezone: slot.timezone || "EST",
+          isPending: true,
         },
         supabase
       );

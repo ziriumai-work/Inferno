@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import { BookingSlot, generateICSContent, createGoogleCalendarUrl, createOutlookCalendarUrl } from "@/lib/calendarUtils";
+import { formatGoogleMeetUrl } from "@/lib/meetUtils";
 import { dataStore } from "@/utils/dataStore";
 
 export default function CalendarPage() {
@@ -211,11 +212,16 @@ export default function CalendarPage() {
 
   const handleDownloadICS = () => {
     if (!lastBookedData) return;
+    const meetUrl = formatGoogleMeetUrl(
+      lastBookedData.booking?.meeting_url,
+      lastBookedData.booking?.id
+    );
     const icsString = generateICSContent({
       title: `Consultation: ${consultTypeNames[lastBookedData.meeting_type] || "Operations Review"}`,
-      description: `Booked by ${lastBookedData.full_name} (${lastBookedData.company || "N/A"})\nEmail: ${lastBookedData.email}\nScope: ${lastBookedData.notes || "None"}`,
+      description: `Booked by ${lastBookedData.full_name} (${lastBookedData.company || "N/A"})\nEmail: ${lastBookedData.email}\nScope: ${lastBookedData.notes || "None"}\nGoogle Meet Video Link: ${meetUrl}`,
       startTime: new Date(lastBookedData.slot.start_time),
-      endTime: new Date(lastBookedData.slot.end_time)
+      endTime: new Date(lastBookedData.slot.end_time),
+      location: meetUrl,
     });
     const blob = new Blob([icsString], { type: "text/calendar;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
@@ -233,18 +239,24 @@ export default function CalendarPage() {
     teaming: "Prime/Subcontractor joint-venture teaming review (30m)"
   };
 
+  const currentMeetUrl = lastBookedData
+    ? formatGoogleMeetUrl(lastBookedData.booking?.meeting_url, lastBookedData.booking?.id)
+    : "";
+
   const googleCalUrl = lastBookedData ? createGoogleCalendarUrl({
     title: `Consultation: ${consultTypeNames[lastBookedData.meeting_type] || "Operations Review"}`,
-    description: `Booked by ${lastBookedData.full_name} (${lastBookedData.company || "N/A"})\nEmail: ${lastBookedData.email}\nScope: ${lastBookedData.notes || "None"}`,
+    description: `Booked by ${lastBookedData.full_name} (${lastBookedData.company || "N/A"})\nEmail: ${lastBookedData.email}\nScope: ${lastBookedData.notes || "None"}\nGoogle Meet Video Link: ${currentMeetUrl}`,
     startTime: new Date(lastBookedData.slot.start_time),
-    endTime: new Date(lastBookedData.slot.end_time)
+    endTime: new Date(lastBookedData.slot.end_time),
+    location: currentMeetUrl,
   }) : "#";
 
   const outlookCalUrl = lastBookedData ? createOutlookCalendarUrl({
     title: `Consultation: ${consultTypeNames[lastBookedData.meeting_type] || "Operations Review"}`,
-    description: `Booked by ${lastBookedData.full_name} (${lastBookedData.company || "N/A"})\nEmail: ${lastBookedData.email}\nScope: ${lastBookedData.notes || "None"}`,
+    description: `Booked by ${lastBookedData.full_name} (${lastBookedData.company || "N/A"})\nEmail: ${lastBookedData.email}\nScope: ${lastBookedData.notes || "None"}\nGoogle Meet Video Link: ${currentMeetUrl}`,
     startTime: new Date(lastBookedData.slot.start_time),
-    endTime: new Date(lastBookedData.slot.end_time)
+    endTime: new Date(lastBookedData.slot.end_time),
+    location: currentMeetUrl,
   }) : "#";
 
   return (
@@ -271,9 +283,9 @@ export default function CalendarPage() {
                   <polyline points="20 6 9 17 4 12"></polyline>
                 </svg>
               </div>
-              <h3>Consultation Confirmed</h3>
+              <h3>Consultation Request Submitted</h3>
               <p className="text-sm text-[var(--text-muted)] mb-4">
-                Transmission received and locked in database.
+                Transmission received. Your requested slot has been reserved in our system.
               </p>
 
               {emailStatusInfo && (
@@ -283,40 +295,56 @@ export default function CalendarPage() {
                     : "bg-yellow-500/10 text-yellow-300 border-yellow-500/30"
                 }`}>
                   {emailStatusInfo.status === "sent"
-                    ? "Confirmation email sent"
-                    : "Confirmation recorded"}
+                    ? "Acknowledgment email dispatched"
+                    : "Transmission recorded in database"}
                 </div>
               )}
 
               {lastBookedData && (
-                <div className="flex flex-col gap-3 w-full max-w-[340px] mx-auto">
+                <div className="flex flex-col gap-3 w-full max-w-[360px] mx-auto text-left">
+                  {/* Status Banner */}
+                  <div className="bg-[var(--panel-dark)] border border-amber-500/30 p-4 rounded-xl text-center shadow-md">
+                    <span className="text-[0.7rem] font-bold text-amber-500 uppercase tracking-wider block mb-1">
+                      ⏳ Pending Operations Desk Confirmation
+                    </span>
+                    <p className="text-xs text-[var(--text-bright)] font-semibold mb-1">
+                      {new Date(lastBookedData.slot.start_time).toLocaleDateString()} &bull; {new Date(lastBookedData.slot.start_time).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} ({lastBookedData.slot.timezone || "EST"})
+                    </p>
+                    <p className="text-[0.72rem] text-[var(--text-muted)] leading-relaxed mt-2">
+                      Our administrative team is reviewing your requested consultation time. Your direct <strong>Google Meet video bridge</strong> will be emailed to <strong className="text-[var(--primary)]">{lastBookedData.email}</strong> once officially confirmed by our operations desk.
+                    </p>
+                  </div>
+
                   <button
                     type="button"
                     onClick={handleDownloadICS}
-                    className="btn btn-primary py-2.5 px-4 text-[0.85rem] w-full justify-center"
+                    className="btn btn-secondary py-2.5 px-4 text-[0.82rem] w-full justify-center"
                   >
-                    Download Invitation
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg></button>
+                    Download Calendar (.ics)
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                  </button>
                   <a
                     href={googleCalUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="btn btn-secondary py-2.5 px-4 text-[0.85rem] w-full text-center justify-center"
+                    className="btn btn-secondary py-2.5 px-4 text-[0.82rem] w-full text-center justify-center"
                   >
                     Add to Google Calendar
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg></a>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                  </a>
                   <a
                     href={outlookCalUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="btn btn-secondary py-2.5 px-4 text-[0.85rem] w-full text-center justify-center"
+                    className="btn btn-secondary py-2.5 px-4 text-[0.82rem] w-full text-center justify-center"
                   >
                     Add to Outlook Calendar
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg></a>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                  </a>
                   <button
                     type="button"
                     onClick={() => setIsSuccess(false)}
-                    className="bg-transparent border-none text-[var(--text-muted)] cursor-pointer text-xs mt-2"
+                    className="bg-transparent border-none text-[var(--text-muted)] hover:text-[var(--text-bright)] cursor-pointer text-xs mt-2 text-center"
                   >
                     Close Window
                   </button>

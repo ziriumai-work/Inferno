@@ -59,6 +59,9 @@ export function constructMetadata({
       description,
       images: [absoluteImageUrl],
     },
+    verification: {
+      google: "google6e2e92a7a0d58085",
+    },
     robots: noindex
       ? { index: false, follow: false }
       : {

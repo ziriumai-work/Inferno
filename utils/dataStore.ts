@@ -253,6 +253,7 @@ export interface SiteSettings {
   primaryNaics: string;
   linkedinUrl: string;
   twitterUrl: string;
+  defaultMeetingUrl?: string;
 }
 
 export interface PartnerCardItem {
@@ -289,6 +290,7 @@ const defaultSiteSettings: SiteSettings = {
   primaryNaics: "541611",
   linkedinUrl: "https://linkedin.com",
   twitterUrl: "https://x.com",
+  defaultMeetingUrl: "",
 };
 
 const defaultPartnerCards: PartnerCardItem[] = partnerCardsData.map((p, idx) => ({

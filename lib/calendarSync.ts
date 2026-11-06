@@ -22,43 +22,7 @@ export async function fetchExternalBusySlots(startDate: Date, endDate: Date, for
 
   const busySlots: BusyTimeRange[] = [];
 
-  // 1. Google Calendar FreeBusy API check (if configured)
-  const googleApiKey = process.env.GOOGLE_CALENDAR_API_KEY;
-  const googleCalendarId = process.env.GOOGLE_CALENDAR_ID;
-
-  if (googleApiKey && googleCalendarId) {
-    try {
-      const res = await fetch(
-        `https://www.googleapis.com/calendar/v3/freeBusy?key=${googleApiKey}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            timeMin: startDate.toISOString(),
-            timeMax: endDate.toISOString(),
-            items: [{ id: googleCalendarId }]
-          }),
-          next: { revalidate: 30 }
-        }
-      );
-
-      if (res.ok) {
-        const data = await res.json();
-        const calBusy = data?.calendars?.[googleCalendarId]?.busy || [];
-        for (const item of calBusy) {
-          busySlots.push({
-            start: new Date(item.start),
-            end: new Date(item.end),
-            source: "google"
-          });
-        }
-      }
-    } catch (err) {
-      console.error("Error querying Google Calendar FreeBusy API:", err);
-    }
-  }
-
-  // 2. Outlook / Microsoft Graph API check (if configured)
+  // Outlook / Microsoft Graph API check (if configured)
   const outlookAccessToken = process.env.OUTLOOK_GRAPH_ACCESS_TOKEN;
   const outlookUserEmail = process.env.OUTLOOK_USER_EMAIL;
 

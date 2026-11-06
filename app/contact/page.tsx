@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, Suspense } from "react";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import RevealOnMount from "@/components/RevealOnMount";
 import { dataStore, SiteSettings } from "@/utils/dataStore";
@@ -143,6 +144,20 @@ function ContactFormInner() {
         >
           Try Again
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M21.5 2v6h-6"></path><path d="M21.34 15.57a10 10 0 1 1-.57-8.38"></path></svg></button>
+      </div>
+
+      {/* Quick Consultation Switcher */}
+      <div className="mb-5 p-3.5 rounded-xl bg-[var(--primary)]/10 border border-[var(--primary)]/20 flex flex-wrap items-center justify-between gap-2.5">
+        <div className="flex items-center gap-2 text-xs text-[var(--text-bright)]">
+          <span className="flex h-2 w-2 rounded-full bg-[var(--primary)] animate-ping" />
+          <span>Prefer direct calendar scheduling?</span>
+        </div>
+        <Link
+          href="/calendar"
+          className="text-xs font-bold text-[var(--primary)] hover:underline inline-flex items-center gap-1"
+        >
+          Book Consultation &rarr;
+        </Link>
       </div>
 
       <form id="coordination-form" onSubmit={handleFormSubmit}>
@@ -372,7 +387,46 @@ export default function ContactPage() {
               specialists are ready to coordinate your plan.
             </p>
 
+            {/* Quick Action Button for Consultation */}
+            <div className="mb-8">
+              <Link
+                href="/calendar"
+                className="btn btn-primary inline-flex items-center justify-center gap-2 px-6 py-3.5 text-sm font-bold no-underline shadow-md hover:shadow-lg transition-all rounded-full active:scale-95"
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <rect x="3" y="4" width="18" height="18" rx="2"></rect>
+                  <line x1="16" y1="2" x2="16" y2="6"></line>
+                  <line x1="8" y1="2" x2="8" y2="6"></line>
+                  <line x1="3" y1="10" x2="21" y2="10"></line>
+                </svg>
+                <span>Book a Consultation</span>
+                <span className="text-xs opacity-90">&rarr;</span>
+              </Link>
+            </div>
+
             <div className="contact-direct-links">
+              <Link
+                href="/calendar"
+                className="contact-direct-card group !border-[var(--primary)]/40 hover:!border-[var(--primary)] shadow-xs transition-all"
+              >
+                <div className="contact-direct-icon !bg-[var(--primary)]/10 text-[var(--primary)]">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+                    <rect x="3" y="4" width="18" height="18" rx="2"></rect>
+                    <line x1="16" y1="2" x2="16" y2="6"></line>
+                    <line x1="8" y1="2" x2="8" y2="6"></line>
+                    <line x1="3" y1="10" x2="21" y2="10"></line>
+                  </svg>
+                </div>
+                <div className="flex-1">
+                  <span className="contact-direct-label !text-[var(--primary)] font-bold flex items-center gap-2">
+                    <span>Strategic Video Consultation</span>
+                    <span className="inline-block px-1.5 py-0.5 text-[0.62rem] font-bold bg-[var(--primary)] text-white rounded">LIVE</span>
+                  </span>
+                  <span className="contact-direct-val font-medium text-xs sm:text-sm">
+                    Book calendar slot &amp; Google Meet bridge &rarr;
+                  </span>
+                </div>
+              </Link>
               <a
                 href={`mailto:${contactEmail}`}
                 className="contact-direct-card"
