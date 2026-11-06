@@ -1,6 +1,71 @@
 "use client";
 
 import React, { useEffect, useState, Suspense } from "react";
+import {
+  GitBranch,
+  Wrench,
+  Handshake,
+  Package,
+  Siren,
+  LifeBuoy,
+  HardHat,
+  Truck,
+  Puzzle,
+  Users,
+  FileText,
+  ShieldCheck,
+  ReceiptText,
+  Building2,
+  Info,
+  Award,
+} from "lucide-react";
+import GovernmentIcon from "@/components/icons/GovernmentIcon";
+
+/* Teaming arrangements. Icons are literal where possible — a hard hat
+   for construction trades, a truck for logistics — so each card reads
+   at a glance rather than needing its label. */
+const TEAMING = [
+  { label: "Prime contractor / subcontractor relationships", Icon: GitBranch },
+  { label: "Specialty subcontracting", Icon: Wrench },
+  { label: "Professional consulting partnerships", Icon: Handshake },
+  { label: "Supplier and distributor relationships", Icon: Package },
+  { label: "Emergency-response vendor networks", Icon: Siren },
+  { label: "Disaster-recovery support teams", Icon: LifeBuoy },
+  { label: "Construction and facilities trade partnerships", Icon: HardHat },
+  { label: "Logistics and transportation partnerships", Icon: Truck },
+  { label: "Staffing and administrative support relationships", Icon: Users },
+  { label: "Joint pursuit and strategic teaming arrangements", Icon: Puzzle },
+] as const;
+
+const BONDS = [
+  { label: "Bid Bonds", value: "Solicitation required %", Icon: FileText },
+  {
+    label: "Performance Bonds",
+    value: "Up to 100% of subcontract value",
+    Icon: ShieldCheck,
+  },
+  {
+    label: "Payment Bonds",
+    value: "Up to 100% of subcontract value",
+    Icon: ReceiptText,
+  },
+  {
+    label: "Single-project & aggregate bonding capacity",
+    value: "",
+    Icon: Building2,
+  },
+] as const;
+
+const INSURANCE = [
+  "Commercial General Liability",
+  "Workers’ Compensation",
+  "Employer’s Liability",
+  "Commercial Automobile Liability",
+  "Professional Liability / E&O",
+  "Cyber Liability",
+  "Pollution or Environmental Liability",
+  "Umbrella / Excess Liability",
+] as const;
 import { useSearchParams } from "next/navigation";
 import RevealOnMount from "@/components/RevealOnMount";
 import { partnerCardsData, PartnerCard } from "@/lib/partnerCardsData";
@@ -319,19 +384,7 @@ function PartnershipsContent() {
               <div>
                 <div className="flex items-center gap-2 mb-4">
                   <div className="w-9 h-9 rounded-xl bg-[var(--navy)]/10 text-[var(--navy)] flex items-center justify-center shrink-0">
-                    <svg
-                      viewBox="0 0 24 24"
-                      width="20"
-                      height="20"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2.5"
-                    >
-                      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                      <circle cx="9" cy="7" r="4"></circle>
-                      <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                      <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                    </svg>
+                    <Users className="w-5 h-5" strokeWidth={1.9} aria-hidden="true" />
                   </div>
                   <h4 className="font-[family-name:var(--font-space-grotesk)] text-[1.3rem] font-bold text-[var(--text-bright)]">
                     Our Approach to Teaming
@@ -341,30 +394,16 @@ function PartnershipsContent() {
                   We recognize that no single company needs to do everything.
                   TIG works with partners through a variety of arrangements:
                 </p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs text-[var(--text-bright)] font-medium mb-6">
-                  {[
-                    "Prime contractor / subcontractor relationships",
-                    "Specialty subcontracting",
-                    "Professional consulting partnerships",
-                    "Supplier and distributor relationships",
-                    "Emergency-response vendor networks",
-                    "Disaster-recovery support teams",
-                    "Construction and facilities trade partnerships",
-                    "Logistics and transportation partnerships",
-                    "Staffing and administrative support relationships",
-                    "Joint pursuit and strategic teaming arrangements",
-                  ].map((arr, idx) => (
-                    <div
-                      key={idx}
-                      className="bg-[var(--panel-dark)] p-3 rounded-xl border border-[var(--border)] flex items-center gap-2.5 shadow-2xs"
-                    >
-                      <div className="w-2 h-2 rounded-full bg-[var(--primary)] shrink-0"></div>
-                      <span className="leading-tight text-[0.82rem]">
-                        {arr}
+                <ul className="teaming-grid">
+                  {TEAMING.map((item) => (
+                    <li key={item.label} className="teaming-card">
+                      <span className="teaming-card__icon">
+                        <item.Icon strokeWidth={1.8} aria-hidden="true" />
                       </span>
-                    </div>
+                      <span className="teaming-card__label">{item.label}</span>
+                    </li>
                   ))}
-                </div>
+                </ul>
               </div>
               <div className="bg-[var(--navy)] text-white p-4 rounded-xl text-center">
                 <p className="text-xs font-semibold text-white/90">
@@ -381,124 +420,187 @@ function PartnershipsContent() {
           </div>
 
           {/* Bonding, Insurance, Certifications & Government Readiness */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 cred-deck">
             {/* Bonding Capacity */}
-            <div className="glow-card bg-[var(--panel-dark)] border border-[var(--border)] rounded-[20px] p-6 flex flex-col justify-between shadow-sm">
+            <div className="glow-card cred-card bg-[var(--panel-dark)] border border-[var(--border)] rounded-[20px] p-6 shadow-sm">
               <div>
-                <h5 className="font-[family-name:var(--font-space-grotesk)] text-[1.1rem] font-bold text-[var(--text-bright)] mb-2">
+                <span className="cred-head__icon">
+                  <Handshake strokeWidth={1.8} aria-hidden="true" />
+                </span>
+                <h5 className="cred-card__title font-[family-name:var(--font-space-grotesk)] font-bold text-[var(--text-bright)]">
                   Bonding Capacity
                 </h5>
-                <p className="text-xs text-[var(--text-muted)] leading-[1.6] mb-3">
+                <p className="cred-card__intro">
                   For construction, facilities, infrastructure,
                   disaster-recovery, and projects requiring bonding, TIG may
                   request evidence of capability:
                 </p>
-                <ul className="space-y-2 text-xs text-[var(--text-bright)]">
-                  <li className="flex items-start gap-1.5">
-                    <span className="text-[var(--primary)] font-bold">
-                      &bull;
-                    </span>
-                    <span>
-                      <strong>Bid Bonds:</strong> Solicitation required %
-                    </span>
-                  </li>
-                  <li className="flex items-start gap-1.5">
-                    <span className="text-[var(--primary)] font-bold">
-                      &bull;
-                    </span>
-                    <span>
-                      <strong>Performance Bonds:</strong> Up to 100% of
-                      subcontract value
-                    </span>
-                  </li>
-                  <li className="flex items-start gap-1.5">
-                    <span className="text-[var(--primary)] font-bold">
-                      &bull;
-                    </span>
-                    <span>
-                      <strong>Payment Bonds:</strong> Up to 100% of subcontract
-                      value
-                    </span>
-                  </li>
-                  <li className="flex items-start gap-1.5">
-                    <span className="text-[var(--primary)] font-bold">
-                      &bull;
-                    </span>
-                    <span>Single-project &amp; aggregate bonding capacity</span>
-                  </li>
+                <ul className="bond-list">
+                  {BONDS.map((b) => (
+                    <li key={b.label} className="bond-row">
+                      <span className="bond-row__icon">
+                        <b.Icon strokeWidth={1.8} aria-hidden="true" />
+                      </span>
+                      <span className="bond-row__label">{b.label}</span>
+                      {b.value && (
+                        <span className="bond-row__value">{b.value}</span>
+                      )}
+                    </li>
+                  ))}
                 </ul>
               </div>
-              <p className="text-[0.72rem] text-[var(--text-muted)] mt-4 pt-3 border-t border-[var(--border)] italic">
-                Evaluated on a project-by-project basis. Lack of bonding does
-                not disqualify partners from reduced scopes or supplier roles.
+              <p className="bond-note">
+                <Info className="bond-note__icon" strokeWidth={2} aria-hidden="true" />
+                <span>
+                  Evaluated on a project-by-project basis. Lack of bonding does
+                  not disqualify partners from reduced scopes or supplier roles.
+                </span>
               </p>
             </div>
 
             {/* Insurance Requirements */}
-            <div className="glow-card bg-[var(--panel-dark)] border border-[var(--border)] rounded-[20px] p-6 shadow-sm">
-              <h5 className="font-[family-name:var(--font-space-grotesk)] text-[1.1rem] font-bold text-[var(--text-bright)] mb-2">
+            <div className="glow-card cred-card bg-[var(--panel-dark)] border border-[var(--border)] rounded-[20px] p-6 shadow-sm">
+              <span className="cred-head__icon">
+                <ShieldCheck strokeWidth={1.8} aria-hidden="true" />
+              </span>
+              <h5 className="cred-card__title font-[family-name:var(--font-space-grotesk)] font-bold text-[var(--text-bright)]">
                 Insurance &amp; Risk Requirements
               </h5>
-              <p className="text-xs text-[var(--text-muted)] leading-[1.5] mb-3">
+              <p className="cred-card__intro">
                 Partners maintain coverage appropriate to assigned project
                 scope:
               </p>
-              <ul className="space-y-1.5 text-xs text-[var(--text-muted)]">
-                <li>&bull; Commercial General Liability</li>
-                <li>&bull; Workers&apos; Compensation</li>
-                <li>&bull; Employer&apos;s Liability</li>
-                <li>&bull; Commercial Automobile Liability</li>
-                <li>&bull; Professional Liability / E&amp;O</li>
-                <li>&bull; Cyber Liability</li>
-                <li>&bull; Pollution or Environmental Liability</li>
-                <li>&bull; Umbrella / Excess Liability</li>
+              <ul className="bond-list bond-list--two">
+                {INSURANCE.map((label) => (
+                  <li key={label} className="bond-row">
+                    <span className="bond-row__icon">
+                      <ShieldCheck strokeWidth={1.8} aria-hidden="true" />
+                    </span>
+                    <span className="bond-row__label">{label}</span>
+                  </li>
+                ))}
               </ul>
             </div>
 
             {/* Certifications & Credentials */}
-            <div className="glow-card bg-[var(--panel-dark)] border border-[var(--border)] rounded-[20px] p-6 shadow-sm">
-              <h5 className="font-[family-name:var(--font-space-grotesk)] text-[1.1rem] font-bold text-[var(--text-bright)] mb-1">
+            <div className="glow-card cred-card bg-[var(--panel-dark)] border border-[var(--border)] rounded-[20px] p-6 shadow-sm">
+              <span className="cred-head__icon">
+                <Award strokeWidth={1.8} aria-hidden="true" />
+              </span>
+              <h5 className="cred-card__title font-[family-name:var(--font-space-grotesk)] font-bold text-[var(--text-bright)]">
                 Certifications &amp; Credentials
               </h5>
-              <span className="text-[0.68rem] text-[var(--primary)] font-semibold block mb-3">
+              <span className="cred-card__intro cred-card__intro--accent">
                 (Provides teaming value — not required)
               </span>
-              <ul className="space-y-1 text-[0.75rem] text-[var(--text-muted)]">
-                <li>&bull; SBA Small Business</li>
-                <li>&bull; HUBZone</li>
-                <li>&bull; Veteran-Owned Small Business (VOSB)</li>
-                <li>&bull; Service-Disabled Veteran-Owned (SDVOSB)</li>
-                <li>&bull; Women-Owned Small Business (WOSB)</li>
-                <li>&bull; Economically Disadvantaged WOSB (EDWOSB)</li>
-                <li>&bull; Minority Business Enterprise (MBE)</li>
-                <li>&bull; Disadvantaged Business Enterprise (DBE)</li>
-                <li>&bull; Small / Local Business Enterprise (SBE/LBE)</li>
-                <li>&bull; State or municipal diversity certs</li>
-                <li>&bull; Trade, safety, or industry credentials</li>
+                            <ul className="cred-chips">
+                <li className="cred-chip">
+                  <span className="cred-dot" aria-hidden="true" />
+                  SBA Small Business
+                </li>
+                <li className="cred-chip">
+                  <span className="cred-dot" aria-hidden="true" />
+                  HUBZone
+                </li>
+                <li className="cred-chip">
+                  <span className="cred-dot" aria-hidden="true" />
+                  Veteran-Owned Small Business (VOSB)
+                </li>
+                <li className="cred-chip">
+                  <span className="cred-dot" aria-hidden="true" />
+                  Service-Disabled Veteran-Owned (SDVOSB)
+                </li>
+                <li className="cred-chip">
+                  <span className="cred-dot" aria-hidden="true" />
+                  Women-Owned Small Business (WOSB)
+                </li>
+                <li className="cred-chip">
+                  <span className="cred-dot" aria-hidden="true" />
+                  Economically Disadvantaged WOSB (EDWOSB)
+                </li>
+                <li className="cred-chip">
+                  <span className="cred-dot" aria-hidden="true" />
+                  Minority Business Enterprise (MBE)
+                </li>
+                <li className="cred-chip">
+                  <span className="cred-dot" aria-hidden="true" />
+                  Disadvantaged Business Enterprise (DBE)
+                </li>
+                <li className="cred-chip">
+                  <span className="cred-dot" aria-hidden="true" />
+                  Small / Local Business Enterprise (SBE/LBE)
+                </li>
+                <li className="cred-chip">
+                  <span className="cred-dot" aria-hidden="true" />
+                  State or municipal diversity certs
+                </li>
+                <li className="cred-chip">
+                  <span className="cred-dot" aria-hidden="true" />
+                  Trade, safety, or industry credentials
+                </li>
               </ul>
             </div>
 
             {/* Government Contracting Readiness */}
-            <div className="glow-card bg-[var(--panel-dark)] border border-[var(--border)] rounded-[20px] p-6 shadow-sm">
-              <h5 className="font-[family-name:var(--font-space-grotesk)] text-[1.1rem] font-bold text-[var(--text-bright)] mb-2">
+            <div className="glow-card cred-card bg-[var(--panel-dark)] border border-[var(--border)] rounded-[20px] p-6 shadow-sm">
+              <span className="cred-head__icon">
+                <GovernmentIcon strokeWidth={1.75} />
+              </span>
+              <h5 className="cred-card__title font-[family-name:var(--font-space-grotesk)] font-bold text-[var(--text-bright)]">
                 Government Readiness
               </h5>
-              <p className="text-xs text-[var(--text-muted)] leading-[1.5] mb-2">
+              <p className="cred-card__intro">
                 Requirements based on specific contract scope:
               </p>
-              <ul className="space-y-1 text-[0.75rem] text-[var(--text-muted)]">
-                <li>&bull; Unique Entity ID (UEI)</li>
-                <li>&bull; Active SAM.gov registration</li>
-                <li>&bull; Current W-9</li>
-                <li>&bull; E-Verify participation</li>
-                <li>&bull; Applicable NAICS classifications</li>
-                <li>&bull; State/local contractor licenses</li>
-                <li>&bull; OSHA or safety training</li>
-                <li>&bull; Background screening / site access</li>
-                <li>&bull; Drug-free workplace compliance</li>
-                <li>&bull; Debarment &amp; suspension certs</li>
-                <li>&bull; Conflict-of-interest disclosures</li>
-                <li>&bull; Certificates of insurance &amp; bonding</li>
+                            <ul className="cred-chips">
+                <li className="cred-chip">
+                  <span className="cred-dot" aria-hidden="true" />
+                  Unique Entity ID (UEI)
+                </li>
+                <li className="cred-chip">
+                  <span className="cred-dot" aria-hidden="true" />
+                  Active SAM.gov registration
+                </li>
+                <li className="cred-chip">
+                  <span className="cred-dot" aria-hidden="true" />
+                  Current W-9
+                </li>
+                <li className="cred-chip">
+                  <span className="cred-dot" aria-hidden="true" />
+                  E-Verify participation
+                </li>
+                <li className="cred-chip">
+                  <span className="cred-dot" aria-hidden="true" />
+                  Applicable NAICS classifications
+                </li>
+                <li className="cred-chip">
+                  <span className="cred-dot" aria-hidden="true" />
+                  State/local contractor licenses
+                </li>
+                <li className="cred-chip">
+                  <span className="cred-dot" aria-hidden="true" />
+                  OSHA or safety training
+                </li>
+                <li className="cred-chip">
+                  <span className="cred-dot" aria-hidden="true" />
+                  Background screening / site access
+                </li>
+                <li className="cred-chip">
+                  <span className="cred-dot" aria-hidden="true" />
+                  Drug-free workplace compliance
+                </li>
+                <li className="cred-chip">
+                  <span className="cred-dot" aria-hidden="true" />
+                  Debarment &amp; suspension certs
+                </li>
+                <li className="cred-chip">
+                  <span className="cred-dot" aria-hidden="true" />
+                  Conflict-of-interest disclosures
+                </li>
+                <li className="cred-chip">
+                  <span className="cred-dot" aria-hidden="true" />
+                  Certificates of insurance &amp; bonding
+                </li>
               </ul>
             </div>
           </div>

@@ -6,6 +6,11 @@ import RevealOnMount from "./RevealOnMount";
 import AnimatedStats from "./AnimatedStats";
 import TypewriterText from "./TypewriterText";
 import {
+  MissionIcon,
+  VisionIcon,
+} from "@/components/icons/MissionVisionIcons";
+import NaicsGrid from "@/components/NaicsGrid";
+import {
   dataStore,
   TeamMember,
   AboutData,
@@ -141,21 +146,6 @@ export default function AboutClient() {
     }
   };
 
-  const naicsCodes = [
-    { code: "541611", title: "Administrative & General Management Consulting" },
-    { code: "541618", title: "Other Management Consulting" },
-    { code: "541690", title: "Other Scientific & Technical Consulting" },
-    { code: "624230", title: "Emergency & Other Relief Services" },
-    { code: "561210", title: "Facilities Support Services" },
-    { code: "562910", title: "Remediation Services" },
-    { code: "238320", title: "Painting & Wall Covering Contractors" },
-    { code: "561720", title: "Janitorial Services" },
-    { code: "561790", title: "Other Services to Buildings & Dwellings" },
-    { code: "238990", title: "All Other Specialty Trade Contractors" },
-    { code: "423990", title: "Other Miscellaneous Durable Goods" },
-    { code: "488510", title: "Freight Transportation Arrangement" },
-    { code: "561422", title: "Telemarketing & Other Contact Centers" },
-  ];
 
   return (
     <div className="page-view block overflow-x-clip">
@@ -241,43 +231,20 @@ export default function AboutClient() {
 
             {/* Mission & Vision Callout Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mt-8">
-              <div className="bg-[rgba(225,77,24,0.03)] border-l-[3px] border-l-[var(--primary)] p-6 rounded-r-xl border-y border-r border-[var(--border)]">
-                <div className="flex items-center gap-2 mb-2">
-                  <svg
-                    className="w-5 h-5 text-[var(--primary)]"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                  >
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <polygon points="12 6 12 12 16 14"></polygon>
-                  </svg>
-                  <h4 className="font-[family-name:var(--font-space-grotesk)] text-[1.05rem] font-bold text-[var(--primary)]">
-                    Our Mission
-                  </h4>
-                </div>
-                <p className="text-[0.92rem] text-[var(--text-muted)] leading-[1.6]">
-                  {about.mission}
-                </p>
+              <div className="mv-card mv-card--mission">
+                <span className="mv-card__icon">
+                  <MissionIcon className="w-full h-full" />
+                </span>
+                <h4 className="mv-card__title">Our Mission</h4>
+                <p className="mv-card__body">{about.mission}</p>
               </div>
 
-              <div className="bg-[rgba(15,23,42,0.02)] border-l-[3px] border-l-[var(--navy)] p-6 rounded-r-xl border-y border-r border-[var(--border)]">
-                <div className="flex items-center gap-2 mb-2">
-                  <svg
-                    className="w-5 h-5 text-[var(--navy)]"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                  >
-                    <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
-                  </svg>
-                  <h4 className="font-[family-name:var(--font-space-grotesk)] text-[1.05rem] font-bold text-[var(--text-bright)]">
-                    Our Vision
-                  </h4>
-                </div>
-                <p className="text-[0.92rem] text-[var(--text-muted)] leading-[1.6]">
+              <div className="mv-card mv-card--vision">
+                <span className="mv-card__icon">
+                  <VisionIcon className="w-full h-full" />
+                </span>
+                <h4 className="mv-card__title">Our Vision</h4>
+                <p className="mv-card__body">
                   {about.vision ||
                     "We believe every mission matters because every community matters."}
                 </p>
@@ -496,22 +463,7 @@ export default function AboutClient() {
               <h5 className="font-[family-name:var(--font-space-grotesk)] text-xs font-bold text-[var(--text-bright)] uppercase tracking-wider mb-3">
                 Core NAICS Classifications Registered:
               </h5>
-              <div className="flex flex-wrap gap-2">
-                {naicsCodes.map((item) => (
-                  <div
-                    key={item.code}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[var(--glass)] border border-[var(--border)] text-xs hover:border-[var(--primary)] transition-colors group cursor-default"
-                    title={item.title}
-                  >
-                    <span className="font-[family-name:var(--font-jetbrains-mono)] font-bold text-[var(--primary)]">
-                      {item.code}
-                    </span>
-                    <span className="text-[var(--text-muted)] text-[0.78rem]">
-                      {item.title}
-                    </span>
-                  </div>
-                ))}
-              </div>
+              <NaicsGrid />
             </div>
           </div>
         </RevealOnMount>
