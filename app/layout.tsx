@@ -112,11 +112,18 @@ export default function RootLayout({
           src="https://www.googletagmanager.com/gtm.js?id=GTM-WNTD9JM9"
           strategy="afterInteractive"
         />
+        <Script
+          src="https://www.googletagmanager.com/gtag/js?id=G-Q2DM5QETCM"
+          strategy="afterInteractive"
+        />
         <Script id="google-analytics-init" strategy="afterInteractive">
           {`
             window.dataLayer = window.dataLayer || [];
             function gtag(){dataLayer.push(arguments);}
             gtag('js', new Date());
+            gtag('config', 'G-Q2DM5QETCM', {
+              page_path: window.location.pathname,
+            });
           `}
         </Script>
       </head>
