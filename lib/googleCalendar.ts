@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import { sanitizeSupabaseUrl, sanitizeSupabaseKey } from "@/lib/supabase/client";
 
 /**
  * Google Calendar & Google Meet Integration Service
@@ -42,8 +43,8 @@ export interface CreateMeetingResult {
  * Helper to get a server-side Supabase client for reading/writing tokens
  */
 function getSupabaseClient() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const url = sanitizeSupabaseUrl(process.env.NEXT_PUBLIC_SUPABASE_URL);
+  const key = sanitizeSupabaseKey(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
   if (!url || !key) return null;
   return createClient(url, key);
 }

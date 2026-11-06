@@ -1,8 +1,24 @@
 "use client";
 
 import { useEffect } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { createClient, sanitizeHeadersInit } from "@/lib/supabase/client";
 import { dataStore } from "@/utils/dataStore";
+
+// Global client-side guard against non-ISO-8859-1 header code points in window.fetch
+if (typeof window !== "undefined" && !(window as any).__safe_fetch_installed) {
+  (window as any).__safe_fetch_installed = true;
+  const originalFetch = window.fetch;
+  window.fetch = function (input: RequestInfo | URL, init?: RequestInit) {
+    if (init && init.headers) {
+      try {
+        init.headers = sanitizeHeadersInit(init.headers);
+      } catch {
+        // Continue with original headers
+      }
+    }
+    return originalFetch.call(this, input, init);
+  };
+}
 
 /**
  * Global Realtime Provider for The Inferno Group portal.

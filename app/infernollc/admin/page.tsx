@@ -1458,10 +1458,13 @@ export default function AdminPage() {
     setAuthLoading(true);
     setAuthError(null);
 
+    const cleanEmail = authEmail.trim();
+    const cleanPassword = authPassword.trim();
+
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
-        email: authEmail,
-        password: authPassword,
+        email: cleanEmail,
+        password: cleanPassword,
       });
 
       if (error) {

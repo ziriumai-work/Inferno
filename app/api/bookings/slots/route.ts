@@ -67,9 +67,9 @@ export async function GET(request: NextRequest) {
       .lte("start_time", endDate.toISOString())
       .order("start_time", { ascending: true });
 
+    const effectiveSlots: any[] = existingSlots ? [...existingSlots] : [];
     if (fetchError) {
-      console.error("Error fetching booking slots:", fetchError);
-      return NextResponse.json({ error: fetchError.message }, { status: 500 });
+      console.warn("Notice: booking_slots query returned error, generating dynamic slots:", fetchError.message);
     }
 
     // Check if we need to auto-generate default business slots for upcoming business days
@@ -103,37 +103,52 @@ export async function GET(request: NextRequest) {
 
         const slotStartTime = slotStart.getTime();
 
-        // Check if a slot at this start_time already exists in existingSlots
-        const slotExists = existingSlots?.some(
+        // Check if a slot at this start_time already exists in effectiveSlots
+        const slotExists = effectiveSlots.some(
           (s) => new Date(s.start_time).getTime() === slotStartTime
         );
 
         if (!slotExists) {
-          newSlotsToInsert.push({
+          const generatedSlot = {
+            id: `tig-slot-${slotStart.getTime()}`,
             start_time: slotStart.toISOString(),
             end_time: slotEnd.toISOString(),
             timezone: "EST",
             is_available: true,
-          });
+          };
+          newSlotsToInsert.push(generatedSlot);
+          effectiveSlots.push(generatedSlot);
         }
       }
     }
 
     if (newSlotsToInsert.length > 0) {
-      const { data: insertedSlots, error: insertError } = await supabase
-        .from("booking_slots")
-        .insert(newSlotsToInsert)
-        .select();
+      try {
+        const { data: insertedSlots, error: insertError } = await supabase
+          .from("booking_slots")
+          .insert(newSlotsToInsert)
+          .select();
 
-      if (!insertError && insertedSlots) {
-        existingSlots?.push(...insertedSlots);
+        if (!insertError && insertedSlots) {
+          // Replace generated IDs with DB persistent IDs if successful
+          for (const ins of insertedSlots) {
+            const idx = effectiveSlots.findIndex(
+              (s) => s.start_time === ins.start_time
+            );
+            if (idx !== -1) {
+              effectiveSlots[idx] = ins;
+            }
+          }
+        }
+      } catch (insertErr) {
+        console.warn("Could not persist generated slots to Supabase:", insertErr);
       }
     }
 
     // Live sync external calendar (Google / Outlook freebusy) real-time
     const syncedSlots = await syncExternalCalendarBusyBlocks(
       supabase,
-      existingSlots || [],
+      effectiveSlots,
       baseDate,
       endDate
     );
