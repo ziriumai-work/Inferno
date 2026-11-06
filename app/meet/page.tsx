@@ -7,6 +7,8 @@ import { createClient } from "@/lib/supabase/server";
 import { isValidGoogleMeetUrl } from "@/lib/meetUtils";
 import { isGoogleCalendarConnected, createGoogleCalendarMeetingEvent } from "@/lib/googleCalendar";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = constructMetadata({
   title: "Live Video Consultation Room | The Inferno Group LLC",
   description:

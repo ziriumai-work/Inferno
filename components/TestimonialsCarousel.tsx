@@ -59,12 +59,13 @@ export default function TestimonialsCarousel() {
     };
   }, [activeIndex, testimonials.length]);
 
+  const touchStartX = useRef<number | null>(null);
+  const touchEndX = useRef<number | null>(null);
+
   if (testimonials.length === 0) {
     return null;
   }
 
-  const touchStartX = useRef<number | null>(null);
-  const touchEndX = useRef<number | null>(null);
   const minSwipeDistance = 45;
 
   const handlePrev = () => {

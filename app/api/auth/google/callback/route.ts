@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+
+export const dynamic = "force-dynamic";
 import { exchangeCodeForTokens } from "@/lib/googleCalendar";
 
 export async function GET(request: NextRequest) {
@@ -17,7 +19,7 @@ export async function GET(request: NextRequest) {
 
   // The redirect_uri passed to token exchange MUST match the redirect_uri used in authorization
   const redirectUri = process.env.GOOGLE_REDIRECT_URI || "https://www.theinfernogroup.com/";
-  let result = await exchangeCodeForTokens(code, redirectUri);
+  const result = await exchangeCodeForTokens(code, redirectUri);
 
   if (!result.success) {
     console.error("Token exchange failed:", result.error);

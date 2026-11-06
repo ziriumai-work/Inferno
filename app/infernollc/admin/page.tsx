@@ -1142,6 +1142,19 @@ export default function AdminPage() {
   const [isSendingMeetInvite, setIsSendingMeetInvite] = useState(false);
   const [isGoogleConnected, setIsGoogleConnected] = useState(false);
 
+  const showToast = useCallback(
+    (
+      msg: string,
+      type: "success" | "error" | "info" | "warning" = "success",
+    ) => {
+      setToastState({ message: msg, type });
+      setTimeout(() => {
+        setToastState((prev) => (prev?.message === msg ? null : prev));
+      }, 4000);
+    },
+    [],
+  );
+
   const checkGoogleAuth = useCallback(async () => {
     try {
       const res = await fetch("/api/auth/google");
@@ -1205,19 +1218,6 @@ export default function AdminPage() {
   } | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const showToast = useCallback(
-    (
-      msg: string,
-      type: "success" | "error" | "info" | "warning" = "success",
-    ) => {
-      setToastState({ message: msg, type });
-      setTimeout(() => {
-        setToastState((prev) => (prev?.message === msg ? null : prev));
-      }, 4000);
-    },
-    [],
-  );
 
   const fetchSupabaseBookings = useCallback(async () => {
     try {

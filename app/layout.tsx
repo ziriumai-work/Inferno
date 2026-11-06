@@ -13,9 +13,66 @@ const Chatbot = dynamic(() => import("@/components/Chatbot"));
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
-  title: "The Inferno Group LLC | Government Consulting & Emergency Management Services",
+  title: {
+    default: "The Inferno Group LLC | Government Consulting & Emergency Management Services",
+    template: "%s | The Inferno Group LLC",
+  },
   description:
     "The Inferno Group LLC is a HUBZone and Veteran-Owned government consulting firm specializing in Emergency Management, disaster recovery, public & individual assistance, and strategic public sector execution.",
+  applicationName: "The Inferno Group LLC",
+  authors: [{ name: "The Inferno Group LLC", url: SITE_URL }],
+  creator: "The Inferno Group LLC",
+  publisher: "The Inferno Group LLC",
+  keywords: [
+    "The Inferno Group LLC",
+    "Government Consulting",
+    "Emergency Management",
+    "Disaster Recovery",
+    "FEMA Public Assistance",
+    "SBA HUBZone",
+    "Veteran-Owned Small Business",
+    "VOSB",
+    "B2G Contracting",
+    "Public Assistance Grant Management",
+  ],
+  openGraph: {
+    title: "The Inferno Group LLC | Government Consulting & Emergency Management Services",
+    description:
+      "Operational readiness when crisis meets command. SBA HUBZone & VOSB certified emergency management, FEMA Public Assistance compliance, and federal program execution.",
+    url: SITE_URL,
+    siteName: "The Inferno Group LLC",
+    locale: "en_US",
+    type: "website",
+    images: [
+      {
+        url: `${SITE_URL}/og-image.png`,
+        secureUrl: `${SITE_URL}/og-image.png`,
+        width: 1200,
+        height: 630,
+        alt: "The Inferno Group LLC - Government Contracting & Emergency Management Cadre",
+        type: "image/png",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "The Inferno Group LLC | Government Consulting & Emergency Management Services",
+    description:
+      "Operational readiness when crisis meets command. SBA HUBZone & VOSB certified emergency management, FEMA Public Assistance compliance, and federal program execution.",
+    site: "@theinfernogroup",
+    creator: "@theinfernogroup",
+    images: [
+      {
+        url: `${SITE_URL}/og-image.png`,
+        alt: "The Inferno Group LLC - Government Contracting & Emergency Management Cadre",
+      },
+    ],
+  },
+  icons: {
+    icon: "/logo.png",
+    shortcut: "/logo.png",
+    apple: "/logo.png",
+  },
   verification: {
     google: "google6e2e92a7a0d58085",
   },

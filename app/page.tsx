@@ -3,6 +3,8 @@ import type { Metadata } from "next";
 import HomeClient from "@/components/HomeClient";
 import { constructMetadata } from "@/lib/seoConfig";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = constructMetadata({
   title: "The Inferno Group LLC | B2G Government Consulting & Emergency Management",
   description:
