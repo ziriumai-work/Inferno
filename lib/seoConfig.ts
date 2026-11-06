@@ -5,7 +5,11 @@ export function getSanitizedSiteUrl(rawUrl?: string): string {
   const input = rawUrl || process.env.NEXT_PUBLIC_SITE_URL;
   if (!input) return fallback;
 
-  let cleaned = input.trim().replace(/^["']|["']$/g, "").replace(/\/$/, "");
+  let cleaned = input
+    .trim()
+    .replace(/^[\s"'“”‘’`]+|[\s"'“”‘’`]+$/g, "")
+    .replace(/[^\x20-\x7E]/g, "")
+    .replace(/\/$/, "");
   if (!cleaned) return fallback;
 
   if (!cleaned.startsWith("http://") && !cleaned.startsWith("https://")) {

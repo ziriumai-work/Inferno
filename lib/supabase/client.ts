@@ -3,14 +3,18 @@ import { createBrowserClient } from '@supabase/ssr'
 export function sanitizeSupabaseUrl(rawUrl?: string): string {
   const fallback = "https://mefsbgjzupctvhabijca.supabase.co";
   if (!rawUrl) return fallback;
-  let cleaned = rawUrl.trim().replace(/^["']|["']$/g, "").replace(/\/$/, "");
+  let cleaned = rawUrl
+    .trim()
+    .replace(/^[\s"'“”‘’`]+|[\s"'“”‘’`]+$/g, "")
+    .replace(/[^\x20-\x7E]/g, "")
+    .replace(/\/$/, "");
   if (!cleaned) return fallback;
   if (!cleaned.startsWith("http://") && !cleaned.startsWith("https://")) {
     cleaned = `https://${cleaned}`;
   }
   try {
-    new URL(cleaned);
-    return cleaned;
+    const u = new URL(cleaned);
+    return u.origin;
   } catch {
     return fallback;
   }
@@ -73,10 +77,17 @@ export function createClient() {
     {
       global: {
         fetch: (input: RequestInfo | URL, init?: RequestInit) => {
+          let cleanInput = input;
+          if (typeof cleanInput === "string" && cleanInput.includes("supabase.co")) {
+            cleanInput = cleanInput
+              .replace(/https?:\/\/xn--https-hw3b\/\//g, "https://")
+              .replace(/%E2%80%9D/g, "")
+              .replace(/[“”"']/g, "");
+          }
           if (init && init.headers) {
             init.headers = sanitizeHeadersInit(init.headers);
           }
-          return fetch(input, init);
+          return fetch(cleanInput, init);
         },
       },
     }

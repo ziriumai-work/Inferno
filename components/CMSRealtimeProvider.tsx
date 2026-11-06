@@ -4,11 +4,18 @@ import { useEffect } from "react";
 import { createClient, sanitizeHeadersInit } from "@/lib/supabase/client";
 import { dataStore } from "@/utils/dataStore";
 
-// Global client-side guard against non-ISO-8859-1 header code points in window.fetch
+// Global client-side guard against non-ISO-8859-1 header code points & malformed URLs in window.fetch
 if (typeof window !== "undefined" && !(window as any).__safe_fetch_installed) {
   (window as any).__safe_fetch_installed = true;
   const originalFetch = window.fetch;
   window.fetch = function (input: RequestInfo | URL, init?: RequestInit) {
+    let cleanInput = input;
+    if (typeof cleanInput === "string" && cleanInput.includes("supabase.co")) {
+      cleanInput = cleanInput
+        .replace(/https?:\/\/xn--https-hw3b\/\//g, "https://")
+        .replace(/%E2%80%9D/g, "")
+        .replace(/[“”"']/g, "");
+    }
     if (init && init.headers) {
       try {
         init.headers = sanitizeHeadersInit(init.headers);
@@ -16,7 +23,7 @@ if (typeof window !== "undefined" && !(window as any).__safe_fetch_installed) {
         // Continue with original headers
       }
     }
-    return originalFetch.call(this, input, init);
+    return originalFetch.call(this, cleanInput, init);
   };
 }
 
